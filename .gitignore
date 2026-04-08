@@ -33,6 +33,15 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+# uploaded avatars (stored locally, use cloud storage in prod)
+/public/avatars/*
+!/public/avatars/.gitkeep
+
 # vercel
 .vercel
 
