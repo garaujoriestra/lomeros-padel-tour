@@ -6,6 +6,7 @@
 
 import { recommendSides, type SideRecommendation } from './recommend-sides';
 import type { SideStats } from './side-stats';
+import { expectedScore } from './elo';
 
 export interface PlayerSummary {
   id: string;
@@ -24,6 +25,7 @@ export interface PairingOption {
   label: string; // 'Más equilibrado' | 'Equilibrado' | 'Desequilibrado'
   team1SideRec: SideRecommendation | null;
   team2SideRec: SideRecommendation | null;
+  team1WinProb: number; // 0-1, expected probability that team1 wins
 }
 
 function emptySideStats(): SideStats {
@@ -62,7 +64,7 @@ export function recommendPairings(
           { id: t2[1].id, sideStats: sideStatsByPlayer[t2[1].id] ?? emptySideStats() },
         )
       : null;
-    return { team1: t1, team2: t2, team1Elo, team2Elo, eloDiff, fairnessScore: 0, label: '', team1SideRec, team2SideRec };
+    return { team1: t1, team2: t2, team1Elo, team2Elo, eloDiff, fairnessScore: 0, label: '', team1SideRec, team2SideRec, team1WinProb: expectedScore(team1Elo, team2Elo) };
   });
 
   // Sort by eloDiff ascending (most balanced first)

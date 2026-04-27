@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
 import { computeSideStats } from '@/lib/rating/side-stats';
+import { expectedScore } from '@/lib/rating/elo';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,35 @@ function SideSuggestionBadge({ rec, playerId }: { rec: { driveSidePlayerId: stri
     return <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-700">🟪 Revés sugerido</span>;
   }
   return null;
+}
+
+function PredictionLine({
+  team1Elo,
+  team2Elo,
+  variant,
+}: {
+  team1Elo: number;
+  team2Elo: number;
+  variant: 'hero' | 'recommender';
+}) {
+  const team1Pct = Math.round(expectedScore(team1Elo, team2Elo) * 100);
+  const team2Pct = 100 - team1Pct;
+  if (variant === 'hero') {
+    return (
+      <p className="text-xs sm:text-sm text-white/70 mt-1 font-bold tabular-nums">
+        <span className="text-blue-300">🔵 {team1Pct}%</span>
+        <span className="mx-1.5 text-white/40">–</span>
+        <span className="text-red-300">{team2Pct}% 🔴</span>
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs font-bold tabular-nums mt-1">
+      <span className="text-blue-600">🔵 {team1Pct}%</span>
+      <span className="mx-1.5 text-gray-300">–</span>
+      <span className="text-red-600">{team2Pct}% 🔴</span>
+    </p>
+  );
 }
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -248,6 +278,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="text-center">
                   <p className="text-3xl font-black text-blue-300">VS</p>
                   <p className="text-blue-300/60 text-xs mt-1 uppercase tracking-widest">Pendiente</p>
+                  {t1p1 && t1p2 && t2p1 && t2p2 && (
+                    <PredictionLine
+                      team1Elo={(t1p1.eloRating + t1p2.eloRating) / 2}
+                      team2Elo={(t2p1.eloRating + t2p2.eloRating) / 2}
+                      variant="hero"
+                    />
+                  )}
                 </div>
                 <div className="space-y-1">
                   {[t2p1, t2p2].map((p, i) => (
@@ -276,6 +313,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="text-center">
                   <p className="text-4xl font-black text-blue-300">VS</p>
                   <p className="text-blue-300/60 text-xs mt-1 uppercase tracking-widest">Pendiente</p>
+                  {t1p1 && t1p2 && t2p1 && t2p2 && (
+                    <PredictionLine
+                      team1Elo={(t1p1.eloRating + t1p2.eloRating) / 2}
+                      team2Elo={(t2p1.eloRating + t2p2.eloRating) / 2}
+                      variant="hero"
+                    />
+                  )}
                 </div>
                 <div className="text-right space-y-2">
                   {[t2p1, t2p2].map((p, i) => (
@@ -328,6 +372,11 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                     <p className={`text-lg font-black tabular-nums ${opt.eloDiff < 30 ? 'text-green-600' : opt.eloDiff < 80 ? 'text-yellow-600' : 'text-red-500'}`}>
                       ±{Math.round(opt.eloDiff)}
                     </p>
+                    <PredictionLine
+                      team1Elo={opt.team1Elo}
+                      team2Elo={opt.team2Elo}
+                      variant="recommender"
+                    />
                   </div>
                 </div>
 

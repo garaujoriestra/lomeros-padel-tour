@@ -70,4 +70,28 @@ describe('recommendPairings', () => {
     const teamWithAB = opt!.team1.some((p) => p.id === 'a') ? opt!.team1SideRec : opt!.team2SideRec;
     expect(teamWithAB).toEqual({ driveSidePlayerId: 'a', revesSidePlayerId: 'b' });
   });
+
+  it('computes team1WinProb correctly', () => {
+    // Equal teams (1500 each) → both pairings yield 0.5 each side.
+    const equal = recommendPairings(four);
+    for (const opt of equal) {
+      expect(opt.team1WinProb).toBeCloseTo(0.5, 5);
+    }
+
+    // Stronger pair on team1 → team1WinProb > 0.5.
+    const skewed: [PlayerSummary, PlayerSummary, PlayerSummary, PlayerSummary] = [
+      player('a', 1700),
+      player('b', 1700),
+      player('c', 1300),
+      player('d', 1300),
+    ];
+    const result = recommendPairings(skewed);
+    // Find the option where a+b are on the same team — that team has avg Elo 1700 vs 1300.
+    // expectedScore(1700, 1300) = 1 / (1 + 10^((1300-1700)/400)) ≈ 0.909
+    const abTogether = result.find(
+      (o) => o.team1.some((p) => p.id === 'a') && o.team1.some((p) => p.id === 'b'),
+    );
+    expect(abTogether).toBeDefined();
+    expect(abTogether!.team1WinProb).toBeCloseTo(0.909, 2);
+  });
 });
