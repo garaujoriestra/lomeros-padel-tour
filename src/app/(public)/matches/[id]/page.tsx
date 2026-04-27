@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
 import { matches, matchSets, players, pairStats } from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, or } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
+import { computeSideStats, type MatchWithSide } from '@/lib/rating/side-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,17 @@ function SideBadge({ side }: { side: string | null }) {
       {side === 'drive' ? 'D' : 'R'}
     </span>
   );
+}
+
+function SideSuggestionBadge({ rec, playerId }: { rec: { driveSidePlayerId: string; revesSidePlayerId: string } | null; playerId: string }) {
+  if (!rec) return null;
+  if (rec.driveSidePlayerId === playerId) {
+    return <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-700">🟦 Drive sugerido</span>;
+  }
+  if (rec.revesSidePlayerId === playerId) {
+    return <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-700">🟪 Revés sugerido</span>;
+  }
+  return null;
 }
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -48,9 +60,29 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     ? await db.select().from(matchSets).where(eq(matchSets.matchId, id)).then((s) => s.sort((a, b) => a.setNumber - b.setNumber))
     : [];
 
+  // Build side stats for the 4 players (only when we'll show pairing recommendations)
+  const fourPlayerIds = [match.team1Player1Id, match.team1Player2Id, match.team2Player1Id, match.team2Player2Id];
+  const playerCompletedMatches = match.status === 'scheduled' && fourPlayers.length === 4
+    ? await db.select().from(matches).where(
+        or(
+          inArray(matches.team1Player1Id, fourPlayerIds),
+          inArray(matches.team1Player2Id, fourPlayerIds),
+          inArray(matches.team2Player1Id, fourPlayerIds),
+          inArray(matches.team2Player2Id, fourPlayerIds),
+        ),
+      )
+    : [];
+
+  const completedOnly = playerCompletedMatches.filter((m) => m.status === 'completed');
+
+  const sideStatsByPlayer: Record<string, ReturnType<typeof computeSideStats>> = {};
+  for (const pid of fourPlayerIds) {
+    sideStatsByPlayer[pid] = computeSideStats(pid, completedOnly as MatchWithSide[]);
+  }
+
   // Pairing recommendations (only for scheduled)
   const pairingOptions = match.status === 'scheduled' && fourPlayers.length === 4
-    ? recommendPairings([t1p1!, t1p2!, t2p1!, t2p2!])
+    ? recommendPairings([t1p1!, t1p2!, t2p1!, t2p2!], sideStatsByPlayer)
     : null;
 
   const t1Sets = sets.filter((s) => s.team1Games > s.team2Games).length;
@@ -308,7 +340,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                           {p.name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
+                          <p className="font-bold text-gray-800 text-sm truncate">
+                            {p.name}
+                            <SideSuggestionBadge rec={opt.team1SideRec} playerId={p.id} />
+                          </p>
                           <p className="text-xs text-gray-400">{Math.round(p.eloRating)} ELO</p>
                         </div>
                       </div>
@@ -328,7 +363,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                           {p.name.charAt(0)}
                         </div>
                         <div className="min-w-0 sm:order-1">
-                          <p className="font-bold text-gray-800 text-sm truncate sm:text-right">{p.name}</p>
+                          <p className="font-bold text-gray-800 text-sm truncate sm:text-right">
+                            {p.name}
+                            <SideSuggestionBadge rec={opt.team2SideRec} playerId={p.id} />
+                          </p>
                           <p className="text-xs text-gray-400 sm:text-right">{Math.round(p.eloRating)} ELO</p>
                         </div>
                       </div>
