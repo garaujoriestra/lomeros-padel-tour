@@ -13,17 +13,17 @@ const adminLinks = [
 export function AdminSidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-52 shrink-0">
-      <nav className="space-y-1">
+    <aside className="md:w-52 md:shrink-0">
+      <nav className="flex md:flex-col gap-2 md:gap-1 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0">
         {adminLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className={cn(
-              'block px-3 py-2 rounded-md text-sm font-medium transition-colors',
+              'inline-flex items-center min-h-[40px] px-4 md:px-3 md:py-2 rounded-full md:rounded-md text-sm font-medium transition-colors whitespace-nowrap shrink-0 md:shrink',
               pathname === link.href
                 ? 'bg-orange-100 text-orange-800'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 md:bg-transparent'
             )}
           >
             {link.label}
