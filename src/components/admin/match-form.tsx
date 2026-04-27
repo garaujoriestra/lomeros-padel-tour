@@ -29,6 +29,8 @@ export function MatchForm({ players }: MatchFormProps) {
 
   const [team1, setTeam1] = useState<[string, string]>(['', '']);
   const [team2, setTeam2] = useState<[string, string]>(['', '']);
+  const [team1Sides, setTeam1Sides] = useState<[string, string]>(['', '']); // '' | 'drive' | 'reves'
+  const [team2Sides, setTeam2Sides] = useState<[string, string]>(['', '']);
 
   const [sets, setSets] = useState<SetScore[]>([
     { team1Games: '', team2Games: '' },
@@ -85,6 +87,13 @@ export function MatchForm({ players }: MatchFormProps) {
 
     setLoading(true);
 
+    if (team1Sides[0] && team1Sides[1] && team1Sides[0] === team1Sides[1]) {
+      toast.warning(`Ambos jugadores del Equipo 1 al ${team1Sides[0] === 'drive' ? 'drive' : 'revés'}. ¿Seguro?`);
+    }
+    if (team2Sides[0] && team2Sides[1] && team2Sides[0] === team2Sides[1]) {
+      toast.warning(`Ambos jugadores del Equipo 2 al ${team2Sides[0] === 'drive' ? 'drive' : 'revés'}. ¿Seguro?`);
+    }
+
     const payload = {
       date,
       location: location.trim() || null,
@@ -92,6 +101,10 @@ export function MatchForm({ players }: MatchFormProps) {
       team1Player2Id: team1[1],
       team2Player1Id: team2[0],
       team2Player2Id: team2[1],
+      team1Player1Side: team1Sides[0] || null,
+      team1Player2Side: team1Sides[1] || null,
+      team2Player1Side: team2Sides[0] || null,
+      team2Player2Side: team2Sides[1] || null,
       ...(mode === 'completed' && {
         sets: sets.map((s, i) => ({
           setNumber: i + 1,
@@ -125,31 +138,49 @@ export function MatchForm({ players }: MatchFormProps) {
   const playerSlot = (
     team: [string, string],
     setTeam: (v: [string, string]) => void,
+    sides: [string, string],
+    setSides: (v: [string, string]) => void,
     label: string,
-    color: string
+    color: string,
   ) => (
     <div className="space-y-3">
       <p className={`font-semibold text-sm ${color}`}>{label}</p>
       {[0, 1].map((slot) => (
         <div key={slot} className="space-y-1">
           <Label className="text-xs">Jugador {slot + 1}</Label>
-          <select
-            className="w-full border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
-            value={team[slot]}
-            onChange={(e) => {
-              const next: [string, string] = [...team] as [string, string];
-              next[slot] = e.target.value;
-              setTeam(next);
-            }}
-            required
-          >
-            <option value="">— Seleccionar —</option>
-            {availablePlayers(team[slot]).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}{p.nickname ? ` (${p.nickname})` : ''}
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <select
+              className="w-full border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={team[slot]}
+              onChange={(e) => {
+                const next: [string, string] = [...team] as [string, string];
+                next[slot] = e.target.value;
+                setTeam(next);
+              }}
+              required
+            >
+              <option value="">— Seleccionar —</option>
+              {availablePlayers(team[slot]).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.nickname ? ` (${p.nickname})` : ''}
+                </option>
+              ))}
+            </select>
+            <select
+              className="border rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={sides[slot]}
+              onChange={(e) => {
+                const next: [string, string] = [...sides] as [string, string];
+                next[slot] = e.target.value;
+                setSides(next);
+              }}
+              aria-label={`Lado del jugador ${slot + 1}`}
+            >
+              <option value="">Lado —</option>
+              <option value="drive">Drive</option>
+              <option value="reves">Revés</option>
+            </select>
+          </div>
         </div>
       ))}
     </div>
@@ -209,8 +240,8 @@ export function MatchForm({ players }: MatchFormProps) {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest">👥 Equipos</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {playerSlot(team1, setTeam1, '🔵 Equipo 1', 'text-blue-700')}
-          {playerSlot(team2, setTeam2, '🔴 Equipo 2', 'text-red-700')}
+          {playerSlot(team1, setTeam1, team1Sides, setTeam1Sides, '🔵 Equipo 1', 'text-blue-700')}
+          {playerSlot(team2, setTeam2, team2Sides, setTeam2Sides, '🔴 Equipo 2', 'text-red-700')}
         </div>
       </div>
 
