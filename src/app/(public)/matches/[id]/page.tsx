@@ -7,6 +7,18 @@ import { recommendPairings } from '@/lib/rating/recommend-pairs';
 
 export const dynamic = 'force-dynamic';
 
+function SideBadge({ side }: { side: string | null }) {
+  if (side !== 'drive' && side !== 'reves') return null;
+  const colors = side === 'drive'
+    ? 'bg-blue-500/20 border border-blue-400/40 text-blue-200'
+    : 'bg-purple-500/20 border border-purple-400/40 text-purple-200';
+  return (
+    <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold ${colors}`}>
+      {side === 'drive' ? 'D' : 'R'}
+    </span>
+  );
+}
+
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -80,6 +92,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
                         <p className={`text-lg font-black hover:text-green-300 transition-colors ${match.winnerTeam === 1 ? 'text-white' : 'text-green-200'}`}>
                           {p?.name ?? '?'}
+                          <SideBadge side={i === 0 ? match.team1Player1Side : match.team1Player2Side} />
                         </p>
                       </Link>
                     ))}
@@ -113,6 +126,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
                         <p className={`text-lg font-black hover:text-green-300 transition-colors ${match.winnerTeam === 2 ? 'text-white' : 'text-green-200'}`}>
                           {p?.name ?? '?'}
+                          <SideBadge side={i === 0 ? match.team2Player1Side : match.team2Player2Side} />
                         </p>
                       </Link>
                     ))}
@@ -133,6 +147,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
                         <p className={`text-xl font-black hover:text-green-300 transition-colors ${match.winnerTeam === 1 ? 'text-white' : 'text-green-200'}`}>
                           {p?.name ?? '?'}
+                          <SideBadge side={i === 0 ? match.team1Player1Side : match.team1Player2Side} />
                         </p>
                       </Link>
                     ))}
@@ -168,6 +183,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
                         <p className={`text-xl font-black hover:text-green-300 transition-colors ${match.winnerTeam === 2 ? 'text-white' : 'text-green-200'}`}>
                           {p?.name ?? '?'}
+                          <SideBadge side={i === 0 ? match.team2Player1Side : match.team2Player2Side} />
                         </p>
                       </Link>
                     ))}
@@ -190,7 +206,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="space-y-1">
                   {[t1p1, t1p2].map((p, i) => (
                     <Link key={i} href={p ? `/players/${p.id}` : '#'}>
-                      <p className="text-lg font-black text-white hover:text-green-300 transition-colors">{p?.name ?? '?'}</p>
+                      <p className="text-lg font-black text-white hover:text-green-300 transition-colors">
+                        {p?.name ?? '?'}
+                        <SideBadge side={i === 0 ? match.team1Player1Side : match.team1Player2Side} />
+                      </p>
                     </Link>
                   ))}
                 </div>
@@ -201,7 +220,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="space-y-1">
                   {[t2p1, t2p2].map((p, i) => (
                     <Link key={i} href={p ? `/players/${p.id}` : '#'}>
-                      <p className="text-lg font-black text-white hover:text-green-300 transition-colors">{p?.name ?? '?'}</p>
+                      <p className="text-lg font-black text-white hover:text-green-300 transition-colors">
+                        {p?.name ?? '?'}
+                        <SideBadge side={i === 0 ? match.team2Player1Side : match.team2Player2Side} />
+                      </p>
                     </Link>
                   ))}
                 </div>
@@ -212,7 +234,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="space-y-2">
                   {[t1p1, t1p2].map((p, i) => (
                     <Link key={i} href={p ? `/players/${p.id}` : '#'}>
-                      <p className="text-xl font-black text-white hover:text-green-300 transition-colors">{p?.name ?? '?'}</p>
+                      <p className="text-xl font-black text-white hover:text-green-300 transition-colors">
+                        {p?.name ?? '?'}
+                        <SideBadge side={i === 0 ? match.team1Player1Side : match.team1Player2Side} />
+                      </p>
                     </Link>
                   ))}
                 </div>
@@ -223,7 +248,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 <div className="text-right space-y-2">
                   {[t2p1, t2p2].map((p, i) => (
                     <Link key={i} href={p ? `/players/${p.id}` : '#'}>
-                      <p className="text-xl font-black text-white hover:text-green-300 transition-colors">{p?.name ?? '?'}</p>
+                      <p className="text-xl font-black text-white hover:text-green-300 transition-colors">
+                        {p?.name ?? '?'}
+                        <SideBadge side={i === 0 ? match.team2Player1Side : match.team2Player2Side} />
+                      </p>
                     </Link>
                   ))}
                 </div>
