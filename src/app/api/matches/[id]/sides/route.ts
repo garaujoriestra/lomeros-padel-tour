@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-
-function coerceSide(value: unknown): string | null {
-  return value === 'drive' || value === 'reves' ? value : null;
-}
+import { coerceSide } from '@/lib/rating/side-stats';
 
 // PATCH /api/matches/[id]/sides — update only the side columns
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

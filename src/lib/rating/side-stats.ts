@@ -1,19 +1,20 @@
+import type { Match } from '@/lib/db/schema';
+
+export type MatchWithSide = Pick<Match,
+  | 'team1Player1Id' | 'team1Player2Id' | 'team2Player1Id' | 'team2Player2Id'
+  | 'team1Player1Side' | 'team1Player2Side' | 'team2Player1Side' | 'team2Player2Side'
+  | 'winnerTeam'
+>;
+
+export type CourtSide = 'drive' | 'reves';
+
+export function coerceSide(value: unknown): CourtSide | null {
+  return value === 'drive' || value === 'reves' ? value : null;
+}
+
 export interface SideStats {
   drive: { matches: number; wins: number; losses: number; winRate: number };
   reves: { matches: number; wins: number; losses: number; winRate: number };
-}
-
-// TODO(C.4): replace with Pick<Match, keyof MatchWithSide> once schema.ts gets the 4 side columns.
-export interface MatchWithSide {
-  team1Player1Id: string;
-  team1Player2Id: string;
-  team2Player1Id: string;
-  team2Player2Id: string;
-  team1Player1Side: string | null;
-  team1Player2Side: string | null;
-  team2Player1Side: string | null;
-  team2Player2Side: string | null;
-  winnerTeam: number | null;
 }
 
 interface SlotInfo {

@@ -4,7 +4,7 @@ import { eq, and, inArray, or } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
-import { computeSideStats, type MatchWithSide } from '@/lib/rating/side-stats';
+import { computeSideStats } from '@/lib/rating/side-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +77,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
   const sideStatsByPlayer: Record<string, ReturnType<typeof computeSideStats>> = {};
   for (const pid of fourPlayerIds) {
-    sideStatsByPlayer[pid] = computeSideStats(pid, completedOnly as MatchWithSide[]);
+    sideStatsByPlayer[pid] = computeSideStats(pid, completedOnly);
   }
 
   // Pairing recommendations (only for scheduled)

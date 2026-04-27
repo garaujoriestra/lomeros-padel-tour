@@ -4,7 +4,7 @@ import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
 import Link from 'next/link';
-import { computeSideStats, type MatchWithSide } from '@/lib/rating/side-stats';
+import { computeSideStats } from '@/lib/rating/side-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +60,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     ? playerMap[bestPartner.player1Id === id ? bestPartner.player2Id : bestPartner.player1Id]
     : null;
 
-  const sideStats = computeSideStats(id, completedMatches as unknown as MatchWithSide[]);
+  const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
   const driveBetter = sideStats.drive.winRate >= sideStats.reves.winRate;
 

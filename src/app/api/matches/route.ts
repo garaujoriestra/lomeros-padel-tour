@@ -3,10 +3,7 @@ import { db } from '@/lib/db';
 import { matches, matchSets } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
-
-function coerceSide(value: unknown): string | null {
-  return value === 'drive' || value === 'reves' ? value : null;
-}
+import { coerceSide } from '@/lib/rating/side-stats';
 
 // GET /api/matches
 export async function GET() {
