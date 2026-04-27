@@ -115,7 +115,8 @@ Aplicado en `rankings/page.tsx`, `matches/page.tsx`, `rankings/pairs/page.tsx`, 
 |---|---|
 | `p-8` | `p-5 sm:p-7 md:p-10` |
 | `text-4xl` (h1) | `text-2xl sm:text-3xl md:text-4xl` |
-| `rounded-3xl` | `rounded-xl sm:rounded-2xl md:rounded-3xl` |
+| `rounded-2xl` (heroes pequeños) | `rounded-xl sm:rounded-2xl` |
+| `rounded-3xl` (heroes grandes: home, info, perfil jugador) | `rounded-2xl sm:rounded-3xl` |
 | `mt-1` para subtítulo | `mt-1 text-sm sm:text-base` |
 
 #### 3.2 `<MatchCard />` compartido (nuevo)
