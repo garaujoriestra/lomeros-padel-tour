@@ -58,10 +58,11 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
               </button>
             </>
           ) : (
-            <Link href="/login">
-              <button className="inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all">
-                Admin
-              </button>
+            <Link
+              href="/login"
+              className="inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all"
+            >
+              Admin
             </Link>
           )}
         </div>
