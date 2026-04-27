@@ -18,14 +18,32 @@ interface ResultFormProps {
   team2Name: string;
   date: string;
   location?: string | null;
+  team1Player1Name: string;
+  team1Player2Name: string;
+  team2Player1Name: string;
+  team2Player2Name: string;
+  initialSides: {
+    team1Player1Side: string | null;
+    team1Player2Side: string | null;
+    team2Player1Side: string | null;
+    team2Player2Side: string | null;
+  };
 }
 
-export function ResultForm({ matchId, team1Name, team2Name, date, location }: ResultFormProps) {
+export function ResultForm({ matchId, team1Name, team2Name, date, location, team1Player1Name, team1Player2Name, team2Player1Name, team2Player2Name, initialSides }: ResultFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sets, setSets] = useState<SetScore[]>([
     { team1Games: '', team2Games: '' },
     { team1Games: '', team2Games: '' },
+  ]);
+  const [team1Sides, setTeam1Sides] = useState<[string, string]>([
+    initialSides.team1Player1Side ?? '',
+    initialSides.team1Player2Side ?? '',
+  ]);
+  const [team2Sides, setTeam2Sides] = useState<[string, string]>([
+    initialSides.team2Player1Side ?? '',
+    initialSides.team2Player2Side ?? '',
   ]);
 
   function handleSetChange(idx: number, team: 'team1' | 'team2', value: string) {
@@ -66,6 +84,10 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
           team1Games: Number(s.team1Games),
           team2Games: Number(s.team2Games),
         })),
+        team1Player1Side: team1Sides[0] || null,
+        team1Player2Side: team1Sides[1] || null,
+        team2Player1Side: team2Sides[0] || null,
+        team2Player2Side: team2Sides[1] || null,
       }),
     });
 
@@ -148,6 +170,52 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
             </p>
           </div>
         )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🎾 Lado de pista (opcional)</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <p className="font-semibold text-sm text-blue-700">🔵 {team1Name}</p>
+            {[
+              { name: team1Player1Name, value: team1Sides[0], onChange: (v: string) => setTeam1Sides([v, team1Sides[1]]) },
+              { name: team1Player2Name, value: team1Sides[1], onChange: (v: string) => setTeam1Sides([team1Sides[0], v]) },
+            ].map((row, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <span className="text-sm text-gray-700 truncate">{row.name}</span>
+                <select
+                  className="border rounded-md px-2 py-1 text-sm bg-white"
+                  value={row.value}
+                  onChange={(e) => row.onChange(e.target.value)}
+                >
+                  <option value="">—</option>
+                  <option value="drive">Drive</option>
+                  <option value="reves">Revés</option>
+                </select>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-sm text-red-700">🔴 {team2Name}</p>
+            {[
+              { name: team2Player1Name, value: team2Sides[0], onChange: (v: string) => setTeam2Sides([v, team2Sides[1]]) },
+              { name: team2Player2Name, value: team2Sides[1], onChange: (v: string) => setTeam2Sides([team2Sides[0], v]) },
+            ].map((row, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <span className="text-sm text-gray-700 truncate">{row.name}</span>
+                <select
+                  className="border rounded-md px-2 py-1 text-sm bg-white"
+                  value={row.value}
+                  onChange={(e) => row.onChange(e.target.value)}
+                >
+                  <option value="">—</option>
+                  <option value="drive">Drive</option>
+                  <option value="reves">Revés</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-3">
