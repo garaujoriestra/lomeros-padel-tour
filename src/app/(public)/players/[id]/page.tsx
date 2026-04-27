@@ -6,6 +6,7 @@ import { EloChart } from '@/components/charts/elo-chart';
 import Link from 'next/link';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
+import { PartnerCard } from '@/components/shared/partner-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,19 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const bestPartnerPlayer = bestPartner
     ? playerMap[bestPartner.player1Id === id ? bestPartner.player2Id : bestPartner.player1Id]
     : null;
+
+  const worstPartner = pairs
+    .filter((p) => p.matchesPlayed >= 2)
+    .sort((a, b) => (a.wins / a.matchesPlayed) - (b.wins / b.matchesPlayed))[0];
+  const worstPartnerPlayer = worstPartner
+    ? playerMap[worstPartner.player1Id === id ? worstPartner.player2Id : worstPartner.player1Id]
+    : null;
+
+  // Only show "worst" card if it's a DIFFERENT player from "best"
+  const showWorstCard =
+    worstPartnerPlayer != null &&
+    bestPartnerPlayer != null &&
+    worstPartnerPlayer.id !== bestPartnerPlayer.id;
 
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
@@ -197,27 +211,13 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      {/* Best partner */}
-      {bestPartnerPlayer && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">🤝 Mejor compañero</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-black shadow-sm">
-                {bestPartnerPlayer.name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-black text-gray-800">{bestPartnerPlayer.name}</p>
-                <p className="text-xs text-gray-400">{bestPartner.matchesPlayed} partidos juntos</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className={`text-2xl font-black tabular-nums ${Math.round((bestPartner.wins / bestPartner.matchesPlayed) * 100) >= 60 ? 'text-green-600' : 'text-gray-700'}`}>
-                {Math.round((bestPartner.wins / bestPartner.matchesPlayed) * 100)}%
-              </p>
-              <p className="text-xs text-gray-400">{bestPartner.wins}V · {bestPartner.losses}D</p>
-            </div>
-          </div>
+      {/* Best partner + (optional) Worst partner */}
+      {bestPartnerPlayer && bestPartner && (
+        <div className={`grid gap-4 ${showWorstCard ? 'sm:grid-cols-2' : ''}`}>
+          <PartnerCard variant="best" partner={bestPartnerPlayer} pairStat={bestPartner} />
+          {showWorstCard && worstPartner && (
+            <PartnerCard variant="worst" partner={worstPartnerPlayer} pairStat={worstPartner} />
+          )}
         </div>
       )}
 
