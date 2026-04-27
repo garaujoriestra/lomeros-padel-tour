@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { Podium } from '@/components/shared/podium';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,47 +53,7 @@ export default async function RankingsPage() {
           {top3.length >= 3 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Podio</p>
-              <div className="flex items-end justify-center gap-3 md:gap-6">
-                {/* #2 Silver */}
-                <Link href={`/players/${top3[1].id}`} className="flex-1 max-w-[185px] group">
-                  <div className="bg-gradient-to-b from-slate-200 via-slate-300 to-slate-500 rounded-2xl px-4 pt-5 pb-0 shadow-xl shadow-slate-300/40 flex flex-col items-center gap-2 group-hover:scale-105 transition-transform">
-                    <span className="text-3xl">🥈</span>
-                    <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center text-2xl font-black border-2 border-white/40">{top3[1].name.charAt(0)}</div>
-                    <p className="font-black text-sm text-center text-slate-900 leading-tight">{top3[1].name}</p>
-                    {top3[1].nickname && <p className="text-slate-600 text-xs">{top3[1].nickname}</p>}
-                    <p className="text-3xl font-black text-slate-800 tabular-nums">{Math.round(top3[1].eloRating)}</p>
-                    <p className="text-slate-500 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                    <p className="text-xs text-slate-700 pb-3 font-semibold">{Math.round((top3[1].wins / top3[1].matchesPlayed) * 100)}% · {top3[1].matchesPlayed}P</p>
-                    <div className="w-full bg-slate-600 rounded-b-xl py-2.5 text-center font-black text-xl text-white">2</div>
-                  </div>
-                </Link>
-                {/* #1 Gold */}
-                <Link href={`/players/${top3[0].id}`} className="flex-1 max-w-[215px] group -mb-3">
-                  <div className="bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 rounded-2xl px-5 pt-7 pb-0 shadow-2xl shadow-amber-300/50 flex flex-col items-center gap-2 ring-2 ring-amber-400/40 group-hover:scale-105 transition-transform">
-                    <span className="text-5xl drop-shadow-lg">👑</span>
-                    <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center text-3xl font-black border-2 border-white/50">{top3[0].name.charAt(0)}</div>
-                    <p className="font-black text-base text-center text-amber-950 leading-tight">{top3[0].name}</p>
-                    {top3[0].nickname && <p className="text-amber-800 text-xs">{top3[0].nickname}</p>}
-                    <p className="text-4xl font-black text-amber-950 tabular-nums">{Math.round(top3[0].eloRating)}</p>
-                    <p className="text-amber-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                    <p className="text-xs text-amber-900 pb-4 font-semibold">{Math.round((top3[0].wins / top3[0].matchesPlayed) * 100)}% · {top3[0].matchesPlayed}P</p>
-                    <div className="w-full bg-amber-700 rounded-b-xl py-3 text-center font-black text-2xl text-white">1</div>
-                  </div>
-                </Link>
-                {/* #3 Bronze */}
-                <Link href={`/players/${top3[2].id}`} className="flex-1 max-w-[165px] group">
-                  <div className="bg-gradient-to-b from-orange-200 via-orange-400 to-orange-600 rounded-2xl px-4 pt-4 pb-0 shadow-xl shadow-orange-200/40 flex flex-col items-center gap-1.5 group-hover:scale-105 transition-transform mt-8">
-                    <span className="text-2xl">🥉</span>
-                    <div className="w-12 h-12 rounded-full bg-white/25 flex items-center justify-center text-xl font-black border-2 border-white/30">{top3[2].name.charAt(0)}</div>
-                    <p className="font-black text-sm text-center text-orange-950 leading-tight">{top3[2].name}</p>
-                    {top3[2].nickname && <p className="text-orange-700 text-xs">{top3[2].nickname}</p>}
-                    <p className="text-2xl font-black text-orange-950 tabular-nums">{Math.round(top3[2].eloRating)}</p>
-                    <p className="text-orange-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                    <p className="text-xs text-orange-900 pb-3 font-semibold">{Math.round((top3[2].wins / top3[2].matchesPlayed) * 100)}% · {top3[2].matchesPlayed}P</p>
-                    <div className="w-full bg-orange-700 rounded-b-xl py-2 text-center font-black text-xl text-white">3</div>
-                  </div>
-                </Link>
-              </div>
+              <Podium players={top3} variant="rankings" />
             </div>
           )}
 
