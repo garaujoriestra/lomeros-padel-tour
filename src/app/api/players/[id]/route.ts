@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, nickname, avatarUrl } = body;
+    const { name, nickname, avatarUrl, isLeftHanded } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -28,7 +28,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const [updated] = await db
       .update(players)
-      .set({ name: name.trim(), nickname: nickname?.trim() || null, avatarUrl: avatarUrl?.trim() || null })
+      .set({
+        name: name.trim(),
+        nickname: nickname?.trim() || null,
+        avatarUrl: avatarUrl?.trim() || null,
+        isLeftHanded: !!isLeftHanded,
+      })
       .where(eq(players.id, id))
       .returning();
 

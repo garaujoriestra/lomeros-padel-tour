@@ -97,6 +97,11 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                     {eloChange >= 0 ? '+' : ''}{eloChange}
                   </span>
                 </span>
+                {player.isLeftHanded && (
+                  <span className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-sm font-bold">
+                    🤚 Zurdo
+                  </span>
+                )}
                 {streak.count > 1 && (
                   <span className={`px-3 py-1 rounded-full text-sm font-bold ${streak.type === 'W' ? 'bg-green-500/20 border border-green-400/40 text-green-300' : 'bg-red-500/20 border border-red-400/40 text-red-300'}`}>
                     {streak.type === 'W' ? '🔥' : '❄️'} Racha {streak.count} {streak.type === 'W' ? 'victorias' : 'derrotas'}

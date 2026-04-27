@@ -11,6 +11,7 @@ export const players = sqliteTable('players', {
   matchesPlayed: integer('matches_played').notNull().default(0),
   wins: integer('wins').notNull().default(0),
   losses: integer('losses').notNull().default(0),
+  isLeftHanded: integer('is_left_handed', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 

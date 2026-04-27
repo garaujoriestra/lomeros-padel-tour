@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, nickname, avatarUrl } = body;
+    const { name, nickname, avatarUrl, isLeftHanded } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       nickname: nickname?.trim() || null,
       avatarUrl: avatarUrl?.trim() || null,
+      isLeftHanded: !!isLeftHanded,
     }).returning();
 
     return NextResponse.json(player, { status: 201 });
