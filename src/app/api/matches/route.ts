@@ -4,6 +4,10 @@ import { matches, matchSets } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 
+function coerceSide(value: unknown): string | null {
+  return value === 'drive' || value === 'reves' ? value : null;
+}
+
 // GET /api/matches
 export async function GET() {
   try {
@@ -31,6 +35,10 @@ export async function POST(request: NextRequest) {
       team1Player2Id,
       team2Player1Id,
       team2Player2Id,
+      team1Player1Side,
+      team1Player2Side,
+      team2Player1Side,
+      team2Player2Side,
       sets, // optional: [{setNumber, team1Games, team2Games}]
     } = body;
 
@@ -73,6 +81,10 @@ export async function POST(request: NextRequest) {
         team1Player2Id,
         team2Player1Id,
         team2Player2Id,
+        team1Player1Side: coerceSide(team1Player1Side),
+        team1Player2Side: coerceSide(team1Player2Side),
+        team2Player1Side: coerceSide(team2Player1Side),
+        team2Player2Side: coerceSide(team2Player2Side),
         winnerTeam,
         status: isScheduled ? 'scheduled' : 'completed',
       })

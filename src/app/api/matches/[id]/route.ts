@@ -4,6 +4,10 @@ import { matches, matchSets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 
+function coerceSide(value: unknown): string | null {
+  return value === 'drive' || value === 'reves' ? value : null;
+}
+
 // GET /api/matches/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -40,7 +44,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { sets } = body; // [{setNumber, team1Games, team2Games}]
+    const { sets, team1Player1Side, team1Player2Side, team2Player1Side, team2Player2Side } = body;
 
     if (!sets || sets.length < 2 || sets.length > 3) {
       return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
@@ -72,9 +76,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Update match status + winner
+    const updateFields: Record<string, unknown> = { winnerTeam, status: 'completed' };
+    if (team1Player1Side !== undefined) updateFields.team1Player1Side = coerceSide(team1Player1Side);
+    if (team1Player2Side !== undefined) updateFields.team1Player2Side = coerceSide(team1Player2Side);
+    if (team2Player1Side !== undefined) updateFields.team2Player1Side = coerceSide(team2Player1Side);
+    if (team2Player2Side !== undefined) updateFields.team2Player2Side = coerceSide(team2Player2Side);
+
     const [updated] = await db
       .update(matches)
-      .set({ winnerTeam, status: 'completed' })
+      .set(updateFields)
       .where(eq(matches.id, id))
       .returning();
 
