@@ -59,8 +59,12 @@ export function SkeletonText({ className }: { className?: string }) {
 
 /**
  * Reproduces the green-gradient hero shape used across pages.
- * `tall=false` matches the small heroes on rankings/matches/pairs.
- * `tall=true` matches the larger heroes on home/info/players[id].
+ * `tall=false` matches the small heroes on rankings/matches/pairs (`md:p-10`).
+ * `tall=true` matches the home/info hero (`md:p-14`).
+ *
+ * Note: the player-profile and match-detail heroes have custom internal
+ * structure (avatar + stats grid / breadcrumb + score) and inline their
+ * own hero block in their loading.tsx — they don't use this primitive.
  */
 export function SkeletonHero({ tall = false }: { tall?: boolean }) {
   const padding = tall ? 'p-5 sm:p-8 md:p-14' : 'p-5 sm:p-7 md:p-10';
@@ -160,7 +164,7 @@ import { SkeletonHero, SkeletonBox } from '@/components/shared/skeletons';
 
 export default function PublicLoading() {
   return (
-    <div className="space-y-6">
+    <div role="status" aria-busy="true" aria-label="Cargando" className="space-y-6">
       <SkeletonHero tall />
       <SkeletonBox className="h-32" />
       <SkeletonBox className="h-32" />
@@ -198,7 +202,7 @@ import { SkeletonHero, SkeletonText } from '@/components/shared/skeletons';
 
 export default function RankingsLoading() {
   return (
-    <div className="space-y-8">
+    <div role="status" aria-busy="true" aria-label="Cargando ranking" className="space-y-8">
       <SkeletonHero />
 
       {/* Podium */}
@@ -280,7 +284,7 @@ import { SkeletonHero, SkeletonText } from '@/components/shared/skeletons';
 
 export default function PairsLoading() {
   return (
-    <div className="space-y-8">
+    <div role="status" aria-busy="true" aria-label="Cargando parejas" className="space-y-8">
       <SkeletonHero />
 
       {/* Top-3 cards */}
@@ -373,7 +377,7 @@ import { SkeletonHero, SkeletonMatchCard } from '@/components/shared/skeletons';
 
 export default function MatchesLoading() {
   return (
-    <div className="space-y-8">
+    <div role="status" aria-busy="true" aria-label="Cargando partidos" className="space-y-8">
       <SkeletonHero />
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -413,7 +417,7 @@ import { SkeletonBox, SkeletonText } from '@/components/shared/skeletons';
 
 export default function MatchDetailLoading() {
   return (
-    <div className="space-y-8">
+    <div role="status" aria-busy="true" aria-label="Cargando detalle de partido" className="space-y-8">
       {/* Custom hero — tall green block with breadcrumb + 2 teams + score */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="relative p-5 sm:p-8 md:p-10 space-y-4 sm:space-y-6">
@@ -503,7 +507,7 @@ import { SkeletonBox, SkeletonText } from '@/components/shared/skeletons';
 
 export default function PlayerLoading() {
   return (
-    <div className="space-y-6">
+    <div role="status" aria-busy="true" aria-label="Cargando perfil de jugador" className="space-y-6">
       {/* Profile header — green gradient with stacked avatar+info on mobile */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="relative p-5 sm:p-8 md:p-10">
