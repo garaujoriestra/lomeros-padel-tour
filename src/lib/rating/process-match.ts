@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { players, matches, matchSets, pairStats, ratingHistory } from '@/lib/db/schema';
+import { players, pairStats, ratingHistory } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   calculateDoublesElo,

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { matches, matchSets, players } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches, matchSets } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 
 // GET /api/matches

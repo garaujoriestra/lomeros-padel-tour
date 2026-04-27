@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 
 // GET /api/players - listar todos los jugadores
 export async function GET() {

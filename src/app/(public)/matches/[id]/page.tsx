@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { matches, matchSets, players, pairStats } from '@/lib/db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';

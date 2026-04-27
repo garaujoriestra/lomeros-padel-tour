@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { players, matches, ratingHistory, pairStats } from '@/lib/db/schema';
-import { eq, or, desc, sql } from 'drizzle-orm';
+import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
 import Link from 'next/link';
