@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { matches, matchSets } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
+import { coerceSide } from '@/lib/rating/side-stats';
 
 // GET /api/matches
 export async function GET() {
@@ -31,6 +32,10 @@ export async function POST(request: NextRequest) {
       team1Player2Id,
       team2Player1Id,
       team2Player2Id,
+      team1Player1Side,
+      team1Player2Side,
+      team2Player1Side,
+      team2Player2Side,
       sets, // optional: [{setNumber, team1Games, team2Games}]
     } = body;
 
@@ -73,6 +78,10 @@ export async function POST(request: NextRequest) {
         team1Player2Id,
         team2Player1Id,
         team2Player2Id,
+        team1Player1Side: coerceSide(team1Player1Side),
+        team1Player2Side: coerceSide(team1Player2Side),
+        team2Player1Side: coerceSide(team2Player1Side),
+        team2Player2Side: coerceSide(team2Player2Side),
         winnerTeam,
         status: isScheduled ? 'scheduled' : 'completed',
       })

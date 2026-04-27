@@ -83,6 +83,9 @@ export default async function MatchesAdminPage() {
                             + Resultado
                           </Button>
                         </Link>
+                        <Link href={`/admin/matches/${match.id}/sides`}>
+                          <Button variant="outline" className="min-h-[40px] px-3 text-xs">🎾 Lados</Button>
+                        </Link>
                         <DeleteMatchButton id={match.id} />
                       </div>
                     </div>
@@ -135,7 +138,12 @@ export default async function MatchesAdminPage() {
                           </div>
                         </div>
                       </div>
-                      <DeleteMatchButton id={match.id} />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link href={`/admin/matches/${match.id}/sides`}>
+                          <Button variant="outline" className="min-h-[40px] px-3 text-xs">🎾 Lados</Button>
+                        </Link>
+                        <DeleteMatchButton id={match.id} />
+                      </div>
                     </div>
                   </div>
                 );

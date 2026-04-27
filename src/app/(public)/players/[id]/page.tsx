@@ -4,6 +4,7 @@ import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
 import Link from 'next/link';
+import { computeSideStats } from '@/lib/rating/side-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const bestPartnerPlayer = bestPartner
     ? playerMap[bestPartner.player1Id === id ? bestPartner.player2Id : bestPartner.player1Id]
     : null;
+
+  const sideStats = computeSideStats(id, completedMatches);
+  const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
+  const driveBetter = sideStats.drive.winRate >= sideStats.reves.winRate;
 
   const chartData = history.map((h, i) => ({ partido: i + 1, elo: Math.round(h.eloAfter) }));
   const eloChange = Math.round(player.eloRating - 1500);
@@ -213,6 +218,17 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         </div>
       )}
 
+      {/* Court side stats */}
+      {hasSideData && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">🎾 Lado de pista</p>
+          <div className="grid grid-cols-2 gap-4">
+            <SideStatBlock label="Drive" emoji="🟦" stats={sideStats.drive} highlight={driveBetter && sideStats.drive.matches > 0} />
+            <SideStatBlock label="Revés" emoji="🟪" stats={sideStats.reves} highlight={!driveBetter && sideStats.reves.matches > 0} />
+          </div>
+        </div>
+      )}
+
       {/* Match history */}
       {completedMatches.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -250,6 +266,34 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SideStatBlock({ label, emoji, stats, highlight }: {
+  label: string;
+  emoji: string;
+  stats: { matches: number; wins: number; losses: number; winRate: number };
+  highlight: boolean;
+}) {
+  if (stats.matches === 0) {
+    return (
+      <div className="rounded-xl border border-gray-100 p-4 text-center text-gray-400">
+        <p className="text-2xl mb-1">{emoji}</p>
+        <p className="font-black text-xs uppercase tracking-wider mb-1">{label}</p>
+        <p className="text-sm">Sin datos</p>
+      </div>
+    );
+  }
+  const winPct = Math.round(stats.winRate * 100);
+  const colorClass = winPct >= 60 ? 'text-green-600' : winPct >= 40 ? 'text-yellow-600' : 'text-red-500';
+  return (
+    <div className={`rounded-xl p-4 text-center ${highlight ? 'border-2 border-green-300 bg-green-50/30' : 'border border-gray-100'}`}>
+      <p className="text-2xl mb-1">{emoji}</p>
+      <p className="font-black text-xs uppercase tracking-wider mb-1 text-gray-600">{label}</p>
+      <p className={`text-2xl font-black tabular-nums ${colorClass}`}>{winPct}%</p>
+      <p className="text-xs text-gray-400 mt-0.5">{stats.matches}P · {stats.wins}V {stats.losses}D</p>
+      {highlight && <p className="text-[10px] text-green-700 font-bold mt-1">↑ Tu mejor lado</p>}
     </div>
   );
 }

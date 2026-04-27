@@ -37,6 +37,16 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
         team2Name={team2Name}
         date={match.date}
         location={match.location}
+        team1Player1Name={pMap[match.team1Player1Id]?.name ?? '?'}
+        team1Player2Name={pMap[match.team1Player2Id]?.name ?? '?'}
+        team2Player1Name={pMap[match.team2Player1Id]?.name ?? '?'}
+        team2Player2Name={pMap[match.team2Player2Id]?.name ?? '?'}
+        initialSides={{
+          team1Player1Side: match.team1Player1Side,
+          team1Player2Side: match.team1Player2Side,
+          team2Player1Side: match.team2Player1Side,
+          team2Player2Side: match.team2Player2Side,
+        }}
       />
     </div>
   );

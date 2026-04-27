@@ -4,6 +4,9 @@
  * by fairness (smallest Elo gap between teams = most balanced match).
  */
 
+import { recommendSides, type SideRecommendation } from './recommend-sides';
+import type { SideStats } from './side-stats';
+
 export interface PlayerSummary {
   id: string;
   name: string;
@@ -19,9 +22,21 @@ export interface PairingOption {
   eloDiff: number; // absolute difference — lower = more balanced
   fairnessScore: number; // 0-100 — higher = fairer
   label: string; // 'Más equilibrado' | 'Equilibrado' | 'Desequilibrado'
+  team1SideRec: SideRecommendation | null;
+  team2SideRec: SideRecommendation | null;
 }
 
-export function recommendPairings(players: [PlayerSummary, PlayerSummary, PlayerSummary, PlayerSummary]): PairingOption[] {
+function emptySideStats(): SideStats {
+  return {
+    drive: { matches: 0, wins: 0, losses: 0, winRate: 0 },
+    reves: { matches: 0, wins: 0, losses: 0, winRate: 0 },
+  };
+}
+
+export function recommendPairings(
+  players: [PlayerSummary, PlayerSummary, PlayerSummary, PlayerSummary],
+  sideStatsByPlayer?: Record<string, SideStats>,
+): PairingOption[] {
   const [a, b, c, d] = players;
 
   // All 3 possible pairings: AB vs CD, AC vs BD, AD vs BC
@@ -35,7 +50,19 @@ export function recommendPairings(players: [PlayerSummary, PlayerSummary, Player
     const team1Elo = (t1[0].eloRating + t1[1].eloRating) / 2;
     const team2Elo = (t2[0].eloRating + t2[1].eloRating) / 2;
     const eloDiff = Math.abs(team1Elo - team2Elo);
-    return { team1: t1, team2: t2, team1Elo, team2Elo, eloDiff, fairnessScore: 0, label: '' };
+    const team1SideRec = sideStatsByPlayer
+      ? recommendSides(
+          { id: t1[0].id, sideStats: sideStatsByPlayer[t1[0].id] ?? emptySideStats() },
+          { id: t1[1].id, sideStats: sideStatsByPlayer[t1[1].id] ?? emptySideStats() },
+        )
+      : null;
+    const team2SideRec = sideStatsByPlayer
+      ? recommendSides(
+          { id: t2[0].id, sideStats: sideStatsByPlayer[t2[0].id] ?? emptySideStats() },
+          { id: t2[1].id, sideStats: sideStatsByPlayer[t2[1].id] ?? emptySideStats() },
+        )
+      : null;
+    return { team1: t1, team2: t2, team1Elo, team2Elo, eloDiff, fairnessScore: 0, label: '', team1SideRec, team2SideRec };
   });
 
   // Sort by eloDiff ascending (most balanced first)
