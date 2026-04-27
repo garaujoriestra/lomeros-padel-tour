@@ -16,7 +16,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   }
 
   return (
-    <nav className="bg-gradient-to-r from-green-950 via-green-900 to-green-950 text-white shadow-2xl sticky top-0 z-50 border-b border-green-800/50">
+    <nav aria-label="Barra superior" className="bg-gradient-to-r from-green-950 via-green-900 to-green-950 text-white shadow-2xl sticky top-0 z-50 border-b border-green-800/50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-black text-xl tracking-tight hover:opacity-80 transition-opacity shrink-0">
           <span className="text-2xl">🎾</span>

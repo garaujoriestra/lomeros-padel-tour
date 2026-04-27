@@ -11,7 +11,7 @@ export function BottomNav() {
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-green-950/95 backdrop-blur border-t border-green-900/50 pb-[env(safe-area-inset-bottom)]"
-      aria-label="Navegación principal"
+      aria-label="Navegación inferior"
     >
       <ul className="grid grid-cols-5">
         {navLinks.map((link) => {

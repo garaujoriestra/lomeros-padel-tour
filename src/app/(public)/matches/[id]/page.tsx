@@ -46,7 +46,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     <div className="space-y-8">
 
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
         <div className="relative p-5 sm:p-8 md:p-10">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-6">

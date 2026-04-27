@@ -123,7 +123,7 @@ function TeamRow({
   const spacing = size === 'sm' ? 'space-y-1.5' : 'space-y-2';
   const badgePadding = size === 'sm' ? 'px-2.5 py-0.5' : 'px-3 py-1';
   return (
-    <div className={loser ? 'opacity-35' : ''}>
+    <div className={loser ? 'opacity-50' : ''}>
       <div className={`${spacing} ${isRight ? 'text-right' : ''}`}>
         {players.map((p, i) => (
           <div key={i} className={`flex items-center gap-2 ${isRight ? 'justify-end' : ''}`}>
