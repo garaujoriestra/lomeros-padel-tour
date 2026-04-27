@@ -41,6 +41,15 @@ describe('computeSideStats', () => {
     expect(stats.reves.matches).toBe(0);
   });
 
+  it('ignores matches where the player has an unrecognised side value', () => {
+    const matches = [
+      makeMatch({ team1Player1Id: 'p1', team1Player1Side: 'derecha' as string, winnerTeam: 1 }),
+    ];
+    const stats = computeSideStats('p1', matches);
+    expect(stats.drive.matches).toBe(0);
+    expect(stats.reves.matches).toBe(0);
+  });
+
   it('ignores matches where winnerTeam is null (not completed)', () => {
     const matches = [
       makeMatch({ team1Player1Id: 'p1', team1Player1Side: 'drive', winnerTeam: null }),

@@ -3,6 +3,7 @@ export interface SideStats {
   reves: { matches: number; wins: number; losses: number; winRate: number };
 }
 
+// TODO(C.4): replace with Pick<Match, keyof MatchWithSide> once schema.ts gets the 4 side columns.
 export interface MatchWithSide {
   team1Player1Id: string;
   team1Player2Id: string;
@@ -17,7 +18,7 @@ export interface MatchWithSide {
 
 interface SlotInfo {
   team: 1 | 2;
-  side: string | null;
+  side: 'drive' | 'reves';
 }
 
 function findPlayerSlot(playerId: string, m: MatchWithSide): SlotInfo | null {
