@@ -20,23 +20,26 @@ interface PodiumProps {
   variant: 'home' | 'rankings';
 }
 
-export function Podium({ players, variant }: PodiumProps) {
-  const [first, second, third] = players;
-  if (!first || !second || !third) return null;
-  const winRate = (p: PodiumPlayer) =>
-    p.matchesPlayed > 0 ? Math.round((p.wins / p.matchesPlayed) * 100) : 0;
-
-  const Footer = ({ p }: { p: PodiumPlayer }) =>
-    variant === 'home' ? (
+function renderFooter(p: PodiumPlayer, variant: 'home' | 'rankings') {
+  if (variant === 'home') {
+    return (
       <div className="text-xs flex gap-2 sm:gap-3 pb-3 font-semibold">
         <span>✅ {p.wins}V</span>
         <span>❌ {p.losses}D</span>
       </div>
-    ) : (
-      <p className="text-xs pb-3 font-semibold">
-        {winRate(p)}% · {p.matchesPlayed}P
-      </p>
     );
+  }
+  const winRate = p.matchesPlayed > 0 ? Math.round((p.wins / p.matchesPlayed) * 100) : 0;
+  return (
+    <p className="text-xs pb-3 font-semibold">
+      {winRate}% · {p.matchesPlayed}P
+    </p>
+  );
+}
+
+export function Podium({ players, variant }: PodiumProps) {
+  const [first, second, third] = players;
+  if (!first || !second || !third) return null;
 
   return (
     <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-6">
@@ -52,7 +55,7 @@ export function Podium({ players, variant }: PodiumProps) {
           <p className="text-2xl sm:text-3xl font-black text-slate-800 tabular-nums">{Math.round(second.eloRating)}</p>
           <p className="text-slate-500 text-xs uppercase tracking-widest -mt-1">ELO</p>
           <div className="text-slate-700">
-            <Footer p={second} />
+            {renderFooter(second, variant)}
           </div>
           <div className="w-full bg-slate-600 rounded-b-xl py-2 sm:py-2.5 text-center font-black text-lg sm:text-xl text-white">2</div>
         </div>
@@ -70,7 +73,7 @@ export function Podium({ players, variant }: PodiumProps) {
           <p className="text-3xl sm:text-4xl font-black text-amber-950 tabular-nums">{Math.round(first.eloRating)}</p>
           <p className="text-amber-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
           <div className="text-amber-900">
-            <Footer p={first} />
+            {renderFooter(first, variant)}
           </div>
           <div className="w-full bg-amber-700 rounded-b-xl py-2.5 sm:py-3 text-center font-black text-xl sm:text-2xl text-white">1</div>
         </div>
@@ -88,7 +91,7 @@ export function Podium({ players, variant }: PodiumProps) {
           <p className="text-xl sm:text-2xl font-black text-orange-950 tabular-nums">{Math.round(third.eloRating)}</p>
           <p className="text-orange-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
           <div className="text-orange-900">
-            <Footer p={third} />
+            {renderFooter(third, variant)}
           </div>
           <div className="w-full bg-orange-700 rounded-b-xl py-1.5 sm:py-2 text-center font-black text-lg sm:text-xl text-white">3</div>
         </div>
