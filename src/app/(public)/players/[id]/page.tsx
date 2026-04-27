@@ -75,22 +75,22 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     <div className="space-y-6">
 
       {/* ── PROFILE HEADER ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-emerald-400/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
-        <div className="relative p-8 md:p-10">
-          <div className="flex items-center gap-6">
+        <div className="relative p-5 sm:p-8 md:p-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-5xl font-black text-white shadow-xl shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-4xl sm:text-5xl font-black text-white shadow-xl shrink-0">
               {player.name.charAt(0)}
             </div>
             {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight truncate">{player.name}</h1>
+            <div className="flex-1 min-w-0 w-full">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight sm:truncate">{player.name}</h1>
               {player.nickname && (
-                <p className="text-green-300 text-lg font-medium mt-0.5">&ldquo;{player.nickname}&rdquo;</p>
+                <p className="text-green-300 text-base sm:text-lg font-medium mt-0.5">&ldquo;{player.nickname}&rdquo;</p>
               )}
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
                 <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm font-bold">
                   ELO {Math.round(player.eloRating)}
                   <span className={`ml-1.5 text-xs font-black ${eloChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -106,22 +106,22 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/10">
+          {/* Stats row — 2x2 on mobile, 4 cols ≥sm */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-white/10">
             <div className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">ELO</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-white tabular-nums">{player.matchesPlayed}</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{player.matchesPlayed}</p>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">Partidos</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-green-400 tabular-nums">{player.wins}</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-green-400 tabular-nums">{player.wins}</p>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">Victorias</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-red-400 tabular-nums">{player.losses}</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-red-400 tabular-nums">{player.losses}</p>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">Derrotas</p>
             </div>
           </div>
@@ -222,14 +222,14 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                 ? [playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]]
                 : [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
               return (
-                <div key={match.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm ${won ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-gradient-to-br from-red-400 to-red-500'}`}>
+                <div key={match.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0 ${won ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-gradient-to-br from-red-400 to-red-500'}`}>
                       {won ? 'V' : 'D'}
                     </div>
-                    <span className="text-xs text-gray-400 font-medium">{match.date}</span>
+                    <span className="text-xs text-gray-400 font-medium shrink-0">{match.date}</span>
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-sm text-gray-600 font-medium truncate text-right">
                     vs {opponents.map((p) => p?.name ?? '?').join(' & ')}
                   </span>
                 </div>
