@@ -154,11 +154,11 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
         <Button
           type="submit"
           disabled={loading || !matchResult}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
+          className="flex-1 min-h-[40px] px-4 text-sm bg-green-600 hover:bg-green-700 text-white font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar resultado y actualizar rankings'}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>
