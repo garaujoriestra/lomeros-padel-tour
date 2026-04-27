@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
 import Link from 'next/link';
 import { computeSideStats } from '@/lib/rating/side-stats';
+import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,8 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
   const driveBetter = sideStats.drive.winRate >= sideStats.reves.winRate;
+
+  const rivalries = computeAllRivalries(id, completedMatches, allPlayers);
 
   const chartData = history.map((h, i) => ({ partido: i + 1, elo: Math.round(h.eloAfter) }));
   const eloChange = Math.round(player.eloRating - 1500);
@@ -229,6 +232,20 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         </div>
       )}
 
+      {/* Head-to-head per rival */}
+      {rivalries.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-50">
+            <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🤜 Head-to-head</p>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {rivalries.map((r) => (
+              <RivalryRow key={r.opponentId} rivalry={r} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Match history */}
       {completedMatches.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -295,5 +312,26 @@ function SideStatBlock({ label, emoji, stats, highlight }: {
       <p className="text-xs text-gray-400 mt-0.5">{stats.matches}P · {stats.wins}V {stats.losses}D</p>
       {highlight && <p className="text-[10px] text-green-700 font-bold mt-1">↑ Tu mejor lado</p>}
     </div>
+  );
+}
+
+function RivalryRow({ rivalry }: { rivalry: RivalryStats }) {
+  const winPct = Math.round(rivalry.winRate * 100);
+  const colorClass = winPct >= 60 ? 'text-green-600' : winPct >= 40 ? 'text-yellow-600' : 'text-red-500';
+  return (
+    <Link href={`/players/${rivalry.opponentId}`} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/50 transition-colors">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-sm font-black shrink-0">
+          {rivalry.opponentName.charAt(0)}
+        </div>
+        <span className="text-sm font-bold text-gray-800 truncate">{rivalry.opponentName}</span>
+      </div>
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <span className="text-xs text-gray-400 tabular-nums">{rivalry.matches}P</span>
+        <span className="text-xs font-bold text-green-600 tabular-nums">{rivalry.wins}V</span>
+        <span className="text-xs font-bold text-red-400 tabular-nums">{rivalry.losses}D</span>
+        <span className={`text-sm font-black tabular-nums w-12 text-right ${colorClass}`}>{winPct}%</span>
+      </div>
+    </Link>
   );
 }
