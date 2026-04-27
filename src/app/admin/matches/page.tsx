@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { matches, matchSets, players } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,7 @@ export default async function MatchesAdminPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-x-auto">
           {/* Scheduled */}
           {scheduled.length > 0 && (
             <div className="space-y-3">
