@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { expectedScore } from '@/lib/rating/elo';
+import { ShareMatchButton } from '@/components/shared/share-match-button';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +119,18 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
   const t1Sets = sets.filter((s) => s.team1Games > s.team2Games).length;
   const t2Sets = sets.filter((s) => s.team2Games > s.team1Games).length;
+
+  // Build absolute URL + share text for the share button (only used when completed)
+  const headersList = await headers();
+  const host = headersList.get('host') ?? 'lomeros-padel-tour.vercel.app';
+  const proto = host.includes('localhost') ? 'http' : 'https';
+  const matchUrl = `${proto}://${host}/matches/${match.id}`;
+  const t1NamesShort = `${t1p1?.name ?? '?'} / ${t1p2?.name ?? '?'}`;
+  const t2NamesShort = `${t2p1?.name ?? '?'} / ${t2p2?.name ?? '?'}`;
+  const setsString = sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' / ');
+  const shareText = match.status === 'completed'
+    ? `🎾 ${t1NamesShort} vs ${t2NamesShort} · ${setsString} · LPT`
+    : '';
 
   return (
     <div className="space-y-8">
@@ -336,6 +350,17 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           )}
         </div>
       </div>
+
+      {/* Share button — only for completed matches */}
+      {match.status === 'completed' && (
+        <div className="flex justify-end">
+          <ShareMatchButton
+            url={matchUrl}
+            title="Resultado del partido — LPT"
+            text={shareText}
+          />
+        </div>
+      )}
 
       {/* Pairing Recommender — only for scheduled matches */}
       {pairingOptions && (
