@@ -221,13 +221,13 @@ export function MatchForm({ players }: MatchFormProps) {
             <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Resultado (sets)</p>
             <div className="flex gap-2">
               {sets.length === 2 && (
-                <Button type="button" variant="outline" size="sm"
+                <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
                   onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                   + 3er set
                 </Button>
               )}
               {sets.length === 3 && (
-                <Button type="button" variant="ghost" size="sm"
+                <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
                   onClick={() => setSets(sets.slice(0, 2))}>
                   Quitar 3er set
                 </Button>
@@ -237,8 +237,8 @@ export function MatchForm({ players }: MatchFormProps) {
 
           <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 text-center">
             <span className="text-left">Set</span>
-            <span className="text-blue-700">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
-            <span className="text-red-700">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
+            <span className="text-blue-700 truncate">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
+            <span className="text-red-700 truncate">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
           </div>
 
           {sets.map((set, idx) => (
