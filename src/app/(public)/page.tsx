@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { players, matches, matchSets } from '@/lib/db/schema';
-import { desc, sql, eq } from 'drizzle-orm';
+import { desc, sql, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
@@ -22,7 +22,10 @@ export default async function HomePage() {
   const totalMatches = totalMatchesRow.count;
   const totalPlayers = totalPlayersRow.count;
 
-  const allSets = recentMatches.length > 0 ? await db.select().from(matchSets) : [];
+  const recentMatchIds = recentMatches.map((m) => m.id);
+  const allSets = recentMatchIds.length > 0
+    ? await db.select().from(matchSets).where(inArray(matchSets.matchId, recentMatchIds))
+    : [];
   const allPlayers = await db.select().from(players);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
   const setsMap: Record<string, typeof allSets> = {};

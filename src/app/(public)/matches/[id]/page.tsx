@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { matches, matchSets, players, pairStats } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
@@ -22,11 +22,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const t2p2 = playerMap[match.team2Player2Id];
   const fourPlayers = [t1p1, t1p2, t2p1, t2p2].filter(Boolean);
 
-  // Pair stats for these 4 players
+  // Pair stats for these 4 players (both player slots restricted to the match's 4 ids)
   const allPlayerIds = [match.team1Player1Id, match.team1Player2Id, match.team2Player1Id, match.team2Player2Id];
-  const allPairStats = await db.select().from(pairStats);
-  const relevantPairs = allPairStats.filter((p) =>
-    allPlayerIds.includes(p.player1Id) && allPlayerIds.includes(p.player2Id)
+  const relevantPairs = await db.select().from(pairStats).where(
+    and(
+      inArray(pairStats.player1Id, allPlayerIds),
+      inArray(pairStats.player2Id, allPlayerIds),
+    ),
   );
 
   // Sets (for completed matches)
