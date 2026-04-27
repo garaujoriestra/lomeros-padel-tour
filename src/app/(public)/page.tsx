@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { players, matches, matchSets } from '@/lib/db/schema';
 import { desc, sql, eq } from 'drizzle-orm';
 import Link from 'next/link';
+import { Podium } from '@/components/shared/podium';
+import { MatchCard } from '@/components/shared/match-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,34 +36,34 @@ export default async function HomePage() {
     <div className="space-y-10">
 
       {/* ── HERO ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 p-8 md:p-14 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 p-5 sm:p-8 md:p-14 text-white shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-400/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
         <div className="relative text-center space-y-3">
-          <div className="text-6xl md:text-8xl mb-2 drop-shadow-2xl">🎾</div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight">
+          <div className="text-5xl sm:text-6xl md:text-8xl mb-2 drop-shadow-2xl">🎾</div>
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">
             LOMEROS <span className="text-green-400">PADEL TOUR</span>
           </h1>
-          <p className="text-green-200 text-base md:text-lg font-medium tracking-wide uppercase tracking-widest">
+          <p className="text-green-200 text-sm sm:text-base md:text-lg font-medium tracking-widest uppercase">
             El ranking oficial del grupo · LPT
           </p>
-          <div className="flex justify-center gap-6 md:gap-16 mt-8 pt-8 border-t border-white/10">
+          <div className="flex justify-center gap-4 sm:gap-6 md:gap-16 mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-white/10">
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalMatches}</p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Partidos</p>
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalMatches}</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Partidos</p>
             </div>
             <div className="w-px bg-white/10" />
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalPlayers}</p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Jugadores</p>
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalPlayers}</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Jugadores</p>
             </div>
             <div className="w-px bg-white/10" />
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">
                 {topPlayers[0] ? Math.round(topPlayers[0].eloRating) : '—'}
               </p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Elo #1</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Elo #1</p>
             </div>
           </div>
         </div>
@@ -79,64 +81,7 @@ export default async function HomePage() {
           </div>
 
           {topPlayers.length >= 3 ? (
-            <div className="flex items-end justify-center gap-3 md:gap-6">
-              {/* #2 Silver */}
-              <Link href={`/players/${topPlayers[1].id}`} className="flex-1 max-w-[190px] group">
-                <div className="bg-gradient-to-b from-slate-200 via-slate-300 to-slate-500 rounded-2xl px-4 pt-5 pb-0 shadow-xl shadow-slate-300/40 flex flex-col items-center gap-2 group-hover:scale-105 transition-transform">
-                  <span className="text-3xl">🥈</span>
-                  <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center text-2xl font-black border-2 border-white/40">
-                    {topPlayers[1].name.charAt(0)}
-                  </div>
-                  <p className="font-black text-sm text-center text-slate-900 leading-tight">{topPlayers[1].name}</p>
-                  {topPlayers[1].nickname && <p className="text-slate-600 text-xs">{topPlayers[1].nickname}</p>}
-                  <p className="text-3xl font-black text-slate-800 tabular-nums">{Math.round(topPlayers[1].eloRating)}</p>
-                  <p className="text-slate-500 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                  <div className="text-xs text-slate-700 flex gap-3 pb-3 font-semibold">
-                    <span>✅ {topPlayers[1].wins}V</span>
-                    <span>❌ {topPlayers[1].losses}D</span>
-                  </div>
-                  <div className="w-full bg-slate-600 rounded-b-xl py-2.5 text-center font-black text-xl text-white">2</div>
-                </div>
-              </Link>
-
-              {/* #1 Gold — TALLER */}
-              <Link href={`/players/${topPlayers[0].id}`} className="flex-1 max-w-[220px] group -mb-3">
-                <div className="bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 rounded-2xl px-5 pt-7 pb-0 shadow-2xl shadow-amber-300/50 flex flex-col items-center gap-2 ring-2 ring-amber-400/40 group-hover:scale-105 transition-transform">
-                  <span className="text-5xl drop-shadow-lg">👑</span>
-                  <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center text-3xl font-black border-2 border-white/50">
-                    {topPlayers[0].name.charAt(0)}
-                  </div>
-                  <p className="font-black text-base text-center text-amber-950 leading-tight">{topPlayers[0].name}</p>
-                  {topPlayers[0].nickname && <p className="text-amber-800 text-xs">{topPlayers[0].nickname}</p>}
-                  <p className="text-4xl font-black text-amber-950 tabular-nums">{Math.round(topPlayers[0].eloRating)}</p>
-                  <p className="text-amber-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                  <div className="text-xs text-amber-900 flex gap-3 pb-4 font-semibold">
-                    <span>✅ {topPlayers[0].wins}V</span>
-                    <span>❌ {topPlayers[0].losses}D</span>
-                  </div>
-                  <div className="w-full bg-amber-700 rounded-b-xl py-3 text-center font-black text-2xl text-white">1</div>
-                </div>
-              </Link>
-
-              {/* #3 Bronze */}
-              <Link href={`/players/${topPlayers[2].id}`} className="flex-1 max-w-[170px] group">
-                <div className="bg-gradient-to-b from-orange-200 via-orange-400 to-orange-600 rounded-2xl px-4 pt-4 pb-0 shadow-xl shadow-orange-200/40 flex flex-col items-center gap-1.5 group-hover:scale-105 transition-transform mt-8">
-                  <span className="text-2xl">🥉</span>
-                  <div className="w-12 h-12 rounded-full bg-white/25 flex items-center justify-center text-xl font-black border-2 border-white/30">
-                    {topPlayers[2].name.charAt(0)}
-                  </div>
-                  <p className="font-black text-sm text-center text-orange-950 leading-tight">{topPlayers[2].name}</p>
-                  {topPlayers[2].nickname && <p className="text-orange-700 text-xs">{topPlayers[2].nickname}</p>}
-                  <p className="text-2xl font-black text-orange-950 tabular-nums">{Math.round(topPlayers[2].eloRating)}</p>
-                  <p className="text-orange-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-                  <div className="text-xs text-orange-900 flex gap-3 pb-3 font-semibold">
-                    <span>✅ {topPlayers[2].wins}V</span>
-                    <span>❌ {topPlayers[2].losses}D</span>
-                  </div>
-                  <div className="w-full bg-orange-700 rounded-b-xl py-2 text-center font-black text-xl text-white">3</div>
-                </div>
-              </Link>
-            </div>
+            <Podium players={topPlayers} variant="home" />
           ) : (
             <div className="grid gap-3">
               {topPlayers.map((player, idx) => {
@@ -179,34 +124,15 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {upcomingMatches.map((match) => {
-              const t1p1 = playerMap[match.team1Player1Id];
-              const t1p2 = playerMap[match.team1Player2Id];
-              const t2p1 = playerMap[match.team2Player1Id];
-              const t2p2 = playerMap[match.team2Player2Id];
-              return (
-                <Link key={match.id} href={`/matches/${match.id}`}>
-                  <div className="bg-white rounded-2xl border border-blue-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-5">
-                    <div className="flex justify-between items-center mb-3 text-xs text-blue-500 font-semibold">
-                      <span>📅 {match.date}</span>
-                      {match.location && <span>📍 {match.location}</span>}
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="space-y-1 flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-700 truncate">{t1p1?.name ?? '?'}</p>
-                        <p className="text-sm font-bold text-gray-700 truncate">{t1p2?.name ?? '?'}</p>
-                      </div>
-                      <span className="text-blue-400 font-black text-lg shrink-0">VS</span>
-                      <div className="space-y-1 flex-1 min-w-0 text-right">
-                        <p className="text-sm font-bold text-gray-700 truncate">{t2p1?.name ?? '?'}</p>
-                        <p className="text-sm font-bold text-gray-700 truncate">{t2p2?.name ?? '?'}</p>
-                      </div>
-                    </div>
-                    <p className="text-center text-xs text-blue-400 mt-3 font-medium">Ver recomendación de parejas →</p>
-                  </div>
-                </Link>
-              );
-            })}
+            {upcomingMatches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                team1={[playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]]}
+                team2={[playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]]}
+                href={`/matches/${match.id}`}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -223,66 +149,15 @@ export default async function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {recentMatches.map((match) => {
-              const sets = setsMap[match.id] || [];
-              const t1p1 = playerMap[match.team1Player1Id];
-              const t1p2 = playerMap[match.team1Player2Id];
-              const t2p1 = playerMap[match.team2Player1Id];
-              const t2p2 = playerMap[match.team2Player2Id];
-              const t1Sets = sets.filter((s) => s.team1Games > s.team2Games).length;
-              const t2Sets = sets.filter((s) => s.team2Games > s.team1Games).length;
-              return (
-                <div key={match.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-100 flex justify-between items-center text-xs text-gray-400">
-                    <span className="font-medium">📅 {match.date}</span>
-                    {match.location && <span>📍 {match.location}</span>}
-                  </div>
-                  <div className="grid grid-cols-[1fr_auto_1fr] p-5 gap-3 items-center">
-                    {/* Team 1 */}
-                    <div className={`space-y-1.5 ${match.winnerTeam === 2 ? 'opacity-35' : ''}`}>
-                      <p className={`text-sm font-bold truncate ${match.winnerTeam === 1 ? 'text-green-700' : 'text-gray-700'}`}>{t1p1?.name ?? '?'}</p>
-                      <p className={`text-sm font-bold truncate ${match.winnerTeam === 1 ? 'text-green-700' : 'text-gray-700'}`}>{t1p2?.name ?? '?'}</p>
-                      {match.winnerTeam === 1 && (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 border border-green-200 rounded-full px-2.5 py-0.5">
-                          ✓ GANADOR
-                        </span>
-                      )}
-                    </div>
-
-                    {/* VS + Sets */}
-                    <div className="flex flex-col items-center gap-2 min-w-[64px]">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-xl font-black tabular-nums ${match.winnerTeam === 1 ? 'text-green-600' : 'text-gray-300'}`}>{t1Sets}</span>
-                        <span className="text-gray-200 text-sm font-black">–</span>
-                        <span className={`text-xl font-black tabular-nums ${match.winnerTeam === 2 ? 'text-green-600' : 'text-gray-300'}`}>{t2Sets}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5 items-center">
-                        {sets.map((s) => (
-                          <div key={s.setNumber} className="flex items-center gap-1 font-mono text-xs">
-                            <span className={s.team1Games > s.team2Games ? 'font-black text-gray-700' : 'text-gray-300'}>{s.team1Games}</span>
-                            <span className="text-gray-200">–</span>
-                            <span className={s.team2Games > s.team1Games ? 'font-black text-gray-700' : 'text-gray-300'}>{s.team2Games}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Team 2 */}
-                    <div className={`space-y-1.5 text-right ${match.winnerTeam === 1 ? 'opacity-35' : ''}`}>
-                      <p className={`text-sm font-bold truncate ${match.winnerTeam === 2 ? 'text-green-700' : 'text-gray-700'}`}>{t2p1?.name ?? '?'}</p>
-                      <p className={`text-sm font-bold truncate ${match.winnerTeam === 2 ? 'text-green-700' : 'text-gray-700'}`}>{t2p2?.name ?? '?'}</p>
-                      {match.winnerTeam === 2 && (
-                        <div className="flex justify-end">
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 border border-green-200 rounded-full px-2.5 py-0.5">
-                            ✓ GANADOR
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {recentMatches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                team1={[playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]]}
+                team2={[playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]]}
+                sets={setsMap[match.id] ?? []}
+              />
+            ))}
           </div>
         </section>
       )}

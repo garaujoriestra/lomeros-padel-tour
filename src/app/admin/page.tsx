@@ -41,10 +41,10 @@ export default async function AdminDashboard() {
 
       <div className="flex gap-3">
         <Link href="/admin/players/new">
-          <Button>👤 Añadir jugador</Button>
+          <Button className="min-h-[40px]">👤 Añadir jugador</Button>
         </Link>
         <Link href="/admin/matches/new">
-          <Button variant="outline">🎾 Registrar partido</Button>
+          <Button variant="outline" className="min-h-[40px]">🎾 Registrar partido</Button>
         </Link>
       </div>
 

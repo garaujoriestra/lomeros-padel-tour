@@ -126,6 +126,12 @@
   html {
     @apply font-sans;
     font-size: 18px;
+    -webkit-text-size-adjust: 100%;
+  }
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
   }
 }
 

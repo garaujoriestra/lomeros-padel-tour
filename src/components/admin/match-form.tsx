@@ -193,7 +193,7 @@ export function MatchForm({ players }: MatchFormProps) {
       {/* Fecha y lugar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest">📅 Datos del partido</p>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="date">Fecha *</Label>
             <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
@@ -208,7 +208,7 @@ export function MatchForm({ players }: MatchFormProps) {
       {/* Equipos */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest">👥 Equipos</p>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {playerSlot(team1, setTeam1, '🔵 Equipo 1', 'text-blue-700')}
           {playerSlot(team2, setTeam2, '🔴 Equipo 2', 'text-red-700')}
         </div>
@@ -221,13 +221,13 @@ export function MatchForm({ players }: MatchFormProps) {
             <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Resultado (sets)</p>
             <div className="flex gap-2">
               {sets.length === 2 && (
-                <Button type="button" variant="outline" size="sm"
+                <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
                   onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                   + 3er set
                 </Button>
               )}
               {sets.length === 3 && (
-                <Button type="button" variant="ghost" size="sm"
+                <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
                   onClick={() => setSets(sets.slice(0, 2))}>
                   Quitar 3er set
                 </Button>
@@ -237,8 +237,8 @@ export function MatchForm({ players }: MatchFormProps) {
 
           <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 text-center">
             <span className="text-left">Set</span>
-            <span className="text-blue-700">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
-            <span className="text-red-700">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
+            <span className="text-blue-700 truncate">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
+            <span className="text-red-700 truncate">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
           </div>
 
           {sets.map((set, idx) => (
@@ -270,7 +270,7 @@ export function MatchForm({ players }: MatchFormProps) {
         <Button
           type="submit"
           disabled={loading || !playersComplete || (mode === 'completed' && !matchResult)}
-          className={`flex-1 font-bold ${mode === 'scheduled' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
+          className={`flex-1 min-h-[40px] px-4 text-sm font-bold ${mode === 'scheduled' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
         >
           {loading
             ? 'Guardando...'
@@ -278,7 +278,7 @@ export function MatchForm({ players }: MatchFormProps) {
             ? '📅 Programar partido'
             : '✓ Guardar resultado'}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

@@ -106,13 +106,13 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
           <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Resultado (sets)</p>
           <div className="flex gap-2">
             {sets.length === 2 && (
-              <Button type="button" variant="outline" size="sm"
+              <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
                 onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                 + 3er set
               </Button>
             )}
             {sets.length === 3 && (
-              <Button type="button" variant="ghost" size="sm"
+              <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
                 onClick={() => setSets(sets.slice(0, 2))}>
                 Quitar 3er set
               </Button>
@@ -122,8 +122,8 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
 
         <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 text-center">
           <span className="text-left">Set</span>
-          <span className="text-blue-700">🔵 {team1Name}</span>
-          <span className="text-red-700">🔴 {team2Name}</span>
+          <span className="text-blue-700 truncate">🔵 {team1Name}</span>
+          <span className="text-red-700 truncate">🔴 {team2Name}</span>
         </div>
 
         {sets.map((set, idx) => (
@@ -154,11 +154,11 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location }: Re
         <Button
           type="submit"
           disabled={loading || !matchResult}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
+          className="flex-1 min-h-[40px] px-4 text-sm bg-green-600 hover:bg-green-700 text-white font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar resultado y actualizar rankings'}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

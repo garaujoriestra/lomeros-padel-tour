@@ -166,12 +166,13 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button type="submit" disabled={loading || uploading}>
+            <Button type="submit" disabled={loading || uploading} className="min-h-[40px] px-4 text-sm">
               {loading ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear jugador'}
             </Button>
             <Button
               type="button"
               variant="outline"
+              className="min-h-[40px] px-4 text-sm"
               onClick={() => router.push('/admin/players')}
             >
               Cancelar
