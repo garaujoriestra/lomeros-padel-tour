@@ -30,6 +30,10 @@ export const matches = sqliteTable('matches', {
   winnerTeam: integer('winner_team'), // 1 | 2 | null
   // Status: 'scheduled' | 'completed'
   status: text('status').notNull().default('completed'),
+  team1Player1Side: text('team1_player1_side'),  // 'drive' | 'reves' | null
+  team1Player2Side: text('team1_player2_side'),
+  team2Player1Side: text('team2_player1_side'),
+  team2Player2Side: text('team2_player2_side'),
   notes: text('notes'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
