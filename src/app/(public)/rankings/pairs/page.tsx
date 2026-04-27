@@ -174,7 +174,7 @@ export default async function PairsRankingPage() {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1 sm:gap-1.5">
+                            <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
                                 {p1?.name.charAt(0) ?? '?'}
                               </div>
@@ -182,7 +182,7 @@ export default async function PairsRankingPage() {
                                 {p1?.name ?? '?'}
                               </Link>
                             </div>
-                            <div className="flex items-center gap-1 sm:gap-1.5">
+                            <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
                                 {p2?.name.charAt(0) ?? '?'}
                               </div>
