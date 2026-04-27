@@ -3,14 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-
-const navLinks = [
-  { href: '/', label: 'Inicio', icon: '🏠' },
-  { href: '/rankings', label: 'Ranking', icon: '🏆' },
-  { href: '/rankings/pairs', label: 'Parejas', icon: '👥' },
-  { href: '/matches', label: 'Partidos', icon: '📋' },
-  { href: '/info', label: 'Info', icon: 'ℹ️' },
-];
+import { navLinks } from './nav-links';
 
 export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
@@ -27,7 +20,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-black text-xl tracking-tight hover:opacity-80 transition-opacity shrink-0">
           <span className="text-2xl">🎾</span>
-          <span className="hidden sm:block">LPT<span className="text-green-400 ml-1">·</span></span>
+          <span>LPT<span className="text-green-400 ml-1">·</span></span>
           <span className="hidden lg:block text-xs text-green-300 font-semibold uppercase tracking-widest">Lomeros Padel Tour</span>
         </Link>
 
@@ -53,20 +46,20 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
             <>
               <Link
                 href="/admin"
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 border border-orange-500/30 transition-all"
+                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 border border-orange-500/30 transition-all"
               >
                 ⚙️ Admin
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 rounded-full text-xs font-medium text-green-300 hover:text-white hover:bg-white/10 transition-all"
+                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-medium text-green-300 hover:text-white hover:bg-white/10 transition-all"
               >
                 Salir
               </button>
             </>
           ) : (
             <Link href="/login">
-              <button className="px-4 py-1.5 rounded-full text-xs font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all">
+              <button className="inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all">
                 Admin
               </button>
             </Link>
