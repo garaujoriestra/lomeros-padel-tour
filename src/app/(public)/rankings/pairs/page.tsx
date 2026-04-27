@@ -68,7 +68,7 @@ export default async function PairsRankingPage() {
                   return (
                     <div
                       key={pair.id}
-                      className={`bg-gradient-to-br ${gradients[idx] ?? 'from-gray-50 to-gray-50 border-gray-200'} border rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow`}
+                      className={`bg-gradient-to-br ${gradients[idx] ?? 'from-gray-50 to-gray-50 border-gray-200'} border rounded-2xl p-4 sm:p-5 shadow-md hover:shadow-lg transition-shadow`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <span className="text-3xl">{medals[idx] ?? `#${idx + 1}`}</span>
@@ -101,22 +101,22 @@ export default async function PairsRankingPage() {
                       </div>
 
                       {/* Stats row */}
-                      <div className="flex items-center justify-between pt-3 border-t border-black/5">
-                        <div className="text-center">
-                          <p className="text-lg font-black text-gray-800 tabular-nums">{pair.matchesPlayed}</p>
+                      <div className="flex items-center justify-between gap-1 sm:gap-2 pt-3 border-t border-black/5">
+                        <div className="text-center min-w-0">
+                          <p className="text-base sm:text-lg font-black text-gray-800 tabular-nums">{pair.matchesPlayed}</p>
                           <p className="text-xs text-gray-400">Partidos</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-lg font-black text-green-600 tabular-nums">{pair.wins}</p>
+                        <div className="text-center min-w-0">
+                          <p className="text-base sm:text-lg font-black text-green-600 tabular-nums">{pair.wins}</p>
                           <p className="text-xs text-gray-400">Victorias</p>
                         </div>
-                        <div className="text-center">
-                          <p className={`text-xl font-black tabular-nums ${winRate >= 60 ? 'text-green-600' : winRate >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>
+                        <div className="text-center min-w-0">
+                          <p className={`text-lg sm:text-xl font-black tabular-nums ${winRate >= 60 ? 'text-green-600' : winRate >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>
                             {winRate}%
                           </p>
                           <p className="text-xs text-gray-400">Win rate</p>
                         </div>
-                        <div className="text-center">
+                        <div className="text-center min-w-0">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-black ${
                             synergy > 0.05 ? 'bg-green-100 text-green-700' :
                             synergy < -0.05 ? 'bg-red-100 text-red-600' :
@@ -145,7 +145,7 @@ export default async function PairsRankingPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/60 hover:bg-gray-50/60">
-                    <TableHead className="w-12 pl-6 font-black text-gray-500 text-xs uppercase tracking-wider">#</TableHead>
+                    <TableHead className="w-10 sm:w-12 pl-3 sm:pl-6 font-black text-gray-500 text-xs uppercase tracking-wider">#</TableHead>
                     <TableHead className="font-black text-gray-500 text-xs uppercase tracking-wider">Pareja</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider">ELO</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">P</TableHead>
@@ -166,7 +166,7 @@ export default async function PairsRankingPage() {
 
                     return (
                       <TableRow key={pair.id} className={idx < 3 ? 'bg-green-50/20' : 'hover:bg-gray-50/50'}>
-                        <TableCell className="pl-6 w-12">
+                        <TableCell className="pl-3 sm:pl-6 w-10 sm:w-12">
                           {idx === 0 ? <span className="text-xl">🥇</span>
                             : idx === 1 ? <span className="text-xl">🥈</span>
                             : idx === 2 ? <span className="text-xl">🥉</span>
@@ -174,19 +174,19 @@ export default async function PairsRankingPage() {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-black shrink-0">
+                            <div className="flex items-center gap-1 sm:gap-1.5">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
                                 {p1?.name.charAt(0) ?? '?'}
                               </div>
-                              <Link href={`/players/${pair.player1Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-sm">
+                              <Link href={`/players/${pair.player1Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-xs sm:text-sm truncate">
                                 {p1?.name ?? '?'}
                               </Link>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-xs font-black shrink-0">
+                            <div className="flex items-center gap-1 sm:gap-1.5">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
                                 {p2?.name.charAt(0) ?? '?'}
                               </div>
-                              <Link href={`/players/${pair.player2Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-sm">
+                              <Link href={`/players/${pair.player2Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-xs sm:text-sm truncate">
                                 {p2?.name ?? '?'}
                               </Link>
                             </div>
