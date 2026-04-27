@@ -125,7 +125,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
               {/* ≥sm horizontal — original layout */}
               <div className="hidden sm:grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
-                <div className={match.winnerTeam === 2 ? 'opacity-40' : ''}>
+                <div className={match.winnerTeam === 2 ? 'opacity-50' : ''}>
                   <div className="space-y-2">
                     {[t1p1, t1p2].map((p, i) => (
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
@@ -160,7 +160,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                     ))}
                   </div>
                 </div>
-                <div className={`text-right ${match.winnerTeam === 1 ? 'opacity-40' : ''}`}>
+                <div className={`text-right ${match.winnerTeam === 1 ? 'opacity-50' : ''}`}>
                   <div className="space-y-2">
                     {[t2p1, t2p2].map((p, i) => (
                       <Link key={i} href={p ? `/players/${p.id}` : '#'}>
