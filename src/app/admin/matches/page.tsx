@@ -52,7 +52,7 @@ export default async function MatchesAdminPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-x-auto">
           {/* Scheduled */}
           {scheduled.length > 0 && (
             <div className="space-y-3">

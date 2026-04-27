@@ -40,16 +40,16 @@ export default async function PlayersAdminPage() {
           </Link>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden bg-white">
+        <div className="border rounded-lg overflow-hidden bg-white overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Jugador</TableHead>
                 <TableHead className="text-center">ELO</TableHead>
-                <TableHead className="text-center">P</TableHead>
-                <TableHead className="text-center">W</TableHead>
-                <TableHead className="text-center">L</TableHead>
-                <TableHead className="text-center">Win%</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">P</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">W</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">L</TableHead>
+                <TableHead className="text-center hidden sm:table-cell">Win%</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -71,10 +71,10 @@ export default async function PlayersAdminPage() {
                     <TableCell className="text-center">
                       <Badge variant="outline">{Math.round(player.eloRating)}</Badge>
                     </TableCell>
-                    <TableCell className="text-center text-sm">{player.matchesPlayed}</TableCell>
-                    <TableCell className="text-center text-sm text-green-600 font-medium">{player.wins}</TableCell>
-                    <TableCell className="text-center text-sm text-red-500 font-medium">{player.losses}</TableCell>
-                    <TableCell className="text-center text-sm">{winRate}%</TableCell>
+                    <TableCell className="text-center text-sm hidden sm:table-cell">{player.matchesPlayed}</TableCell>
+                    <TableCell className="text-center text-sm text-green-600 font-medium hidden sm:table-cell">{player.wins}</TableCell>
+                    <TableCell className="text-center text-sm text-red-500 font-medium hidden sm:table-cell">{player.losses}</TableCell>
+                    <TableCell className="text-center text-sm hidden sm:table-cell">{winRate}%</TableCell>
                     <TableCell>
                       <div className="flex gap-2 justify-end">
                         <Link href={`/admin/players/${player.id}/edit`}>
