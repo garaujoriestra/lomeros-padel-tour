@@ -22,7 +22,7 @@ export default function InfoPage() {
       </div>
 
       {/* ¿Qué es LPT? */}
-      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10 space-y-4">
+      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-4">
         <h2 className="text-2xl font-black text-gray-900">🎾 ¿Qué es el LPT?</h2>
         <p className="text-gray-600 leading-relaxed text-lg">
           El <strong>Lomeros Padel Tour (LPT)</strong> es el ranking privado de nuestro grupo de pádel.
@@ -37,7 +37,7 @@ export default function InfoPage() {
       </section>
 
       {/* El Sistema Elo */}
-      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10 space-y-6">
+      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-6">
         <h2 className="text-2xl font-black text-gray-900">📊 El sistema Elo</h2>
         <p className="text-gray-600 leading-relaxed">
           Todos los jugadores empiezan con <strong>1500 puntos de Elo</strong>.
@@ -89,7 +89,7 @@ export default function InfoPage() {
       </section>
 
       {/* Contact */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-green-900 to-emerald-800 rounded-3xl p-8 md:p-10 text-white shadow-xl">
+      <section className="relative overflow-hidden bg-gradient-to-br from-green-900 to-emerald-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 text-white shadow-xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_70%,rgba(74,222,128,0.1)_0%,transparent_60%)]" />
         <div className="relative">
           <p className="text-green-300 font-semibold text-sm uppercase tracking-widest mb-3">📬 Contacto</p>
@@ -105,7 +105,7 @@ export default function InfoPage() {
       </section>
 
       {/* Glosario */}
-      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10 space-y-4">
+      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-4">
         <h2 className="text-2xl font-black text-gray-900">📚 Glosario</h2>
         <div className="divide-y divide-gray-100">
           {[
@@ -115,8 +115,8 @@ export default function InfoPage() {
             { term: 'Racha', def: 'Número de victorias o derrotas consecutivas desde el último partido.' },
             { term: 'Factor-K', def: 'Velocidad a la que cambia el Elo. Más alto = cambios más bruscos. Baja a medida que juegas más.' },
           ].map((item) => (
-            <div key={item.term} className="py-4 flex gap-4">
-              <p className="font-black text-green-700 w-24 shrink-0">{item.term}</p>
+            <div key={item.term} className="py-4 flex flex-col sm:flex-row sm:gap-4">
+              <p className="font-black text-green-700 sm:w-24 sm:shrink-0 mb-1 sm:mb-0">{item.term}</p>
               <p className="text-gray-600 text-sm leading-relaxed">{item.def}</p>
             </div>
           ))}

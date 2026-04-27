@@ -66,13 +66,13 @@ export default async function RankingsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/60 hover:bg-gray-50/60">
-                    <TableHead className="w-14 pl-6 font-black text-gray-500 text-xs uppercase tracking-wider">#</TableHead>
+                    <TableHead className="w-12 sm:w-14 pl-3 sm:pl-6 font-black text-gray-500 text-xs uppercase tracking-wider">#</TableHead>
                     <TableHead className="font-black text-gray-500 text-xs uppercase tracking-wider">Jugador</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider">ELO</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">P</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">V</TableHead>
                     <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">D</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider pr-6">Win%</TableHead>
+                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider pr-3 sm:pr-6">Win%</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -81,7 +81,7 @@ export default async function RankingsPage() {
                     const eloChange = Math.round(player.eloRating - 1500);
                     return (
                       <TableRow key={player.id} className={idx < 3 ? 'bg-green-50/20' : 'hover:bg-gray-50/50'}>
-                        <TableCell className="pl-6 w-14">
+                        <TableCell className="pl-3 sm:pl-6 w-12 sm:w-14">
                           {idx === 0 ? <span className="text-xl">🥇</span>
                             : idx === 1 ? <span className="text-xl">🥈</span>
                             : idx === 2 ? <span className="text-xl">🥉</span>
@@ -102,7 +102,7 @@ export default async function RankingsPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center">
-                            <span className="font-black text-base tabular-nums">{Math.round(player.eloRating)}</span>
+                            <span className="font-black text-sm sm:text-base tabular-nums">{Math.round(player.eloRating)}</span>
                             <span className={`text-xs font-bold tabular-nums ${eloChange >= 0 ? 'text-green-500' : 'text-red-400'}`}>
                               {eloChange >= 0 ? '+' : ''}{eloChange}
                             </span>
@@ -111,7 +111,7 @@ export default async function RankingsPage() {
                         <TableCell className="text-center text-sm hidden sm:table-cell text-gray-600">{player.matchesPlayed}</TableCell>
                         <TableCell className="text-center text-sm font-bold text-green-600 hidden sm:table-cell">{player.wins}</TableCell>
                         <TableCell className="text-center text-sm font-bold text-red-400 hidden sm:table-cell">{player.losses}</TableCell>
-                        <TableCell className="text-center pr-6">
+                        <TableCell className="text-center pr-3 sm:pr-6">
                           <div className="flex items-center justify-center gap-2">
                             <div className="w-14 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
                               <div
