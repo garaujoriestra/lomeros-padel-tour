@@ -15,6 +15,7 @@ interface PlayerFormProps {
     name: string;
     nickname: string | null;
     avatarUrl: string | null;
+    isLeftHanded: boolean | null;
   };
 }
 
@@ -27,6 +28,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     name: initialData?.name ?? '',
     nickname: initialData?.nickname ?? '',
     avatarUrl: initialData?.avatarUrl ?? '',
+    isLeftHanded: initialData?.isLeftHanded ?? false,
   });
   const [preview, setPreview] = useState<string>(initialData?.avatarUrl ?? '');
 
@@ -163,6 +165,17 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               onChange={(e) => setForm({ ...form, nickname: e.target.value })}
               placeholder="Ej: El Cañón"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="isLeftHanded"
+              type="checkbox"
+              checked={form.isLeftHanded}
+              onChange={(e) => setForm({ ...form, isLeftHanded: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isLeftHanded" className="cursor-pointer">🤚 Zurdo</Label>
           </div>
 
           <div className="flex gap-2 pt-2">
