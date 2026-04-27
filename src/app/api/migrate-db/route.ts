@@ -57,9 +57,16 @@ export async function POST() {
       await db.run(sql`ALTER TABLE matches_new RENAME TO matches`);
     }
 
+    // Step 3: Add is_left_handed column to players if not present (Feature B)
+    try {
+      await db.run(sql`ALTER TABLE players ADD COLUMN is_left_handed INTEGER NOT NULL DEFAULT 0`);
+    } catch {
+      // Column already exists — skip silently
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Migración completada: matches ahora soporta partidos programados',
+      message: 'Migración completada',
     });
   } catch (error) {
     console.error(error);
