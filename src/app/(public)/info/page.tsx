@@ -5,16 +5,16 @@ export default function InfoPage() {
     <div className="space-y-10">
 
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
-        <div className="relative px-8 md:px-12 py-14 md:py-16 max-w-3xl">
+        <div className="relative px-5 sm:px-8 md:px-12 py-10 sm:py-14 md:py-16 max-w-3xl">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
             <span>📖</span> Guía del torneo
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight mb-4">
             ¿CÓMO FUNCIONA?
           </h1>
-          <p className="text-green-200 text-lg md:text-xl font-medium max-w-2xl">
+          <p className="text-green-200 text-base sm:text-lg md:text-xl font-medium max-w-2xl">
             Todo lo que necesitas saber sobre el <strong className="text-white">Lomeros Padel Tour</strong> —
             el ranking oficial de nuestro grupo de amigos.
           </p>

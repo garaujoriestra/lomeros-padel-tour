@@ -34,11 +34,11 @@ export default async function RankingsPage() {
     <div className="space-y-8">
 
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-950 to-emerald-900 p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-green-950 to-emerald-900 p-5 sm:p-7 md:p-10 text-white shadow-xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(74,222,128,0.08)_0%,transparent_70%)]" />
         <div className="relative">
-          <h1 className="text-4xl font-black tracking-tight">🏆 CLASIFICACIÓN</h1>
-          <p className="text-green-200 mt-1 font-medium">Ranking individual ordenado por Elo · {ranked.length} jugadores clasificados</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">🏆 CLASIFICACIÓN</h1>
+          <p className="text-green-200 mt-1 font-medium text-sm sm:text-base">Ranking individual ordenado por Elo · {ranked.length} jugadores clasificados</p>
         </div>
       </div>
 

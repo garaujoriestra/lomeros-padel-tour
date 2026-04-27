@@ -36,34 +36,34 @@ export default async function HomePage() {
     <div className="space-y-10">
 
       {/* ── HERO ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 p-8 md:p-14 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 p-5 sm:p-8 md:p-14 text-white shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-400/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
         <div className="relative text-center space-y-3">
-          <div className="text-6xl md:text-8xl mb-2 drop-shadow-2xl">🎾</div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight">
+          <div className="text-5xl sm:text-6xl md:text-8xl mb-2 drop-shadow-2xl">🎾</div>
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">
             LOMEROS <span className="text-green-400">PADEL TOUR</span>
           </h1>
-          <p className="text-green-200 text-base md:text-lg font-medium tracking-wide uppercase tracking-widest">
+          <p className="text-green-200 text-sm sm:text-base md:text-lg font-medium tracking-widest uppercase">
             El ranking oficial del grupo · LPT
           </p>
-          <div className="flex justify-center gap-6 md:gap-16 mt-8 pt-8 border-t border-white/10">
+          <div className="flex justify-center gap-4 sm:gap-6 md:gap-16 mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-white/10">
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalMatches}</p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Partidos</p>
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalMatches}</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Partidos</p>
             </div>
             <div className="w-px bg-white/10" />
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalPlayers}</p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Jugadores</p>
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">{totalPlayers}</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Jugadores</p>
             </div>
             <div className="w-px bg-white/10" />
             <div className="text-center">
-              <p className="text-3xl md:text-5xl font-black text-green-400 tabular-nums">
+              <p className="text-2xl sm:text-3xl md:text-5xl font-black text-green-400 tabular-nums">
                 {topPlayers[0] ? Math.round(topPlayers[0].eloRating) : '—'}
               </p>
-              <p className="text-green-300 text-xs md:text-sm mt-1 uppercase tracking-widest">Elo #1</p>
+              <p className="text-green-300 text-[10px] sm:text-xs md:text-sm mt-1 uppercase tracking-widest">Elo #1</p>
             </div>
           </div>
         </div>

@@ -25,18 +25,18 @@ export default async function MatchesPage() {
     <div className="space-y-8">
 
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-950 to-emerald-900 p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-green-950 to-emerald-900 p-5 sm:p-7 md:p-10 text-white shadow-xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(74,222,128,0.08)_0%,transparent_70%)]" />
         <div className="relative flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-4xl font-black tracking-tight">⚡ PARTIDOS</h1>
-            <p className="text-green-200 mt-1 font-medium">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">⚡ PARTIDOS</h1>
+            <p className="text-green-200 mt-1 font-medium text-sm sm:text-base">
               {completed.length} resultado{completed.length !== 1 ? 's' : ''}
               {upcoming.length > 0 && ` · ${upcoming.length} próximo${upcoming.length !== 1 ? 's' : ''}`}
             </p>
           </div>
           {upcoming.length > 0 && (
-            <span className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-sm font-bold">
+            <span className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs sm:text-sm font-bold">
               📅 {upcoming.length} pendiente{upcoming.length !== 1 ? 's' : ''}
             </span>
           )}
