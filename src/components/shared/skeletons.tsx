@@ -17,8 +17,12 @@ export function SkeletonText({ className }: { className?: string }) {
 
 /**
  * Reproduces the green-gradient hero shape used across pages.
- * `tall=false` matches the small heroes on rankings/matches/pairs.
- * `tall=true` matches the larger heroes on home/info/players[id].
+ * `tall=false` matches the small heroes on rankings/matches/pairs (`md:p-10`).
+ * `tall=true` matches the home/info hero (`md:p-14`).
+ *
+ * Note: the player-profile and match-detail heroes have custom internal
+ * structure (avatar + stats grid / breadcrumb + score) and inline their
+ * own hero block in their loading.tsx — they don't use this primitive.
  */
 export function SkeletonHero({ tall = false }: { tall?: boolean }) {
   const padding = tall ? 'p-5 sm:p-8 md:p-14' : 'p-5 sm:p-7 md:p-10';
