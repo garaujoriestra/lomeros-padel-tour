@@ -123,12 +123,12 @@ function TeamRow({
   const spacing = size === 'sm' ? 'space-y-1.5' : 'space-y-2';
   const badgePadding = size === 'sm' ? 'px-2.5 py-0.5' : 'px-3 py-1';
   return (
-    <div className={loser ? 'opacity-50' : ''}>
+    <div className={`min-w-0 ${loser ? 'opacity-50' : ''}`}>
       <div className={`${spacing} ${isRight ? 'text-right' : ''}`}>
         {players.map((p, i) => (
-          <div key={i} className={`flex items-center gap-2 ${isRight ? 'justify-end' : ''}`}>
+          <div key={i} className={`flex items-center gap-2 min-w-0 ${isRight ? 'justify-end' : ''}`}>
             {!isRight && <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />}
-            <p className={`font-bold truncate ${winner ? 'text-green-700' : 'text-gray-700'}`}>{p?.name ?? '?'}</p>
+            <p className={`font-bold truncate min-w-0 ${winner ? 'text-green-700' : 'text-gray-700'}`}>{p?.name ?? '?'}</p>
             {isRight && <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />}
           </div>
         ))}
