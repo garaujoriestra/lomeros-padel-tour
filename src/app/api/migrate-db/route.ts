@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql, eq } from 'drizzle-orm';
-import { players, matches } from '@/lib/db/schema';
+import { players, matches, matchSets, ratingHistory, playerAchievements } from '@/lib/db/schema';
+import { detectAllAchievements, type MatchHistoryEntry } from '@/lib/achievements/detect';
+import { detectRankChanges } from '@/lib/feed/rank-changes';
 
 // POST /api/migrate-db
 // Migrates the existing matches table to support scheduled matches:
@@ -132,6 +134,90 @@ export async function POST() {
         team2Player1Side: t2.player1,
         team2Player2Side: t2.player2,
       }).where(eq(matches.id, m.id));
+    }
+
+    // Step 6: Backfill achievements retroactively (Block 3 — achievements)
+    // Walk rating_history + match_sets globally, run the detector, and persist
+    // grants that don't already exist for (player_id, achievement_id).
+    const allHistory = await db.select().from(ratingHistory);
+    const allSetsRows = await db.select().from(matchSets);
+    const allMatchesRows = await db.select().from(matches);
+
+    // Group sets by matchId
+    const setsByMatch = new Map<string, { team1Games: number; team2Games: number }[]>();
+    for (const s of allSetsRows) {
+      const arr = setsByMatch.get(s.matchId) ?? [];
+      arr.push({ team1Games: s.team1Games, team2Games: s.team2Games });
+      setsByMatch.set(s.matchId, arr);
+    }
+
+    // Index winnerTeam per matchId
+    const winnerByMatch = new Map<string, number | null>();
+    const team1ByMatch = new Map<string, [string, string]>();
+    for (const m of allMatchesRows) {
+      winnerByMatch.set(m.id, m.winnerTeam);
+      team1ByMatch.set(m.id, [m.team1Player1Id, m.team1Player2Id]);
+    }
+
+    // Build MatchHistoryEntry[] from rating_history
+    const historyForDetector: MatchHistoryEntry[] = allHistory.map((rh) => {
+      const winner = winnerByMatch.get(rh.matchId) ?? null;
+      const t1 = team1ByMatch.get(rh.matchId);
+      const isTeam1 = t1 ? (rh.playerId === t1[0] || rh.playerId === t1[1]) : false;
+      const isWin = winner !== null && ((isTeam1 && winner === 1) || (!isTeam1 && winner === 2));
+
+      const sets = setsByMatch.get(rh.matchId) ?? [];
+      const winningSets = sets.filter((s) =>
+        isTeam1 ? s.team1Games > s.team2Games : s.team2Games > s.team1Games
+      );
+      const losingSetsForOurTeam = sets.filter((s) =>
+        isTeam1 ? s.team2Games > s.team1Games : s.team1Games > s.team2Games
+      );
+
+      // hasBagelSet: any set we won 6-0
+      const hasBagelSet = winningSets.some((s) =>
+        isTeam1 ? s.team1Games === 6 && s.team2Games === 0 : s.team2Games === 6 && s.team1Games === 0
+      );
+
+      // isDoubleBagel: we won the match, won 2 sets, both 6-0, lost 0 sets
+      const wonAllSetsBagel = winningSets.length >= 2 &&
+        winningSets.every((s) => isTeam1 ? s.team1Games === 6 && s.team2Games === 0 : s.team2Games === 6 && s.team1Games === 0);
+      const isDoubleBagel = isWin && wonAllSetsBagel && losingSetsForOurTeam.length === 0;
+
+      return {
+        playerId: rh.playerId,
+        matchId: rh.matchId,
+        recordedAt: rh.recordedAt,
+        eloBefore: rh.eloBefore,
+        eloAfter: rh.eloAfter,
+        isWin,
+        hasBagelSet,
+        isDoubleBagel,
+      };
+    });
+
+    // Compute rank events from full history + current player snapshot
+    const allPlayersSnapshot = await db.select().from(players);
+    const rankEvents = detectRankChanges(allHistory, allPlayersSnapshot);
+
+    // Run detector
+    const candidateGrants = detectAllAchievements({ history: historyForDetector, rankEvents });
+
+    // Idempotency: load existing grants
+    const existingGrants = await db.select().from(playerAchievements);
+    const existingKey = new Set(existingGrants.map((g) => `${g.playerId}:${g.achievementId}`));
+
+    const grantsToInsert = candidateGrants.filter(
+      (g) => !existingKey.has(`${g.playerId}:${g.achievementId}`)
+    );
+
+    for (const g of grantsToInsert) {
+      await db.insert(playerAchievements).values({
+        playerId: g.playerId,
+        achievementId: g.achievementId,
+        earnedAt: g.earnedAt,
+        triggerMatchId: g.triggerMatchId,
+      });
     }
 
     return NextResponse.json({
