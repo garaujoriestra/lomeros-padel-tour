@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
 import { ActivityFeed } from '@/components/shared/activity-feed';
+import { InstallPrompt } from '@/components/shared/install-prompt';
 import { buildFeed } from '@/lib/feed/build-feed';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
 
@@ -97,6 +98,8 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
+
+      <InstallPrompt />
 
       {/* ── PODIUM ── */}
       {topPlayers.length > 0 && (
