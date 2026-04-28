@@ -9,6 +9,8 @@ import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
 import { PartnerCard } from '@/components/shared/partner-card';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
+import { findUnplayedPartners } from '@/lib/players/unplayed-partners';
+import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +82,14 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     worstPartnerPlayer != null &&
     bestPartnerPlayer != null &&
     worstPartnerPlayer.id !== bestPartnerPlayer.id;
+
+  // Unplayed partners
+  // allPlayers covers the snapshot we need (full player list).
+  const unplayed = findUnplayedPartners(id, allPlayers, pairs);
+  // Total candidates = active players (matchesPlayed > 0), excluding the target.
+  const totalCandidates = allPlayers.filter(
+    (p) => p.id !== id && p.matchesPlayed > 0,
+  ).length;
 
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
@@ -229,6 +239,8 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           )}
         </div>
       )}
+
+      <UnplayedPartnersCard unplayed={unplayed} totalCandidates={totalCandidates} />
 
       {/* Court side stats */}
       {hasSideData && (
