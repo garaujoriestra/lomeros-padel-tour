@@ -20,7 +20,7 @@ Vercel Blob ya está configurado y operativo (`@vercel/blob` v2.3.3, `BLOB_READ_
 - **OG image**: la pista cenital se queda. La foto es para la app, no para previews de WhatsApp.
 - **Lightbox / zoom**: el hero del match detail muestra la foto al ancho completo del contenedor; se ve bien tal cual.
 - **Compresión client-side**: Vercel Blob aguanta tamaños razonables; subimos el límite del endpoint a 5MB.
-- **Backfill**: los partidos existentes empiezan con `photo_url` = null; se puede añadir foto a partidos antiguos editando el resultado (si lifecycle B lo permite — ver abajo).
+- **Backfill**: los partidos existentes empiezan con `photo_url` = null y permanecen así. Solo los partidos nuevos (cuyo resultado se cierre tras el merge) podrán tener foto. Coherente con el lifecycle one-shot.
 
 ---
 
@@ -55,23 +55,21 @@ Nuevo route handler en `src/app/api/upload/match-photo/route.ts`. Mismo patrón 
 
 El endpoint de avatares (`/api/upload/route.ts`) NO se toca — sigue dedicado a avatares.
 
-### 4. UX en `result-form.tsx` (lifecycle B)
+### 4. UX en `result-form.tsx` (lifecycle: solo en creación)
 
-Tres estados visuales según el valor de `initialData.photoUrl`:
+**Decisión revisada:** el flujo actual de "meter resultado" es one-shot — el endpoint PUT rechaza si el match ya está completado, y no existe edit-result. Para no construir infraestructura extra (nueva página + endpoint dedicado para foto), el upload de foto vive solo en la creación del resultado. Si te olvidas la foto al cerrar el partido, no se puede añadir después desde la UI.
 
-**Estado A — `photoUrl === null` (creación o edit-result sin foto):**
+Dos estados:
+
+**Estado A — antes de seleccionar fichero:**
 - Bloque "📷 Subir foto del partido (opcional)" encima del marcador.
-- File input + preview tras seleccionar fichero.
+- File input + botón "Seleccionar imagen".
+
+**Estado B — tras seleccionar fichero:**
+- Preview en grande, botón "Cambiar" para reemplazar antes del submit.
 - Al seleccionar fichero, fetch a `/api/upload/match-photo`, recibe URL, almacena en form state.
-- Mismo patrón que `player-form.tsx` para avatares.
 
-**Estado B — `photoUrl !== null` (edit-result con foto ya subida):**
-- Thumbnail read-only de la foto + texto "✅ Foto del partido subida — no editable".
-- No hay file input.
-- El form NO envía cambios al campo `photo_url`.
-
-**Estado C — preview tras seleccionar fichero (transitorio entre A y submit):**
-- Imagen pre-vista en grande, botón "Cambiar" hasta hacer submit.
+Mismo patrón que `player-form.tsx` para avatares.
 
 Patrón concreto reutilizable de `player-form.tsx`:
 - `useRef<HTMLInputElement>` para el file input oculto.
@@ -83,16 +81,12 @@ Patrón concreto reutilizable de `player-form.tsx`:
 
 ### 5. API: PUT del resultado acepta `photoUrl`
 
-En `src/app/api/matches/[id]/route.ts` (o equivalente — el endpoint que `result-form.tsx` invoca al hacer submit), aceptar `photoUrl` en el body **solo si no había foto previa** (lifecycle B). Si ya existía, ignorar el campo (no permitir reemplazo desde la app — es la red de seguridad backend).
+En `src/app/api/matches/[id]/route.ts` (el endpoint que `result-form.tsx` invoca al hacer submit), aceptar `photoUrl` en el body. Como el endpoint ya rechaza requests sobre matches completados, no hay caso de "reemplazo" — siempre es la primera vez.
 
 Implementación:
 ```ts
-// Server-side check
-if (existingMatch.photoUrl !== null && body.photoUrl !== existingMatch.photoUrl) {
-  // Silently ignore — photo is locked
-} else if (existingMatch.photoUrl === null && body.photoUrl) {
-  // Allow setting for the first time
-  updates.photoUrl = body.photoUrl;
+if (typeof body.photoUrl === 'string' && body.photoUrl) {
+  updateFields.photoUrl = body.photoUrl;
 }
 ```
 
@@ -185,23 +179,12 @@ No hay lógica con ramificación que merezca un test unit. Toda la complejidad e
    - Verificar `matches.photo_url` en BD comienza con `https://*.public.blob.vercel-storage.com/match-photos/...`.
    - Verificar que la foto aparece en `/matches/[id]` (hero arriba) y como banner en `<MatchCard>` (en dashboard, en `/matches`).
 
-2. **Meter resultado sin foto, después editar y añadir foto (lifecycle B):**
-   - Crear partido + meter resultado SIN foto.
-   - Verificar que aparece sin banner en MatchCard y sin hero en match detail.
-   - Editar resultado: el bloque de upload está visible.
-   - Subir foto, guardar.
-   - Verificar que ahora aparece en ambas surfaces.
+2. **Meter resultado sin foto:**
+   - Crear partido + meter resultado SIN foto (no seleccionar fichero).
+   - Verificar que el partido se cierra con `photoUrl = null` y que sigue funcionando normal: sin banner en MatchCard, sin hero en match detail.
+   - Verificar que ya no se puede acceder al flujo de meter resultado (la página dice "Resultado ya registrado").
 
-3. **Editar resultado con foto ya subida (lifecycle B locked):**
-   - Editar el resultado de un partido con foto.
-   - Verificar que aparece thumbnail read-only con texto "✅ Foto subida — no editable".
-   - Verificar que no hay file input.
-
-4. **Backend lock test:**
-   - Hacer un PUT al endpoint del partido pasando un `photoUrl` diferente cuando ya hay uno.
-   - Verificar que la BD no se actualiza.
-
-5. **Validación de tamaño:**
+3. **Validación de tamaño:**
    - Intentar subir una imagen > 5MB. Verificar que el endpoint devuelve 400.
 
 ---
@@ -212,7 +195,7 @@ No hay lógica con ramificación que merezca un test unit. Toda la complejidad e
 - **Privacy:** las fotos contienen caras. Vercel Blob "public" significa que cualquiera con la URL puede verla. Las URLs son aleatorias (UUIDs) así que no son adivinables, pero técnicamente no son privadas. Para un grupo de amigos esto es aceptable. Si en el futuro se quiere algo más estricto, considerar `access: 'private'` y servir mediante un proxy autenticado.
 - **Imágenes verticales muy largas:** `max-h-[400px]` + `object-cover` evita que rompan el layout, pero hay riesgo de cortar caras importantes. Aceptable como trade-off; si se observa el problema, considerar `object-contain` o pedir aspect ratio en el upload.
 - **next/image vs `<img>`:** usamos `<img>` porque las URLs de Blob requieren config en `next.config.ts` para `next/image`. Aceptable; las páginas son dinámicas (no se beneficiarían tanto del optimizador).
-- **Lifecycle B en el backend:** el bloqueo en el server (rechazar reemplazo de `photoUrl` cuando ya hay uno) es la red de seguridad. La UI también lo bloquea, pero sin server check, alguien con acceso al admin podría modificar la BD vía API.
+- **Lifecycle one-shot:** al endpoint PUT solo se le puede llamar para matches scheduled (rechaza completed con 400). Esto cierra naturalmente cualquier reemplazo de photoUrl — no hace falta lógica server extra.
 
 ---
 
@@ -220,7 +203,7 @@ No hay lógica con ramificación que merezca un test unit. Toda la complejidad e
 
 Ninguna. Todas las decisiones están cerradas:
 - Schema: `photo_url TEXT` nullable.
-- Lifecycle: B (puede añadirse si falta, locked si ya existe).
+- Lifecycle: foto se sube solo al meter el resultado por primera vez (one-shot). Si te olvidas, no se puede añadir después desde la UI. Coherente con el diseño actual del flujo de resultado.
 - Surfaces: match detail + MatchCard. Feed y OG no se tocan.
 - Subida: nuevo endpoint `/api/upload/match-photo`, 5MB.
 - Tests: sólo verificación manual.
