@@ -85,6 +85,21 @@ export async function POST() {
       // Column already exists — skip silently
     }
 
+    // Step 4d: Create player_achievements table (Block 3 — achievements)
+    try {
+      await db.run(sql`
+        CREATE TABLE IF NOT EXISTS player_achievements (
+          id TEXT PRIMARY KEY,
+          player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+          achievement_id TEXT NOT NULL,
+          earned_at TEXT NOT NULL,
+          trigger_match_id TEXT REFERENCES matches(id) ON DELETE SET NULL
+        )
+      `);
+    } catch {
+      // Table already exists — skip silently
+    }
+
     // Step 5: Heuristic backfill for matches with no side data (Feature C)
     // Convention: lefty → revés, righty → drive. Both same-handed → positional
     // (team1Player1 → drive, team1Player2 → revés).
