@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { matches, matchSets, players, pairStats } from '@/lib/db/schema';
 import { eq, and, inArray, or } from 'drizzle-orm';
@@ -63,6 +64,47 @@ function PredictionLine({
   );
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const [match] = await db.select().from(matches).where(eq(matches.id, id));
+  if (!match) {
+    return { title: 'Partido no encontrado · LPT' };
+  }
+  const allPlayers = await db.select().from(players);
+  const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
+
+  const t1 = `${pMap[match.team1Player1Id]?.name ?? '?'}/${pMap[match.team1Player2Id]?.name ?? '?'}`;
+  const t2 = `${pMap[match.team2Player1Id]?.name ?? '?'}/${pMap[match.team2Player2Id]?.name ?? '?'}`;
+
+  if (match.status === 'completed') {
+    const sets = await db
+      .select()
+      .from(matchSets)
+      .where(eq(matchSets.matchId, id))
+      .then((s) => s.sort((a, b) => a.setNumber - b.setNumber));
+    const setsStr = sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' / ');
+    const description = `Resultado del partido del ${match.date}${match.location ? ` en ${match.location}` : ''}.`;
+    return {
+      title: `${t1} vs ${t2} · ${setsStr} — LPT`,
+      description,
+      openGraph: {
+        title: `${t1} vs ${t2} · ${setsStr}`,
+        description,
+      },
+    };
+  }
+
+  const description = `Partido programado${match.location ? ` en ${match.location}` : ''}.`;
+  return {
+    title: `${t1} vs ${t2} · ${match.date} — LPT`,
+    description,
+    openGraph: {
+      title: `${t1} vs ${t2} · ${match.date}`,
+      description,
+    },
+  };
+}
+
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -120,17 +162,11 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const t1Sets = sets.filter((s) => s.team1Games > s.team2Games).length;
   const t2Sets = sets.filter((s) => s.team2Games > s.team1Games).length;
 
-  // Build absolute URL + share text for the share button (only used when completed)
+  // Build absolute URL for the share button
   const headersList = await headers();
   const host = headersList.get('host') ?? 'lomeros-padel-tour.vercel.app';
   const proto = host.includes('localhost') ? 'http' : 'https';
   const matchUrl = `${proto}://${host}/matches/${match.id}`;
-  const t1NamesShort = `${t1p1?.name ?? '?'} / ${t1p2?.name ?? '?'}`;
-  const t2NamesShort = `${t2p1?.name ?? '?'} / ${t2p2?.name ?? '?'}`;
-  const setsString = sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' / ');
-  const shareText = match.status === 'completed'
-    ? `🎾 ${t1NamesShort} vs ${t2NamesShort} · ${setsString} · LPT`
-    : '';
 
   return (
     <div className="space-y-8">
@@ -354,11 +390,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
       {/* Share button — only for completed matches */}
       {match.status === 'completed' && (
         <div className="flex justify-end">
-          <ShareMatchButton
-            url={matchUrl}
-            title="Resultado del partido — LPT"
-            text={shareText}
-          />
+          <ShareMatchButton url={matchUrl} />
         </div>
       )}
 
