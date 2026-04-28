@@ -164,8 +164,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _sets =
+  const sets =
     match.status === 'completed'
       ? await db
           .select()
@@ -173,6 +172,12 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           .where(eq(matchSets.matchId, id))
           .then((s) => s.sort((a, b) => a.setNumber - b.setNumber))
       : [];
+
+  const scoreText =
+    match.status === 'completed' && sets.length > 0
+      ? sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' · ')
+      : null;
+  const showVs = match.status !== 'completed';
 
   return new ImageResponse(
     (
@@ -271,6 +276,49 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             <PlayerSlot position="bottomLeft" pos={positions.bottomLeft} pMap={pMap} />
             <PlayerSlot position="topRight" pos={positions.topRight} pMap={pMap} />
             <PlayerSlot position="bottomRight" pos={positions.bottomRight} pMap={pMap} />
+            {/* Score / VS over the net */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {showVs ? (
+                <span
+                  style={{
+                    fontSize: 96,
+                    fontWeight: 900,
+                    color: 'white',
+                    textShadow: '0 4px 20px rgba(0,0,0,0.7)',
+                    letterSpacing: 4,
+                  }}
+                >
+                  VS
+                </span>
+              ) : scoreText ? (
+                <span
+                  style={{
+                    fontSize: 78,
+                    fontWeight: 900,
+                    fontFamily: 'monospace',
+                    color: 'white',
+                    background: 'rgba(0,0,0,0.55)',
+                    padding: '12px 32px',
+                    borderRadius: 16,
+                    textShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                    letterSpacing: 2,
+                  }}
+                >
+                  {scoreText}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
 
