@@ -431,7 +431,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             {pairingOptions.map((opt, idx) => (
               <div
                 key={idx}
-                className={`bg-white rounded-2xl border shadow-sm p-6 ${
+                className={`bg-white rounded-2xl border shadow-sm p-4 sm:p-6 ${
                   idx === 0
                     ? 'border-green-200 shadow-green-100/50 ring-1 ring-green-200'
                     : idx === 1
@@ -439,8 +439,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                     : 'border-gray-100 opacity-80'
                 }`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+                  <span className={`self-start px-3 py-1 rounded-full text-xs font-black ${
                     idx === 0
                       ? 'bg-green-100 text-green-700'
                       : idx === 1
@@ -449,7 +449,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   }`}>
                     {idx === 0 ? '⭐ ' : ''}{opt.label}
                   </span>
-                  <div className="text-right">
+                  <div className="sm:text-right">
                     <p className="text-xs text-gray-400">Diferencia de Elo</p>
                     <p className={`text-lg font-black tabular-nums ${opt.eloDiff < 30 ? 'text-green-600' : opt.eloDiff < 80 ? 'text-yellow-600' : 'text-red-500'}`}>
                       ±{Math.round(opt.eloDiff)}
