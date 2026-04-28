@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFeed, type FeedEvent } from './build-feed';
+import { buildFeed } from './build-feed';
 
 describe('buildFeed', () => {
   function match(id: string, status: 'scheduled' | 'completed', date: string, t1p1 = 'a', t1p2 = 'b', t2p1 = 'c', t2p2 = 'd') {
