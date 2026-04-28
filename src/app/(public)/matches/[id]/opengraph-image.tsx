@@ -2,6 +2,118 @@ import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { matches, matchSets, players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { resolveCourtPositions, type PositionedPlayer } from '@/lib/og/court-positions';
+
+function PlayerSlot({
+  position,
+  pos,
+  pMap,
+}: {
+  position: 'topLeft' | 'bottomLeft' | 'topRight' | 'bottomRight';
+  pos: PositionedPlayer;
+  pMap: Record<string, { name: string; avatarUrl: string | null }>;
+}) {
+  const player = pMap[pos.playerId];
+  const name = player?.name ?? '?';
+  const avatarUrl = player?.avatarUrl ?? null;
+  const initial = name.charAt(0).toUpperCase();
+
+  // Quadrant offsets within the court (1080 × 440)
+  // Each quadrant is 540 × 220. Center the slot within its quadrant.
+  // Slot is 220 wide × 200 tall, vertically centered around y = ~110/330.
+  const horizontalSide = position === 'topLeft' || position === 'bottomLeft' ? 'left' : 'right';
+  const verticalSide = position === 'topLeft' || position === 'topRight' ? 'top' : 'bottom';
+
+  const slotStyle: Record<string, string | number> = {
+    position: 'absolute',
+    width: 220,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  };
+  // Position the slot center inside its quadrant.
+  // Court is 1080 wide, each half = 540. Each quadrant center is at (540/2)=270 from its outer edge.
+  // Court is 440 tall, top quadrant center = 110, bottom quadrant center = 330.
+  if (horizontalSide === 'left') {
+    slotStyle.left = 270 - 110; // center 220px wide slot at x=270
+  } else {
+    slotStyle.right = 270 - 110;
+  }
+  if (verticalSide === 'top') {
+    slotStyle.top = 30; // small padding from top border
+  } else {
+    slotStyle.bottom = 30;
+  }
+
+  return (
+    <div style={slotStyle}>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          width={120}
+          height={120}
+          style={{
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            objectFit: 'cover',
+            border: '4px solid rgba(255,255,255,0.9)',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            background: 'linear-gradient(135deg, #4ade80 0%, #14532d 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: 64,
+            fontWeight: 900,
+            border: '4px solid rgba(255,255,255,0.9)',
+          }}
+        >
+          {initial}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          style={{
+            color: 'white',
+            fontSize: 26,
+            fontWeight: 800,
+            textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+          }}
+        >
+          {name}
+        </span>
+        {pos.label ? (
+          <span
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 26,
+              height: 26,
+              borderRadius: 6,
+              background: 'rgba(255,255,255,0.9)',
+              color: '#052e16',
+              fontSize: 15,
+              fontWeight: 900,
+            }}
+          >
+            {pos.label}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
@@ -37,7 +149,23 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const allPlayers = await db.select().from(players);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
-  const sets =
+  const positions = resolveCourtPositions({
+    team1: {
+      p1Id: match.team1Player1Id,
+      p2Id: match.team1Player2Id,
+      p1Side: match.team1Player1Side,
+      p2Side: match.team1Player2Side,
+    },
+    team2: {
+      p1Id: match.team2Player1Id,
+      p2Id: match.team2Player2Id,
+      p1Side: match.team2Player1Side,
+      p2Side: match.team2Player2Side,
+    },
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _sets =
     match.status === 'completed'
       ? await db
           .select()
@@ -139,6 +267,10 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 background: 'rgba(255,255,255,0.85)',
               }}
             />
+            <PlayerSlot position="topLeft" pos={positions.topLeft} pMap={pMap} />
+            <PlayerSlot position="bottomLeft" pos={positions.bottomLeft} pMap={pMap} />
+            <PlayerSlot position="topRight" pos={positions.topRight} pMap={pMap} />
+            <PlayerSlot position="bottomRight" pos={positions.bottomRight} pMap={pMap} />
           </div>
         </div>
 
