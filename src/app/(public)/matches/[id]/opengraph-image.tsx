@@ -5,18 +5,28 @@ import { eq } from 'drizzle-orm';
 
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-export const alt = 'Resultado del partido';
+export const alt = 'Resultado del partido en pista de pádel';
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const [match] = await db.select().from(matches).where(eq(matches.id, params.id));
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const [match] = await db.select().from(matches).where(eq(matches.id, id));
   if (!match) {
     return new ImageResponse(
       (
-        <div style={{
-          width: '100%', height: '100%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#052e16', color: 'white', fontSize: 48, fontFamily: 'sans-serif',
-        }}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#052e16',
+            color: 'white',
+            fontSize: 48,
+            fontFamily: 'sans-serif',
+          }}
+        >
           Partido no encontrado
         </div>
       ),
@@ -27,69 +37,123 @@ export default async function Image({ params }: { params: { id: string } }) {
   const allPlayers = await db.select().from(players);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
-  const sets = match.status === 'completed'
-    ? await db.select().from(matchSets).where(eq(matchSets.matchId, params.id)).then((s) => s.sort((a, b) => a.setNumber - b.setNumber))
-    : [];
-
-  const t1Sets = sets.filter((s) => s.team1Games > s.team2Games).length;
-  const t2Sets = sets.filter((s) => s.team2Games > s.team1Games).length;
+  const sets =
+    match.status === 'completed'
+      ? await db
+          .select()
+          .from(matchSets)
+          .where(eq(matchSets.matchId, id))
+          .then((s) => s.sort((a, b) => a.setNumber - b.setNumber))
+      : [];
 
   return new ImageResponse(
     (
-      <div style={{
-        width: '100%', height: '100%',
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        background: 'linear-gradient(135deg, #052e16 0%, #14532d 50%, #064e3b 100%)',
-        color: 'white',
-        padding: '60px 80px',
-        fontFamily: 'sans-serif',
-      }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 28, color: '#86efac', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' }}>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#052e16',
+          fontFamily: 'sans-serif',
+          color: 'white',
+        }}
+      >
+        {/* Header strip */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: 80,
+            padding: '0 60px',
+            fontSize: 22,
+            color: '#86efac',
+            fontWeight: 800,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 40 }}>🎾</span>
+            <span style={{ fontSize: 32 }}>🎾</span>
             <span>Lomeros Padel Tour</span>
           </div>
-          <span style={{ color: '#bbf7d0' }}>{match.date}</span>
-        </div>
-
-        {/* Center: teams + score */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 40 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, fontSize: 44, fontWeight: 800, color: match.winnerTeam === 1 ? '#4ade80' : 'white', opacity: match.winnerTeam === 2 ? 0.5 : 1 }}>
-            <span>{pMap[match.team1Player1Id]?.name ?? '?'}</span>
-            <span>{pMap[match.team1Player2Id]?.name ?? '?'}</span>
-            {match.winnerTeam === 1 && <span style={{ fontSize: 24, color: '#4ade80', marginTop: 8 }}>🏆 Ganador</span>}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            {match.status === 'completed' ? (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 110, fontWeight: 900 }}>
-                  <span style={{ color: match.winnerTeam === 1 ? '#4ade80' : 'rgba(255,255,255,0.3)' }}>{t1Sets}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 80 }}>—</span>
-                  <span style={{ color: match.winnerTeam === 2 ? '#4ade80' : 'rgba(255,255,255,0.3)' }}>{t2Sets}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 20, fontSize: 28, fontFamily: 'monospace', color: '#a7f3d0' }}>
-                  {sets.map((s) => (
-                    <span key={s.setNumber}>{s.team1Games}-{s.team2Games}</span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize: 80, fontWeight: 900, color: '#86efac' }}>VS</div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, alignItems: 'flex-end', textAlign: 'right', fontSize: 44, fontWeight: 800, color: match.winnerTeam === 2 ? '#4ade80' : 'white', opacity: match.winnerTeam === 1 ? 0.5 : 1 }}>
-            <span>{pMap[match.team2Player1Id]?.name ?? '?'}</span>
-            <span>{pMap[match.team2Player2Id]?.name ?? '?'}</span>
-            {match.winnerTeam === 2 && <span style={{ fontSize: 24, color: '#4ade80', marginTop: 8 }}>🏆 Ganador</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#bbf7d0' }}>
+            <span>{match.date}</span>
+            {match.location ? <span>📍 {match.location}</span> : null}
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'center', fontSize: 24, color: '#86efac' }}>
-          {match.location ? `📍 ${match.location}` : ' '}
+        {/* Court area (placeholder for Tasks 7–9) */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 60px',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: 1080,
+              height: 440,
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, #14532d 0%, #064e3b 100%)',
+              border: '4px solid white',
+              display: 'flex',
+            }}
+          >
+            {/* Net (vertical line center) */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: 0,
+                bottom: 0,
+                width: 4,
+                marginLeft: -2,
+                background: 'white',
+              }}
+            />
+            {/* Service line — left half */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                width: '50%',
+                top: '33%',
+                height: 2,
+                background: 'rgba(255,255,255,0.85)',
+              }}
+            />
+            {/* Service line — right half */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                width: '50%',
+                top: '33%',
+                height: 2,
+                background: 'rgba(255,255,255,0.85)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Footer strip (placeholder for Task 9) */}
+        <div
+          style={{
+            height: 80,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 24,
+            color: '#86efac',
+          }}
+        >
+          {' '}
         </div>
       </div>
     ),
