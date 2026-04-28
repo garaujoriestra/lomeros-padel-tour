@@ -72,6 +72,15 @@ export const ratingHistory = sqliteTable('rating_history', {
   recordedAt: text('recorded_at').notNull().default(sql`(datetime('now'))`),
 });
 
+// ─── PLAYER ACHIEVEMENTS ────────────────────────────────────────────────────
+export const playerAchievements = sqliteTable('player_achievements', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  achievementId: text('achievement_id').notNull(),
+  earnedAt: text('earned_at').notNull(),
+  triggerMatchId: text('trigger_match_id').references(() => matches.id, { onDelete: 'set null' }),
+});
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -81,3 +90,5 @@ export type MatchSet = typeof matchSets.$inferSelect;
 export type NewMatchSet = typeof matchSets.$inferInsert;
 export type PairStat = typeof pairStats.$inferSelect;
 export type RatingHistory = typeof ratingHistory.$inferSelect;
+export type PlayerAchievement = typeof playerAchievements.$inferSelect;
+export type NewPlayerAchievement = typeof playerAchievements.$inferInsert;
