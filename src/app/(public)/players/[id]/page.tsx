@@ -3,10 +3,14 @@ import { players, matches, ratingHistory, pairStats } from '@/lib/db/schema';
 import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
+import { EloSparkline } from '@/components/charts/elo-sparkline';
 import Link from 'next/link';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
 import { PartnerCard } from '@/components/shared/partner-card';
+import { detectRankChanges } from '@/lib/feed/rank-changes';
+import { findUnplayedPartners } from '@/lib/players/unplayed-partners';
+import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +50,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const allPlayers = await db.select().from(players);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
+  const globalHistory = await db.select().from(ratingHistory).orderBy(ratingHistory.recordedAt);
+  const allRankEvents = detectRankChanges(globalHistory, allPlayers);
+  const playerRankEvents = allRankEvents.filter((e) => e.playerId === id);
+
   const recentForm = completedMatches.slice(0, 8).map((m) => {
     const isTeam1 = m.team1Player1Id === id || m.team1Player2Id === id;
     return (isTeam1 && m.winnerTeam === 1) || (!isTeam1 && m.winnerTeam === 2) ? 'W' : 'L';
@@ -75,13 +83,21 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     bestPartnerPlayer != null &&
     worstPartnerPlayer.id !== bestPartnerPlayer.id;
 
+  // Unplayed partners
+  // allPlayers covers the snapshot we need (full player list).
+  const unplayed = findUnplayedPartners(id, allPlayers, pairs);
+  // Total candidates = active players (matchesPlayed > 0), excluding the target.
+  const totalCandidates = allPlayers.filter(
+    (p) => p.id !== id && p.matchesPlayed > 0,
+  ).length;
+
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
   const driveBetter = sideStats.drive.winRate >= sideStats.reves.winRate;
 
   const rivalries = computeAllRivalries(id, completedMatches, allPlayers);
 
-  const chartData = history.map((h, i) => ({ partido: i + 1, elo: Math.round(h.eloAfter) }));
+  const chartData = history.map((h) => ({ date: h.recordedAt, elo: Math.round(h.eloAfter) }));
   const eloChange = Math.round(player.eloRating - 1500);
   const streak = (() => {
     let count = 0;
@@ -136,7 +152,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           {/* Stats row — 2x2 on mobile, 4 cols ≥sm */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-white/10">
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
+                {chartData.length >= 2 && <EloSparkline data={chartData} />}
+              </div>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">ELO</p>
             </div>
             <div className="text-center">
@@ -207,7 +226,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
               {eloChange >= 0 ? '↗' : '↘'} {eloChange >= 0 ? '+' : ''}{eloChange} desde inicial
             </span>
           </div>
-          <EloChart data={chartData} />
+          <EloChart data={chartData} rankEvents={playerRankEvents} />
         </div>
       )}
 
@@ -220,6 +239,8 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           )}
         </div>
       )}
+
+      <UnplayedPartnersCard unplayed={unplayed} totalCandidates={totalCandidates} />
 
       {/* Court side stats */}
       {hasSideData && (
