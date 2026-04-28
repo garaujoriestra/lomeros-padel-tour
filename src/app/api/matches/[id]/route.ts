@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { sets, team1Player1Side, team1Player2Side, team2Player1Side, team2Player2Side } = body;
+    const { sets, team1Player1Side, team1Player2Side, team2Player1Side, team2Player2Side, photoUrl } = body;
 
     if (!sets || sets.length < 2 || sets.length > 3) {
       return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
@@ -78,6 +78,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (team1Player2Side !== undefined) updateFields.team1Player2Side = coerceSide(team1Player2Side);
     if (team2Player1Side !== undefined) updateFields.team2Player1Side = coerceSide(team2Player1Side);
     if (team2Player2Side !== undefined) updateFields.team2Player2Side = coerceSide(team2Player2Side);
+    if (typeof photoUrl === 'string' && photoUrl.length > 0) updateFields.photoUrl = photoUrl;
 
     const [updated] = await db
       .update(matches)
