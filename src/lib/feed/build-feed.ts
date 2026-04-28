@@ -1,4 +1,5 @@
 import type { RankChangeEvent } from './rank-changes';
+import { ACHIEVEMENT_BY_ID, type Achievement } from '@/lib/achievements/catalog';
 
 interface MatchLike {
   id: string;
@@ -55,6 +56,12 @@ export type FeedEvent =
       type: 'new_player';
       timestamp: string;
       player: PlayerLike;
+    }
+  | {
+      type: 'achievement_unlocked';
+      timestamp: string;
+      playerId: string;
+      achievement: Achievement;
     };
 
 interface BuildFeedInput {
@@ -63,7 +70,12 @@ interface BuildFeedInput {
   ratingHistory: RatingHistoryLike[];
   players: PlayerLike[];
   rankEvents: RankChangeEvent[];
+  achievements: { playerId: string; achievementId: string; earnedAt: string }[];
 }
+
+/** Hard-coded cutoff: only achievement events earned after this date appear in the feed.
+ *  Block 3 deploy date — anything before this came from the historical backfill. */
+const ACHIEVEMENT_FEED_CUTOFF = '2026-04-29T00:00:00Z';
 
 const MAX_EVENTS = 10;
 
@@ -114,6 +126,18 @@ export function buildFeed(input: BuildFeedInput): FeedEvent[] {
 
   for (const p of input.players) {
     events.push({ type: 'new_player', timestamp: p.createdAt, player: p });
+  }
+
+  for (const a of input.achievements) {
+    if (a.earnedAt < ACHIEVEMENT_FEED_CUTOFF) continue;
+    const achievement = ACHIEVEMENT_BY_ID[a.achievementId];
+    if (!achievement) continue;  // unknown id — defensive
+    events.push({
+      type: 'achievement_unlocked',
+      timestamp: a.earnedAt,
+      playerId: a.playerId,
+      achievement,
+    });
   }
 
   events.sort((a, b) => b.timestamp.localeCompare(a.timestamp));

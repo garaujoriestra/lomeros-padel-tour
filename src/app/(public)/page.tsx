@@ -52,6 +52,7 @@ export default async function HomePage() {
     ratingHistory: recentHistory,
     players: recentNewPlayers,
     rankEvents,
+    achievements: [],
   });
 
   return (

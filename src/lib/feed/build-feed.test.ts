@@ -23,7 +23,7 @@ describe('buildFeed', () => {
   }
 
   it('returns empty array for empty inputs', () => {
-    expect(buildFeed({ matches: [], matchSets: [], ratingHistory: [], players: [], rankEvents: [] })).toEqual([]);
+    expect(buildFeed({ matches: [], matchSets: [], ratingHistory: [], players: [], rankEvents: [], achievements: [] })).toEqual([]);
   });
 
   it('emits a match_completed event per completed match', () => {
@@ -33,6 +33,7 @@ describe('buildFeed', () => {
       ratingHistory: [rh('a', '2026-04-01T11:00:00Z', 'm1')],
       players: [],
       rankEvents: [],
+      achievements: [],
     });
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('match_completed');
@@ -49,6 +50,7 @@ describe('buildFeed', () => {
       ratingHistory: [],
       players: [],
       rankEvents: [],
+      achievements: [],
     });
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('match_scheduled');
@@ -63,6 +65,7 @@ describe('buildFeed', () => {
       rankEvents: [
         { playerId: 'a', type: 'rank_into_top3', recordedAt: '2026-04-03T10:00:00Z', newElo: 1600 },
       ],
+      achievements: [],
     });
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('rank_change');
@@ -75,6 +78,7 @@ describe('buildFeed', () => {
       ratingHistory: [],
       players: [player('alice', '2026-04-04T10:00:00Z')],
       rankEvents: [],
+      achievements: [],
     });
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('new_player');
@@ -93,6 +97,7 @@ describe('buildFeed', () => {
       ],
       players: [],
       rankEvents: [],
+      achievements: [],
     });
     expect(events.map((e) => e.timestamp)).toEqual([
       '2026-04-03T10:00:00Z',
@@ -107,7 +112,7 @@ describe('buildFeed', () => {
     const ratingHistory = matches.map((m, i) =>
       rh('a', `2026-04-${String(i + 1).padStart(2, '0')}T10:00:00Z`, m.id),
     );
-    const events = buildFeed({ matches, matchSets: [], ratingHistory, players: [], rankEvents: [] });
+    const events = buildFeed({ matches, matchSets: [], ratingHistory, players: [], rankEvents: [], achievements: [] });
     expect(events).toHaveLength(10);
   });
 
@@ -119,6 +124,7 @@ describe('buildFeed', () => {
       ratingHistory: [],
       players: [],
       rankEvents: [],
+      achievements: [],
     });
     expect(events).toHaveLength(0);
   });
@@ -135,8 +141,71 @@ describe('buildFeed', () => {
       rankEvents: [
         { playerId: 'a', type: 'rank_into_top3', recordedAt: '2026-04-03T00:00:00Z', newElo: 1600 },
       ],
+      achievements: [],
     });
     const types = events.map((e) => e.type);
     expect(types).toEqual(['match_scheduled', 'rank_change', 'new_player', 'match_completed']);
+  });
+
+  it('emits an achievement_unlocked event for grants after the cutoff', () => {
+    const events = buildFeed({
+      matches: [],
+      matchSets: [],
+      ratingHistory: [],
+      players: [],
+      rankEvents: [],
+      achievements: [
+        { playerId: 'p1', achievementId: 'streak_3', earnedAt: '2026-04-29T10:00:00Z' },
+      ],
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('achievement_unlocked');
+  });
+
+  it('drops achievement events earned before the cutoff', () => {
+    const events = buildFeed({
+      matches: [],
+      matchSets: [],
+      ratingHistory: [],
+      players: [],
+      rankEvents: [],
+      achievements: [
+        { playerId: 'p1', achievementId: 'first_match', earnedAt: '2026-01-01T00:00:00Z' },
+      ],
+    });
+    expect(events).toHaveLength(0);
+  });
+
+  it('attaches the resolved Achievement object to the event', () => {
+    const events = buildFeed({
+      matches: [],
+      matchSets: [],
+      ratingHistory: [],
+      players: [],
+      rankEvents: [],
+      achievements: [
+        { playerId: 'p1', achievementId: 'streak_3', earnedAt: '2026-04-29T10:00:00Z' },
+      ],
+    });
+    expect(events[0].type).toBe('achievement_unlocked');
+    if (events[0].type === 'achievement_unlocked') {
+      expect(events[0].playerId).toBe('p1');
+      expect(events[0].achievement.id).toBe('streak_3');
+      expect(events[0].achievement.name).toBe('Racha de 3');
+    }
+  });
+
+  it('drops unknown achievementIds defensively', () => {
+    const events = buildFeed({
+      matches: [],
+      matchSets: [],
+      ratingHistory: [],
+      players: [],
+      rankEvents: [],
+      achievements: [
+        { playerId: 'p1', achievementId: 'nonexistent_id', earnedAt: '2026-04-29T10:00:00Z' },
+      ],
+    });
+    expect(events).toHaveLength(0);
   });
 });
