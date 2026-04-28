@@ -74,6 +74,17 @@ export async function POST() {
       }
     }
 
+    // Step 4b: Add photo_url column to matches if not present (Block 2 — match photo)
+    // Must run BEFORE the heuristic backfill below, because that step does
+    // db.select().from(matches) which Drizzle expands using the current schema
+    // (which now includes photo_url). If the column doesn't exist yet, the
+    // SELECT fails.
+    try {
+      await db.run(sql`ALTER TABLE matches ADD COLUMN photo_url TEXT`);
+    } catch {
+      // Column already exists — skip silently
+    }
+
     // Step 5: Heuristic backfill for matches with no side data (Feature C)
     // Convention: lefty → revés, righty → drive. Both same-handed → positional
     // (team1Player1 → drive, team1Player2 → revés).
@@ -106,13 +117,6 @@ export async function POST() {
         team2Player1Side: t2.player1,
         team2Player2Side: t2.player2,
       }).where(eq(matches.id, m.id));
-    }
-
-    // Step 6: Add photo_url column to matches if not present (Block 2 — match photo)
-    try {
-      await db.run(sql`ALTER TABLE matches ADD COLUMN photo_url TEXT`);
-    } catch {
-      // Column already exists — skip silently
     }
 
     return NextResponse.json({
