@@ -64,6 +64,19 @@ function PredictionLine({
   );
 }
 
+function pairMatchesPlayed(
+  p1Id: string,
+  p2Id: string,
+  pairs: { player1Id: string; player2Id: string; matchesPlayed: number }[],
+): number {
+  const found = pairs.find(
+    (p) =>
+      (p.player1Id === p1Id && p.player2Id === p2Id) ||
+      (p.player1Id === p2Id && p.player2Id === p1Id),
+  );
+  return found?.matchesPlayed ?? 0;
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const [match] = await db.select().from(matches).where(eq(matches.id, id));
@@ -455,6 +468,20 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       </div>
                     ))}
                     <p className="text-xs font-bold text-blue-600 pl-10">Elo equipo: {Math.round(opt.team1Elo)}</p>
+                    {(() => {
+                      const [p1, p2] = opt.team1;
+                      const mp = pairMatchesPlayed(p1.id, p2.id, relevantPairs);
+                      if (mp === 0) {
+                        return (
+                          <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                            ✨ INÉDITA
+                          </span>
+                        );
+                      }
+                      return (
+                        <p className="text-xs text-gray-400 mt-1.5">{mp} partido{mp !== 1 ? 's' : ''} juntos</p>
+                      );
+                    })()}
                   </div>
 
                   <div className="text-center sm:px-2">
@@ -478,6 +505,20 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                       </div>
                     ))}
                     <p className="text-xs font-bold text-red-600 pl-10 sm:pl-0 sm:pr-10 sm:text-right">Elo equipo: {Math.round(opt.team2Elo)}</p>
+                    {(() => {
+                      const [p1, p2] = opt.team2;
+                      const mp = pairMatchesPlayed(p1.id, p2.id, relevantPairs);
+                      if (mp === 0) {
+                        return (
+                          <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 sm:float-right sm:clear-right">
+                            ✨ INÉDITA
+                          </span>
+                        );
+                      }
+                      return (
+                        <p className="text-xs text-gray-400 mt-1.5 sm:text-right">{mp} partido{mp !== 1 ? 's' : ''} juntos</p>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
