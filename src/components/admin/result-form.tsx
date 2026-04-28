@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,10 @@ interface ResultFormProps {
 export function ResultForm({ matchId, team1Name, team2Name, date, location, team1Player1Name, team1Player2Name, team2Player1Name, team2Player2Name, initialSides }: ResultFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [preview, setPreview] = useState<string>('');
   const [sets, setSets] = useState<SetScore[]>([
     { team1Games: '', team2Games: '' },
     { team1Games: '', team2Games: '' },
@@ -67,6 +72,29 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
 
   const matchResult = validateSets();
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const res = await fetch('/api/upload/match-photo', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (res.ok) {
+      setPhotoUrl(data.url);
+      toast.success('Foto subida');
+    } else {
+      toast.error(data.error || 'Error al subir la foto');
+      setPreview('');
+    }
+    setUploading(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!matchResult) {
@@ -88,6 +116,7 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
         team1Player2Side: team1Sides[1] || null,
         team2Player1Side: team2Sides[0] || null,
         team2Player2Side: team2Sides[1] || null,
+        photoUrl: photoUrl || null,
       }),
     });
 
@@ -119,6 +148,49 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
         <div className="flex gap-4 mt-3 text-green-300 text-sm">
           <span>📅 {date}</span>
           {location && <span>📍 {location}</span>}
+        </div>
+      </div>
+
+      {/* Photo upload (optional) */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">📷 Foto del partido (opcional)</p>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors group bg-gray-50"
+            aria-label="Seleccionar foto"
+          >
+            {preview ? (
+              <Image src={preview} alt="Preview" fill className="object-cover" unoptimized />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl">📷</div>
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+              {uploading ? '⏳' : preview ? '🔄 Cambiar' : '📁 Elegir'}
+            </div>
+          </button>
+
+          <div className="flex-1 space-y-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? 'Subiendo...' : preview ? 'Cambiar foto' : '📁 Seleccionar imagen'}
+            </Button>
+            <p className="text-xs text-gray-400">JPG, PNG, WEBP · Máx. 5MB</p>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
       </div>
 

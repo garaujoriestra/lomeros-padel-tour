@@ -18,6 +18,7 @@ export interface MatchCardData {
   location?: string | null;
   status: string;            // 'scheduled' | 'completed' — stored as text in the DB schema
   winnerTeam?: number | null;
+  photoUrl?: string | null;
 }
 
 interface MatchCardProps {
@@ -43,6 +44,12 @@ export function MatchCard({ match, team1, team2, sets = [], href }: MatchCardPro
 
   const card = (
     <div className={`bg-white rounded-2xl shadow-md border ${cardBorder} overflow-hidden hover:shadow-lg transition-all`}>
+      {match.photoUrl && (
+        <div className="h-20 bg-gray-100 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={match.photoUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
       {/* Header strip: date + location */}
       <div className={`px-4 sm:px-5 py-2.5 border-b flex justify-between items-center text-xs font-semibold ${headerColors}`}>
         <span>📅 {match.date}</span>

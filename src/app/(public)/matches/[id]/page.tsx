@@ -184,6 +184,18 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-8">
 
+      {/* Photo hero */}
+      {match.photoUrl && (
+        <div className="rounded-2xl overflow-hidden bg-gray-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={match.photoUrl}
+            alt={`Foto del partido del ${match.date}`}
+            className="w-full h-auto max-h-[400px] object-cover"
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
