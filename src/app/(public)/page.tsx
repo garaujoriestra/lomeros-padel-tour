@@ -1,39 +1,58 @@
 import { db } from '@/lib/db';
-import { players, matches, matchSets } from '@/lib/db/schema';
+import { players, matches, matchSets, ratingHistory } from '@/lib/db/schema';
 import { desc, sql, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
+import { ActivityFeed } from '@/components/shared/activity-feed';
+import { buildFeed } from '@/lib/feed/build-feed';
+import { detectRankChanges } from '@/lib/feed/rank-changes';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [topPlayers, recentMatches, upcomingMatches, [totalMatchesRow], [totalPlayersRow]] = await Promise.all([
+  const [
+    topPlayers,
+    recentMatchesAll,
+    upcomingMatches,
+    [totalMatchesRow],
+    [totalPlayersRow],
+    recentHistory,
+    recentNewPlayers,
+  ] = await Promise.all([
     db.select().from(players)
       .where(sql`${players.matchesPlayed} > 0`)
       .orderBy(desc(players.eloRating))
-      .limit(5),
-    db.select().from(matches).where(eq(matches.status, 'completed')).orderBy(desc(matches.date)).limit(4),
+      .limit(3),
+    db.select().from(matches).orderBy(desc(matches.date)).limit(30),
     db.select().from(matches).where(eq(matches.status, 'scheduled')).orderBy(matches.date).limit(3),
     db.select({ count: sql<number>`count(*)` }).from(matches),
     db.select({ count: sql<number>`count(*)` }).from(players).where(sql`${players.matchesPlayed} > 0`),
+    db.select().from(ratingHistory).orderBy(desc(ratingHistory.recordedAt)).limit(100),
+    db.select().from(players).orderBy(desc(players.createdAt)).limit(5),
   ]);
 
   const totalMatches = totalMatchesRow.count;
   const totalPlayers = totalPlayersRow.count;
 
-  const recentMatchIds = recentMatches.map((m) => m.id);
-  const allSets = recentMatchIds.length > 0
-    ? await db.select().from(matchSets).where(inArray(matchSets.matchId, recentMatchIds))
+  const matchIds = recentMatchesAll.map((m) => m.id);
+  const allSets = matchIds.length > 0
+    ? await db.select().from(matchSets).where(inArray(matchSets.matchId, matchIds))
     : [];
+
   const allPlayers = await db.select().from(players);
-  const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
-  const setsMap: Record<string, typeof allSets> = {};
-  for (const set of allSets) {
-    if (!setsMap[set.matchId]) setsMap[set.matchId] = [];
-    setsMap[set.matchId].push(set);
-    setsMap[set.matchId].sort((a, b) => a.setNumber - b.setNumber);
-  }
+  const playerMap: Record<string, typeof allPlayers[number]> = {};
+  for (const p of allPlayers) playerMap[p.id] = p;
+
+  // Build the feed
+  const rankEvents = detectRankChanges(recentHistory, allPlayers);
+  const feedEvents = buildFeed({
+    matches: recentMatchesAll,
+    matchSets: allSets,
+    ratingHistory: recentHistory,
+    players: recentNewPlayers,
+    rankEvents,
+  });
 
   return (
     <div className="space-y-10">
@@ -140,30 +159,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── RECENT MATCHES ── */}
-      {recentMatches.length > 0 && (
-        <section className="space-y-5">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">⚡ ÚLTIMOS PARTIDOS</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-green-300/60 to-transparent" />
-            <Link href="/matches" className="text-sm font-bold text-green-700 hover:text-green-900 transition-colors">
-              Ver todos →
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {recentMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                team1={[playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]]}
-                team2={[playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]]}
-                sets={setsMap[match.id] ?? []}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* ── ACTIVITY FEED ── */}
+      <ActivityFeed events={feedEvents} playerMap={playerMap} />
 
       {/* Empty state */}
       {totalMatches === 0 && (
