@@ -108,6 +108,13 @@ export async function POST() {
       }).where(eq(matches.id, m.id));
     }
 
+    // Step 6: Add photo_url column to matches if not present (Block 2 — match photo)
+    try {
+      await db.run(sql`ALTER TABLE matches ADD COLUMN photo_url TEXT`);
+    } catch {
+      // Column already exists — skip silently
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Migración completada',
