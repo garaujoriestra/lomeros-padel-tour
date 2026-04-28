@@ -34,6 +34,7 @@ export const matches = sqliteTable('matches', {
   team1Player2Side: text('team1_player2_side'),
   team2Player1Side: text('team2_player1_side'),
   team2Player2Side: text('team2_player2_side'),
+  photoUrl: text('photo_url'),
   notes: text('notes'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
