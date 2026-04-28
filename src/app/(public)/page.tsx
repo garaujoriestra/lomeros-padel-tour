@@ -126,7 +126,7 @@ export default async function HomePage() {
               Ver todos →
             </Link>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid md:grid-cols-2 gap-4">
             {upcomingMatches.map((match) => (
               <MatchCard
                 key={match.id}
