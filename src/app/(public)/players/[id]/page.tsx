@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
 import { PartnerCard } from '@/components/shared/partner-card';
+import { detectRankChanges } from '@/lib/feed/rank-changes';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const allPlayers = await db.select().from(players);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
+  const globalHistory = await db.select().from(ratingHistory).orderBy(ratingHistory.recordedAt);
+  const allRankEvents = detectRankChanges(globalHistory, allPlayers);
+  const playerRankEvents = allRankEvents.filter((e) => e.playerId === id);
+
   const recentForm = completedMatches.slice(0, 8).map((m) => {
     const isTeam1 = m.team1Player1Id === id || m.team1Player2Id === id;
     return (isTeam1 && m.winnerTeam === 1) || (!isTeam1 && m.winnerTeam === 2) ? 'W' : 'L';
@@ -81,7 +86,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
 
   const rivalries = computeAllRivalries(id, completedMatches, allPlayers);
 
-  const chartData = history.map((h, i) => ({ partido: i + 1, elo: Math.round(h.eloAfter) }));
+  const chartData = history.map((h) => ({ date: h.recordedAt, elo: Math.round(h.eloAfter) }));
   const eloChange = Math.round(player.eloRating - 1500);
   const streak = (() => {
     let count = 0;
@@ -207,7 +212,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
               {eloChange >= 0 ? '↗' : '↘'} {eloChange >= 0 ? '+' : ''}{eloChange} desde inicial
             </span>
           </div>
-          <EloChart data={chartData} />
+          <EloChart data={chartData} rankEvents={playerRankEvents} />
         </div>
       )}
 
