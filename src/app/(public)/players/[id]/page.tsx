@@ -3,6 +3,7 @@ import { players, matches, ratingHistory, pairStats } from '@/lib/db/schema';
 import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
+import { EloSparkline } from '@/components/charts/elo-sparkline';
 import Link from 'next/link';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries, type RivalryStats } from '@/lib/rating/head-to-head';
@@ -141,7 +142,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           {/* Stats row — 2x2 on mobile, 4 cols ≥sm */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-white/10">
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-2xl sm:text-3xl md:text-4xl font-black text-white tabular-nums">{Math.round(player.eloRating)}</p>
+                {chartData.length >= 2 && <EloSparkline data={chartData} />}
+              </div>
               <p className="text-green-300 text-xs uppercase tracking-widest mt-1">ELO</p>
             </div>
             <div className="text-center">
