@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { players, matches, ratingHistory, pairStats } from '@/lib/db/schema';
+import { players, matches, ratingHistory, pairStats, playerAchievements } from '@/lib/db/schema';
 import { eq, or, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { EloChart } from '@/components/charts/elo-chart';
@@ -11,6 +11,7 @@ import { PartnerCard } from '@/components/shared/partner-card';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
 import { findUnplayedPartners } from '@/lib/players/unplayed-partners';
 import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card';
+import { AchievementsCard } from '@/components/shared/achievements-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +91,12 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const totalCandidates = allPlayers.filter(
     (p) => p.id !== id && p.matchesPlayed > 0,
   ).length;
+
+  const earnedGrants = await db
+    .select()
+    .from(playerAchievements)
+    .where(eq(playerAchievements.playerId, id))
+    .orderBy(desc(playerAchievements.earnedAt));
 
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;
@@ -241,6 +248,10 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
       )}
 
       <UnplayedPartnersCard unplayed={unplayed} totalCandidates={totalCandidates} />
+
+      <AchievementsCard
+        earned={earnedGrants.map((g) => ({ achievementId: g.achievementId, earnedAt: g.earnedAt }))}
+      />
 
       {/* Court side stats */}
       {hasSideData && (
