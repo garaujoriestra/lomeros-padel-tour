@@ -177,6 +177,12 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     match.status === 'completed' && sets.length > 0
       ? sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' · ')
       : null;
+  const winnerNames =
+    match.status === 'completed' && match.winnerTeam === 1
+      ? `${pMap[match.team1Player1Id]?.name ?? '?'} & ${pMap[match.team1Player2Id]?.name ?? '?'}`
+      : match.status === 'completed' && match.winnerTeam === 2
+        ? `${pMap[match.team2Player1Id]?.name ?? '?'} & ${pMap[match.team2Player2Id]?.name ?? '?'}`
+        : null;
   const showVs = match.status !== 'completed';
 
   return new ImageResponse(
@@ -319,21 +325,68 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 </span>
               ) : null}
             </div>
+            {/* Winner overlay — only when match is completed and a winner exists */}
+            {match.status === 'completed' && match.winnerTeam === 1 ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '50%',
+                  background: 'rgba(74, 222, 128, 0.28)',
+                  border: '6px solid #4ade80',
+                  borderRadius: '12px 0 0 12px',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                }}
+              />
+            ) : null}
+            {match.status === 'completed' && match.winnerTeam === 2 ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '50%',
+                  background: 'rgba(74, 222, 128, 0.28)',
+                  border: '6px solid #4ade80',
+                  borderRadius: '0 12px 12px 0',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                }}
+              />
+            ) : null}
           </div>
         </div>
 
-        {/* Footer strip (placeholder for Task 9) */}
+        {/* Footer */}
         <div
           style={{
             height: 80,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 24,
-            color: '#86efac',
+            background: winnerNames ? '#22c55e' : 'transparent',
           }}
         >
-          {' '}
+          {winnerNames ? (
+            <span
+              style={{
+                color: '#052e16',
+                fontSize: 32,
+                fontWeight: 900,
+                letterSpacing: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <span style={{ fontSize: 36 }}>🏆</span>
+              <span>{winnerNames} ganan</span>
+            </span>
+          ) : null}
         </div>
       </div>
     ),
