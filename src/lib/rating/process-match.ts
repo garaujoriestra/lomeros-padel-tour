@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
-import { players, pairStats, ratingHistory } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { players, pairStats, ratingHistory, matches as matchesTable, matchSets as matchSetsTable, playerAchievements } from '@/lib/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
+import { detectAllAchievements, type MatchHistoryEntry } from '@/lib/achievements/detect';
+import { detectRankChanges } from '@/lib/feed/rank-changes';
 import {
   calculateDoublesElo,
   calculatePairElo,
@@ -156,5 +158,102 @@ export async function processMatchRatings(match: MatchInput) {
       .where(
         and(eq(pairStats.player1Id, p1id), eq(pairStats.player2Id, p2id))
       );
+  }
+
+  // Apply achievements for the 4 players based on the freshly-updated state.
+  await applyAchievementsForMatch(match.id);
+}
+
+async function applyAchievementsForMatch(matchId: string) {
+  // Load history + sets + matches + players. We need globals to compute
+  // bagel/doubleBagel and rank changes correctly.
+  const allHistory = await db.select().from(ratingHistory);
+  const allSetsRows = await db.select().from(matchSetsTable);
+  const allMatchesRows = await db.select().from(matchesTable);
+  const allPlayersSnapshot = await db.select().from(players);
+
+  // Group sets by matchId
+  const setsByMatch = new Map<string, { team1Games: number; team2Games: number }[]>();
+  for (const s of allSetsRows) {
+    const arr = setsByMatch.get(s.matchId) ?? [];
+    arr.push({ team1Games: s.team1Games, team2Games: s.team2Games });
+    setsByMatch.set(s.matchId, arr);
+  }
+
+  // Index winnerTeam + team1 ids per matchId
+  const winnerByMatch = new Map<string, number | null>();
+  const team1ByMatch = new Map<string, [string, string]>();
+  for (const m of allMatchesRows) {
+    winnerByMatch.set(m.id, m.winnerTeam);
+    team1ByMatch.set(m.id, [m.team1Player1Id, m.team1Player2Id]);
+  }
+
+  const historyForDetector: MatchHistoryEntry[] = allHistory.map((rh) => {
+    const winner = winnerByMatch.get(rh.matchId) ?? null;
+    const t1 = team1ByMatch.get(rh.matchId);
+    const isTeam1 = t1 ? (rh.playerId === t1[0] || rh.playerId === t1[1]) : false;
+    const isWin = winner !== null && ((isTeam1 && winner === 1) || (!isTeam1 && winner === 2));
+
+    const sets = setsByMatch.get(rh.matchId) ?? [];
+    const winningSets = sets.filter((s) =>
+      isTeam1 ? s.team1Games > s.team2Games : s.team2Games > s.team1Games
+    );
+    const losingSetsForOurTeam = sets.filter((s) =>
+      isTeam1 ? s.team2Games > s.team1Games : s.team1Games > s.team2Games
+    );
+
+    const hasBagelSet = winningSets.some((s) =>
+      isTeam1 ? s.team1Games === 6 && s.team2Games === 0 : s.team2Games === 6 && s.team1Games === 0
+    );
+    const wonAllSetsBagel = winningSets.length >= 2 &&
+      winningSets.every((s) => isTeam1 ? s.team1Games === 6 && s.team2Games === 0 : s.team2Games === 6 && s.team1Games === 0);
+    const isDoubleBagel = isWin && wonAllSetsBagel && losingSetsForOurTeam.length === 0;
+
+    return {
+      playerId: rh.playerId,
+      matchId: rh.matchId,
+      recordedAt: rh.recordedAt,
+      eloBefore: rh.eloBefore,
+      eloAfter: rh.eloAfter,
+      isWin,
+      hasBagelSet,
+      isDoubleBagel,
+    };
+  });
+
+  const rankEvents = detectRankChanges(allHistory, allPlayersSnapshot);
+  const candidateGrants = detectAllAchievements({ history: historyForDetector, rankEvents });
+
+  // Find the 4 player ids of the match we just closed
+  const thisMatch = allMatchesRows.find((m) => m.id === matchId);
+  if (!thisMatch) return;
+  const affectedPlayers = new Set<string>([
+    thisMatch.team1Player1Id,
+    thisMatch.team1Player2Id,
+    thisMatch.team2Player1Id,
+    thisMatch.team2Player2Id,
+  ]);
+
+  // Filter to grants for the 4 affected players (others' grants don't change here)
+  const candidatesForAffected = candidateGrants.filter((g) => affectedPlayers.has(g.playerId));
+
+  // Idempotency
+  const existingGrants = await db
+    .select()
+    .from(playerAchievements)
+    .where(inArray(playerAchievements.playerId, [...affectedPlayers]));
+  const existingKey = new Set(existingGrants.map((g) => `${g.playerId}:${g.achievementId}`));
+
+  const grantsToInsert = candidatesForAffected.filter(
+    (g) => !existingKey.has(`${g.playerId}:${g.achievementId}`)
+  );
+
+  for (const g of grantsToInsert) {
+    await db.insert(playerAchievements).values({
+      playerId: g.playerId,
+      achievementId: g.achievementId,
+      earnedAt: g.earnedAt,
+      triggerMatchId: g.triggerMatchId,
+    });
   }
 }
