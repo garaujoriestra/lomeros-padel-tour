@@ -24,24 +24,27 @@ export function AchievementsCard({ earned }: AchievementsCardProps) {
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Logros</p>
         <span className="text-xs text-gray-400">{earnedCount} / {total}</span>
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
         {ACHIEVEMENTS.map((a: Achievement) => {
           const earnedAt = earnedMap.get(a.id);
           const isEarned = earnedAt !== undefined;
           const tooltip = isEarned
-            ? `${a.name} — ${a.description} · Desbloqueado el ${formatEarnedDate(earnedAt)}`
-            : `${a.name} — ${a.description} (bloqueado)`;
+            ? `${a.description} · Desbloqueado el ${formatEarnedDate(earnedAt)}`
+            : `${a.description} (bloqueado)`;
           return (
             <div
               key={a.id}
               title={tooltip}
-              className={`aspect-square rounded-xl flex items-center justify-center text-2xl ${
+              className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 px-1 py-2 text-center ${
                 isEarned
                   ? 'bg-gradient-to-br from-yellow-100 to-yellow-300 ring-1 ring-yellow-400/50'
-                  : 'bg-gray-100 opacity-40 grayscale'
+                  : 'bg-gray-100 opacity-50 grayscale'
               }`}
             >
-              {a.icon}
+              <span className="text-2xl leading-none">{a.icon}</span>
+              <span className={`text-[10px] font-bold leading-tight line-clamp-2 ${isEarned ? 'text-yellow-900' : 'text-gray-600'}`}>
+                {a.name}
+              </span>
             </div>
           );
         })}
