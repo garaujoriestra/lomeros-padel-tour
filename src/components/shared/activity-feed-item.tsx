@@ -112,16 +112,26 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     );
   }
 
-  // achievement_unlocked
-  return (
-    <div className="bg-white border border-yellow-100 rounded-2xl p-4 flex items-start gap-3">
-      <div className="w-9 h-9 rounded-full bg-yellow-100 flex items-center justify-center text-lg shrink-0">{event.achievement.icon}</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-800 leading-snug">
-          Logro desbloqueado: <span className="font-bold">{event.achievement.name}</span>
-        </p>
-        <p className="text-xs text-gray-400 mt-1.5">{time}</p>
-      </div>
-    </div>
-  );
+  if (event.type === 'achievement_unlocked') {
+    const player = playerMap[event.playerId];
+    return (
+      <Link href={`/players/${event.playerId}`} className="block">
+        <div className="bg-white border border-yellow-200 rounded-2xl p-4 flex items-start gap-3 hover:border-yellow-300 hover:shadow-sm transition-all">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 flex items-center justify-center text-lg shrink-0">
+            {event.achievement.icon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-gray-800 leading-snug">
+              <span className="font-bold">{player?.name ?? '?'}</span> desbloquea{' '}
+              <span className="font-bold">{event.achievement.name}</span>
+            </p>
+            <p className="text-xs text-gray-400 mt-1.5">{event.achievement.description} · {time}</p>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  // Should not reach here; all variants have explicit handlers
+  return null;
 }

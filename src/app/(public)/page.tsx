@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { players, matches, matchSets, ratingHistory } from '@/lib/db/schema';
+import { players, matches, matchSets, ratingHistory, playerAchievements } from '@/lib/db/schema';
 import { desc, sql, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { Podium } from '@/components/shared/podium';
@@ -19,6 +19,7 @@ export default async function HomePage() {
     [totalPlayersRow],
     recentHistory,
     recentNewPlayers,
+    recentAchievements,
   ] = await Promise.all([
     db.select().from(players)
       .where(sql`${players.matchesPlayed} > 0`)
@@ -30,6 +31,7 @@ export default async function HomePage() {
     db.select({ count: sql<number>`count(*)` }).from(players).where(sql`${players.matchesPlayed} > 0`),
     db.select().from(ratingHistory).orderBy(desc(ratingHistory.recordedAt)).limit(100),
     db.select().from(players).orderBy(desc(players.createdAt)).limit(5),
+    db.select().from(playerAchievements).orderBy(desc(playerAchievements.earnedAt)).limit(20),
   ]);
 
   const totalMatches = totalMatchesRow.count;
@@ -52,7 +54,11 @@ export default async function HomePage() {
     ratingHistory: recentHistory,
     players: recentNewPlayers,
     rankEvents,
-    achievements: [],
+    achievements: recentAchievements.map((a) => ({
+      playerId: a.playerId,
+      achievementId: a.achievementId,
+      earnedAt: a.earnedAt,
+    })),
   });
 
   return (
