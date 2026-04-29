@@ -180,6 +180,21 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         : null;
   const showVs = match.status !== 'completed';
 
+  const positions = resolveCourtPositions({
+    team1: {
+      p1Id: match.team1Player1Id,
+      p2Id: match.team1Player2Id,
+      p1Side: match.team1Player1Side,
+      p2Side: match.team1Player2Side,
+    },
+    team2: {
+      p1Id: match.team2Player1Id,
+      p2Id: match.team2Player2Id,
+      p1Side: match.team2Player1Side,
+      p2Side: match.team2Player2Side,
+    },
+  });
+
   return new ImageResponse(
     (
       <div
@@ -219,22 +234,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Court area */}
-        {match.status === 'completed' ? (() => {
-          const positions = resolveCourtPositions({
-            team1: {
-              p1Id: match.team1Player1Id,
-              p2Id: match.team1Player2Id,
-              p1Side: match.team1Player1Side,
-              p2Side: match.team1Player2Side,
-            },
-            team2: {
-              p1Id: match.team2Player1Id,
-              p2Id: match.team2Player2Id,
-              p1Side: match.team2Player1Side,
-              p2Side: match.team2Player2Side,
-            },
-          });
-          return (
+        {match.status === 'completed' ? (
             <div
               style={{
                 flex: 1,
@@ -371,8 +371,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 ) : null}
               </div>
             </div>
-          );
-        })() : (
+        ) : (
           /* Scheduled layout — convocatoria */
           <div
             style={{
