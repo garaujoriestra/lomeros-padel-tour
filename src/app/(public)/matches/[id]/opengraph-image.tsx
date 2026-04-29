@@ -149,20 +149,15 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const allPlayers = await db.select().from(players);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
-  const positions = resolveCourtPositions({
-    team1: {
-      p1Id: match.team1Player1Id,
-      p2Id: match.team1Player2Id,
-      p1Side: match.team1Player1Side,
-      p2Side: match.team1Player2Side,
-    },
-    team2: {
-      p1Id: match.team2Player1Id,
-      p2Id: match.team2Player2Id,
-      p1Side: match.team2Player1Side,
-      p2Side: match.team2Player2Side,
-    },
-  });
+  const fourPlayers = [
+    match.team1Player1Id,
+    match.team1Player2Id,
+    match.team2Player1Id,
+    match.team2Player2Id,
+  ]
+    .map((pid) => pMap[pid])
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   const sets =
     match.status === 'completed'
@@ -223,143 +218,243 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {/* Court area (placeholder for Tasks 7–9) */}
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 60px',
-          }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              width: 1080,
-              height: 440,
-              borderRadius: 16,
-              background: 'linear-gradient(135deg, #14532d 0%, #064e3b 100%)',
-              border: '4px solid white',
-              display: 'flex',
-            }}
-          >
-            {/* Net (vertical line center) */}
+        {/* Court area */}
+        {match.status === 'completed' ? (() => {
+          const positions = resolveCourtPositions({
+            team1: {
+              p1Id: match.team1Player1Id,
+              p2Id: match.team1Player2Id,
+              p1Side: match.team1Player1Side,
+              p2Side: match.team1Player2Side,
+            },
+            team2: {
+              p1Id: match.team2Player1Id,
+              p2Id: match.team2Player2Id,
+              p1Side: match.team2Player1Side,
+              p2Side: match.team2Player2Side,
+            },
+          });
+          return (
             <div
               style={{
-                position: 'absolute',
-                left: '50%',
-                top: 0,
-                bottom: 0,
-                width: 4,
-                marginLeft: -2,
-                background: 'white',
-              }}
-            />
-            {/* Service line — left half */}
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                width: '50%',
-                top: '33%',
-                height: 2,
-                background: 'rgba(255,255,255,0.85)',
-              }}
-            />
-            {/* Service line — right half */}
-            <div
-              style={{
-                position: 'absolute',
-                left: '50%',
-                width: '50%',
-                top: '33%',
-                height: 2,
-                background: 'rgba(255,255,255,0.85)',
-              }}
-            />
-            <PlayerSlot position="topLeft" pos={positions.topLeft} pMap={pMap} />
-            <PlayerSlot position="bottomLeft" pos={positions.bottomLeft} pMap={pMap} />
-            <PlayerSlot position="topRight" pos={positions.topRight} pMap={pMap} />
-            <PlayerSlot position="bottomRight" pos={positions.bottomRight} pMap={pMap} />
-            {/* Score / VS over the net */}
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
+                flex: 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '0 60px',
               }}
             >
-              {showVs ? (
-                <span
+              <div
+                style={{
+                  position: 'relative',
+                  width: 1080,
+                  height: 440,
+                  borderRadius: 16,
+                  background: 'linear-gradient(135deg, #14532d 0%, #064e3b 100%)',
+                  border: '4px solid white',
+                  display: 'flex',
+                }}
+              >
+                {/* Net (vertical line center) */}
+                <div
                   style={{
-                    fontSize: 96,
-                    fontWeight: 900,
-                    color: 'white',
-                    textShadow: '0 4px 20px rgba(0,0,0,0.7)',
-                    letterSpacing: 4,
+                    position: 'absolute',
+                    left: '50%',
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    marginLeft: -2,
+                    background: 'white',
+                  }}
+                />
+                {/* Service line — left half */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    width: '50%',
+                    top: '33%',
+                    height: 2,
+                    background: 'rgba(255,255,255,0.85)',
+                  }}
+                />
+                {/* Service line — right half */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    width: '50%',
+                    top: '33%',
+                    height: 2,
+                    background: 'rgba(255,255,255,0.85)',
+                  }}
+                />
+                <PlayerSlot position="topLeft" pos={positions.topLeft} pMap={pMap} />
+                <PlayerSlot position="bottomLeft" pos={positions.bottomLeft} pMap={pMap} />
+                <PlayerSlot position="topRight" pos={positions.topRight} pMap={pMap} />
+                <PlayerSlot position="bottomRight" pos={positions.bottomRight} pMap={pMap} />
+                {/* Score / VS over the net */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  VS
-                </span>
-              ) : scoreText ? (
-                <span
-                  style={{
-                    fontSize: 78,
-                    fontWeight: 900,
-                    fontFamily: 'monospace',
-                    color: 'white',
-                    background: 'rgba(0,0,0,0.55)',
-                    padding: '12px 32px',
-                    borderRadius: 16,
-                    textShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                    letterSpacing: 2,
-                  }}
-                >
-                  {scoreText}
-                </span>
-              ) : null}
+                  {showVs ? (
+                    <span
+                      style={{
+                        fontSize: 96,
+                        fontWeight: 900,
+                        color: 'white',
+                        textShadow: '0 4px 20px rgba(0,0,0,0.7)',
+                        letterSpacing: 4,
+                      }}
+                    >
+                      VS
+                    </span>
+                  ) : scoreText ? (
+                    <span
+                      style={{
+                        fontSize: 78,
+                        fontWeight: 900,
+                        fontFamily: 'monospace',
+                        color: 'white',
+                        background: 'rgba(0,0,0,0.55)',
+                        padding: '12px 32px',
+                        borderRadius: 16,
+                        textShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        letterSpacing: 2,
+                      }}
+                    >
+                      {scoreText}
+                    </span>
+                  ) : null}
+                </div>
+                {/* Winner overlay — only when match is completed and a winner exists */}
+                {match.status === 'completed' && match.winnerTeam === 1 ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '50%',
+                      background: 'rgba(74, 222, 128, 0.28)',
+                      border: '6px solid #4ade80',
+                      borderRadius: '12px 0 0 12px',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                    }}
+                  />
+                ) : null}
+                {match.status === 'completed' && match.winnerTeam === 2 ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '50%',
+                      background: 'rgba(74, 222, 128, 0.28)',
+                      border: '6px solid #4ade80',
+                      borderRadius: '0 12px 12px 0',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                    }}
+                  />
+                ) : null}
+              </div>
             </div>
-            {/* Winner overlay — only when match is completed and a winner exists */}
-            {match.status === 'completed' && match.winnerTeam === 1 ? (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '50%',
-                  background: 'rgba(74, 222, 128, 0.28)',
-                  border: '6px solid #4ade80',
-                  borderRadius: '12px 0 0 12px',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                }}
-              />
-            ) : null}
-            {match.status === 'completed' && match.winnerTeam === 2 ? (
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '50%',
-                  background: 'rgba(74, 222, 128, 0.28)',
-                  border: '6px solid #4ade80',
-                  borderRadius: '0 12px 12px 0',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                }}
-              />
-            ) : null}
+          );
+        })() : (
+          /* Scheduled layout — convocatoria */
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 48,
+              padding: '0 60px',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 64,
+                fontWeight: 900,
+                color: '#86efac',
+                letterSpacing: 4,
+                textTransform: 'uppercase',
+              }}
+            >
+              Próximo partido
+            </span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 40 }}>
+              {fourPlayers.map((p) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 16,
+                  }}
+                >
+                  {p.avatarUrl ? (
+                    <img
+                      src={p.avatarUrl}
+                      alt={p.name}
+                      width={140}
+                      height={140}
+                      style={{
+                        width: 140,
+                        height: 140,
+                        borderRadius: 70,
+                        objectFit: 'cover',
+                        border: '4px solid rgba(255,255,255,0.9)',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 140,
+                        height: 140,
+                        borderRadius: 70,
+                        background: 'linear-gradient(135deg, #4ade80 0%, #14532d 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: 72,
+                        fontWeight: 900,
+                        border: '4px solid rgba(255,255,255,0.9)',
+                      }}
+                    >
+                      {p.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span
+                    style={{
+                      color: 'white',
+                      fontSize: 28,
+                      fontWeight: 800,
+                      textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                    }}
+                  >
+                    {p.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Footer */}
         <div
