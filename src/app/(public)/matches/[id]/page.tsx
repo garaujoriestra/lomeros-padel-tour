@@ -412,12 +412,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* Share button — only for completed matches */}
-      {match.status === 'completed' && (
-        <div className="flex justify-end">
-          <ShareMatchButton url={matchUrl} />
-        </div>
-      )}
+      {/* Share button — both completed and scheduled */}
+      <div className="flex justify-end">
+        <ShareMatchButton url={matchUrl} />
+      </div>
 
       {/* Pairing Recommender — only for scheduled matches */}
       {pairingOptions && (
