@@ -37,32 +37,34 @@ function teamHasValidSides(t: TeamInput): boolean {
 export function resolveCourtPositions(input: PositionsInput): CourtPositions {
   const { team1, team2 } = input;
 
-  // Team 1: drive goes top, revés goes bottom.
+  // Team 1 plays the left half facing the net (right of image).
+  // From the player's POV, drive = right hand = bottom of image; revés = top.
   let topLeft: PositionedPlayer;
   let bottomLeft: PositionedPlayer;
   if (teamHasValidSides(team1)) {
-    if (team1.p1Side === 'drive') {
-      topLeft = { playerId: team1.p1Id, label: 'D' };
-      bottomLeft = { playerId: team1.p2Id, label: 'R' };
+    if (team1.p1Side === 'reves') {
+      topLeft = { playerId: team1.p1Id, label: 'R' };
+      bottomLeft = { playerId: team1.p2Id, label: 'D' };
     } else {
-      topLeft = { playerId: team1.p2Id, label: 'D' };
-      bottomLeft = { playerId: team1.p1Id, label: 'R' };
+      topLeft = { playerId: team1.p2Id, label: 'R' };
+      bottomLeft = { playerId: team1.p1Id, label: 'D' };
     }
   } else {
     topLeft = { playerId: team1.p1Id, label: null };
     bottomLeft = { playerId: team1.p2Id, label: null };
   }
 
-  // Team 2: revés goes top, drive goes bottom.
+  // Team 2 plays the right half facing the net (left of image).
+  // From the player's POV, drive = right hand = top of image; revés = bottom.
   let topRight: PositionedPlayer;
   let bottomRight: PositionedPlayer;
   if (teamHasValidSides(team2)) {
-    if (team2.p1Side === 'reves') {
-      topRight = { playerId: team2.p1Id, label: 'R' };
-      bottomRight = { playerId: team2.p2Id, label: 'D' };
+    if (team2.p1Side === 'drive') {
+      topRight = { playerId: team2.p1Id, label: 'D' };
+      bottomRight = { playerId: team2.p2Id, label: 'R' };
     } else {
-      topRight = { playerId: team2.p2Id, label: 'R' };
-      bottomRight = { playerId: team2.p1Id, label: 'D' };
+      topRight = { playerId: team2.p2Id, label: 'D' };
+      bottomRight = { playerId: team2.p1Id, label: 'R' };
     }
   } else {
     topRight = { playerId: team2.p1Id, label: null };
