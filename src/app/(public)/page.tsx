@@ -8,6 +8,7 @@ import { ActivityFeed } from '@/components/shared/activity-feed';
 import { InstallPrompt } from '@/components/shared/install-prompt';
 import { buildFeed } from '@/lib/feed/build-feed';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
+import { buildPodiumGroups } from '@/lib/rankings/podium-groups';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export default async function HomePage() {
     db.select().from(players)
       .where(sql`${players.matchesPlayed} > 0`)
       .orderBy(desc(players.eloRating))
-      .limit(3),
+      .limit(20),
     db.select().from(matches).orderBy(desc(matches.date)).limit(30),
     db.select().from(matches).where(eq(matches.status, 'scheduled')).orderBy(matches.date).limit(3),
     db.select({ count: sql<number>`count(*)` }).from(matches),
@@ -113,7 +114,7 @@ export default async function HomePage() {
           </div>
 
           {topPlayers.length >= 3 ? (
-            <Podium players={topPlayers} variant="home" />
+            <Podium groups={buildPodiumGroups(topPlayers)} variant="home" />
           ) : (
             <div className="grid gap-3">
               {topPlayers.map((player, idx) => {

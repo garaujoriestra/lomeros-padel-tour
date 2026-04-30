@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { RankGroup } from '@/lib/rankings/podium-groups';
 
 interface PodiumPlayer {
   id: string;
@@ -11,14 +12,87 @@ interface PodiumPlayer {
 }
 
 interface PodiumProps {
-  /** Expected: at least 3 players (index 0 = gold, 1 = silver, 2 = bronze). Renders nothing if fewer. */
-  players: PodiumPlayer[];
+  /** Up to 3 rank groups in descending order (group[0] = top step). */
+  groups: RankGroup<PodiumPlayer>[];
   /**
    * 'home' shows V/D pills inside each card (used on the homepage).
    * 'rankings' shows winrate% · matchesPlayed (used on the rankings page).
    */
   variant: 'home' | 'rankings';
 }
+
+type StepTone = 'gold' | 'silver' | 'bronze';
+
+const TONE_STYLES: Record<
+  StepTone,
+  {
+    card: string;
+    avatar: string;
+    name: string;
+    nickname: string;
+    elo: string;
+    eloLabel: string;
+    footer: string;
+    bar: string;
+    emoji: string;
+    medalSize: string;
+    cardPadding: string;
+    rankFontSize: string;
+    rankBarPadding: string;
+  }
+> = {
+  gold: {
+    card: 'bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 ring-2 ring-amber-400/40 shadow-2xl shadow-amber-300/50',
+    avatar: 'bg-white/30 border-white/50',
+    name: 'text-amber-950',
+    nickname: 'text-amber-800',
+    elo: 'text-amber-950',
+    eloLabel: 'text-amber-700',
+    footer: 'text-amber-900',
+    bar: 'bg-amber-700',
+    emoji: '👑',
+    medalSize: 'text-4xl sm:text-5xl drop-shadow-lg',
+    cardPadding: 'px-3 sm:px-5 pt-5 sm:pt-7',
+    rankFontSize: 'text-xl sm:text-2xl',
+    rankBarPadding: 'py-2.5 sm:py-3',
+  },
+  silver: {
+    card: 'bg-gradient-to-b from-slate-200 via-slate-300 to-slate-500 shadow-xl shadow-slate-300/40',
+    avatar: 'bg-white/30 border-white/40',
+    name: 'text-slate-900',
+    nickname: 'text-slate-600',
+    elo: 'text-slate-800',
+    eloLabel: 'text-slate-500',
+    footer: 'text-slate-700',
+    bar: 'bg-slate-600',
+    emoji: '🥈',
+    medalSize: 'text-2xl sm:text-3xl',
+    cardPadding: 'px-3 sm:px-4 pt-4 sm:pt-5',
+    rankFontSize: 'text-lg sm:text-xl',
+    rankBarPadding: 'py-2 sm:py-2.5',
+  },
+  bronze: {
+    card: 'bg-gradient-to-b from-orange-200 via-orange-400 to-orange-600 shadow-xl shadow-orange-200/40',
+    avatar: 'bg-white/25 border-white/30',
+    name: 'text-orange-950',
+    nickname: 'text-orange-700',
+    elo: 'text-orange-950',
+    eloLabel: 'text-orange-700',
+    footer: 'text-orange-900',
+    bar: 'bg-orange-700',
+    emoji: '🥉',
+    medalSize: 'text-xl sm:text-2xl',
+    cardPadding: 'px-3 sm:px-4 pt-3 sm:pt-4',
+    rankFontSize: 'text-lg sm:text-xl',
+    rankBarPadding: 'py-1.5 sm:py-2',
+  },
+};
+
+const STEP_LAYOUT: Record<StepTone, string> = {
+  gold: 'max-w-[215px] -mb-3',
+  silver: 'max-w-[185px]',
+  bronze: 'max-w-[165px] mt-6 sm:mt-8',
+};
 
 function renderFooter(p: PodiumPlayer, variant: 'home' | 'rankings') {
   if (variant === 'home') {
@@ -37,65 +111,122 @@ function renderFooter(p: PodiumPlayer, variant: 'home' | 'rankings') {
   );
 }
 
-export function Podium({ players, variant }: PodiumProps) {
-  const [first, second, third] = players;
-  if (!first || !second || !third) return null;
+function SinglePlayerCard({
+  player,
+  rank,
+  tone,
+  variant,
+}: {
+  player: PodiumPlayer;
+  rank: number;
+  tone: StepTone;
+  variant: 'home' | 'rankings';
+}) {
+  const t = TONE_STYLES[tone];
+  const isGold = tone === 'gold';
+  const avatarSize = isGold
+    ? 'w-14 h-14 sm:w-16 sm:h-16 text-2xl sm:text-3xl'
+    : tone === 'silver'
+      ? 'w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl'
+      : 'w-10 h-10 sm:w-12 sm:h-12 text-lg sm:text-xl';
+  const nameSize = isGold ? 'text-sm sm:text-base' : 'text-xs sm:text-sm';
+  const eloSize = isGold
+    ? 'text-3xl sm:text-4xl'
+    : tone === 'silver'
+      ? 'text-2xl sm:text-3xl'
+      : 'text-xl sm:text-2xl';
+  return (
+    <Link href={`/players/${player.id}`} className={`flex-1 min-w-0 group ${STEP_LAYOUT[tone]}`}>
+      <div className={`${t.card} rounded-2xl ${t.cardPadding} pb-0 flex flex-col items-center gap-1.5 sm:gap-2 group-hover:scale-105 transition-transform`}>
+        <span className={t.medalSize}>{t.emoji}</span>
+        <div className={`${avatarSize} rounded-full ${t.avatar} flex items-center justify-center font-black border-2`}>
+          {player.name.charAt(0)}
+        </div>
+        <p className={`font-black ${nameSize} text-center ${t.name} leading-tight w-full truncate`}>{player.name}</p>
+        {player.nickname && <p className={`${t.nickname} text-xs truncate w-full text-center`}>{player.nickname}</p>}
+        <p className={`${eloSize} font-black ${t.elo} tabular-nums`}>{Math.round(player.eloRating)}</p>
+        <p className={`${t.eloLabel} text-xs uppercase tracking-widest -mt-1`}>ELO</p>
+        <div className={t.footer}>{renderFooter(player, variant)}</div>
+        <div className={`w-full ${t.bar} rounded-b-xl ${t.rankBarPadding} text-center font-black ${t.rankFontSize} text-white`}>
+          {rank}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
+function TiedPlayersCard({
+  players,
+  rank,
+  tone,
+  variant,
+}: {
+  players: PodiumPlayer[];
+  rank: number;
+  tone: StepTone;
+  variant: 'home' | 'rankings';
+}) {
+  const t = TONE_STYLES[tone];
+  return (
+    <div className={`flex-1 min-w-0 ${STEP_LAYOUT[tone]}`}>
+      <div className={`${t.card} rounded-2xl ${t.cardPadding} pb-0 flex flex-col items-center gap-1.5 sm:gap-2`}>
+        <span className={t.medalSize}>{t.emoji}</span>
+        <span className={`${t.eloLabel} text-[10px] font-black uppercase tracking-widest`}>
+          Empate · {players.length}
+        </span>
+        <div className="flex flex-col gap-1.5 w-full">
+          {players.map((player) => (
+            <Link
+              key={player.id}
+              href={`/players/${player.id}`}
+              className="flex items-center gap-2 w-full bg-white/20 hover:bg-white/35 transition-colors rounded-lg px-2 py-1.5"
+            >
+              <div className={`w-8 h-8 rounded-full ${t.avatar} flex items-center justify-center text-sm font-black border shrink-0`}>
+                {player.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-black text-xs ${t.name} truncate leading-tight`}>{player.name}</p>
+                <p className={`${t.eloLabel} text-[10px] tabular-nums`}>
+                  {Math.round(player.eloRating)} ELO · {variant === 'home'
+                    ? `${player.wins}V/${player.losses}D`
+                    : `${player.matchesPlayed > 0 ? Math.round((player.wins / player.matchesPlayed) * 100) : 0}% · ${player.matchesPlayed}P`}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <div className={`w-full ${t.bar} rounded-b-xl ${t.rankBarPadding} text-center font-black ${t.rankFontSize} text-white mt-2`}>
+          {rank}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step({
+  group,
+  tone,
+  variant,
+}: {
+  group: RankGroup<PodiumPlayer> | undefined;
+  tone: StepTone;
+  variant: 'home' | 'rankings';
+}) {
+  if (!group || group.players.length === 0) return <div className={`flex-1 min-w-0 ${STEP_LAYOUT[tone]}`} />;
+  if (group.players.length === 1) {
+    return <SinglePlayerCard player={group.players[0]} rank={group.rank} tone={tone} variant={variant} />;
+  }
+  return <TiedPlayersCard players={group.players} rank={group.rank} tone={tone} variant={variant} />;
+}
+
+export function Podium({ groups, variant }: PodiumProps) {
+  if (groups.length === 0) return null;
+  const [gold, silver, bronze] = groups;
   return (
     <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-6">
-      {/* #2 Silver */}
-      <Link href={`/players/${second.id}`} className="flex-1 max-w-[185px] min-w-0 group">
-        <div className="bg-gradient-to-b from-slate-200 via-slate-300 to-slate-500 rounded-2xl px-3 sm:px-4 pt-4 sm:pt-5 pb-0 shadow-xl shadow-slate-300/40 flex flex-col items-center gap-1.5 sm:gap-2 group-hover:scale-105 transition-transform">
-          <span className="text-2xl sm:text-3xl">🥈</span>
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/30 flex items-center justify-center text-xl sm:text-2xl font-black border-2 border-white/40">
-            {second.name.charAt(0)}
-          </div>
-          <p className="font-black text-xs sm:text-sm text-center text-slate-900 leading-tight w-full truncate">{second.name}</p>
-          {second.nickname && <p className="text-slate-600 text-xs truncate w-full text-center">{second.nickname}</p>}
-          <p className="text-2xl sm:text-3xl font-black text-slate-800 tabular-nums">{Math.round(second.eloRating)}</p>
-          <p className="text-slate-500 text-xs uppercase tracking-widest -mt-1">ELO</p>
-          <div className="text-slate-700">
-            {renderFooter(second, variant)}
-          </div>
-          <div className="w-full bg-slate-600 rounded-b-xl py-2 sm:py-2.5 text-center font-black text-lg sm:text-xl text-white">2</div>
-        </div>
-      </Link>
-
-      {/* #1 Gold (taller) */}
-      <Link href={`/players/${first.id}`} className="flex-1 max-w-[215px] min-w-0 group -mb-3">
-        <div className="bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 rounded-2xl px-3 sm:px-5 pt-5 sm:pt-7 pb-0 shadow-2xl shadow-amber-300/50 flex flex-col items-center gap-1.5 sm:gap-2 ring-2 ring-amber-400/40 group-hover:scale-105 transition-transform">
-          <span className="text-4xl sm:text-5xl drop-shadow-lg">👑</span>
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black border-2 border-white/50">
-            {first.name.charAt(0)}
-          </div>
-          <p className="font-black text-sm sm:text-base text-center text-amber-950 leading-tight w-full truncate">{first.name}</p>
-          {first.nickname && <p className="text-amber-800 text-xs truncate w-full text-center">{first.nickname}</p>}
-          <p className="text-3xl sm:text-4xl font-black text-amber-950 tabular-nums">{Math.round(first.eloRating)}</p>
-          <p className="text-amber-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-          <div className="text-amber-900">
-            {renderFooter(first, variant)}
-          </div>
-          <div className="w-full bg-amber-700 rounded-b-xl py-2.5 sm:py-3 text-center font-black text-xl sm:text-2xl text-white">1</div>
-        </div>
-      </Link>
-
-      {/* #3 Bronze */}
-      <Link href={`/players/${third.id}`} className="flex-1 max-w-[165px] min-w-0 group">
-        <div className="bg-gradient-to-b from-orange-200 via-orange-400 to-orange-600 rounded-2xl px-3 sm:px-4 pt-3 sm:pt-4 pb-0 shadow-xl shadow-orange-200/40 flex flex-col items-center gap-1 sm:gap-1.5 group-hover:scale-105 transition-transform mt-6 sm:mt-8">
-          <span className="text-xl sm:text-2xl">🥉</span>
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/25 flex items-center justify-center text-lg sm:text-xl font-black border-2 border-white/30">
-            {third.name.charAt(0)}
-          </div>
-          <p className="font-black text-xs sm:text-sm text-center text-orange-950 leading-tight w-full truncate">{third.name}</p>
-          {third.nickname && <p className="text-orange-700 text-xs truncate w-full text-center">{third.nickname}</p>}
-          <p className="text-xl sm:text-2xl font-black text-orange-950 tabular-nums">{Math.round(third.eloRating)}</p>
-          <p className="text-orange-700 text-xs uppercase tracking-widest -mt-1">ELO</p>
-          <div className="text-orange-900">
-            {renderFooter(third, variant)}
-          </div>
-          <div className="w-full bg-orange-700 rounded-b-xl py-1.5 sm:py-2 text-center font-black text-lg sm:text-xl text-white">3</div>
-        </div>
-      </Link>
+      <Step group={silver} tone="silver" variant={variant} />
+      <Step group={gold} tone="gold" variant={variant} />
+      <Step group={bronze} tone="bronze" variant={variant} />
     </div>
   );
 }

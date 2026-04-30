@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Podium } from '@/components/shared/podium';
+import { buildPodiumGroups, assignCompetitionRanks } from '@/lib/rankings/podium-groups';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,8 @@ export default async function RankingsPage() {
     .where(sql`${players.matchesPlayed} = 0`)
     .orderBy(players.name);
 
-  const top3 = ranked.slice(0, 3);
+  const podiumGroups = buildPodiumGroups(ranked);
+  const rankedWithRanks = assignCompetitionRanks(ranked);
 
   return (
     <div className="space-y-8">
@@ -50,10 +52,10 @@ export default async function RankingsPage() {
       ) : (
         <>
           {/* Podium top 3 */}
-          {top3.length >= 3 && (
+          {podiumGroups.length >= 3 && (
             <div className="space-y-3">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Podio</p>
-              <Podium players={top3} variant="rankings" />
+              <Podium groups={podiumGroups} variant="rankings" />
             </div>
           )}
 
@@ -76,16 +78,16 @@ export default async function RankingsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ranked.map((player, idx) => {
+                  {rankedWithRanks.map((player) => {
                     const winRate = Math.round((player.wins / player.matchesPlayed) * 100);
                     const eloChange = Math.round(player.eloRating - 1500);
                     return (
-                      <TableRow key={player.id} className={idx < 3 ? 'bg-green-50/20' : 'hover:bg-gray-50/50'}>
+                      <TableRow key={player.id} className={player.rank <= 3 ? 'bg-green-50/20' : 'hover:bg-gray-50/50'}>
                         <TableCell className="pl-3 sm:pl-6 w-12 sm:w-14">
-                          {idx === 0 ? <span className="text-xl">🥇</span>
-                            : idx === 1 ? <span className="text-xl">🥈</span>
-                            : idx === 2 ? <span className="text-xl">🥉</span>
-                            : <span className="text-gray-400 font-bold text-sm w-6 inline-block text-center">{idx + 1}</span>}
+                          {player.rank === 1 ? <span className="text-xl">🥇</span>
+                            : player.rank === 2 ? <span className="text-xl">🥈</span>
+                            : player.rank === 3 ? <span className="text-xl">🥉</span>
+                            : <span className="text-gray-400 font-bold text-sm w-6 inline-block text-center">{player.rank}</span>}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
