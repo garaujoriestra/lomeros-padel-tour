@@ -167,35 +167,74 @@ function TiedPlayersCard({
   variant: 'home' | 'rankings';
 }) {
   const t = TONE_STYLES[tone];
+  const isGold = tone === 'gold';
+  const isSilver = tone === 'silver';
+  const sharedElo = Math.round(players[0].eloRating);
+
+  // Slightly smaller avatars than the single-player card so two fit nicely.
+  const avatarSize = isGold
+    ? 'w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl'
+    : isSilver
+      ? 'w-10 h-10 sm:w-12 sm:h-12 text-lg sm:text-xl'
+      : 'w-9 h-9 sm:w-10 sm:h-10 text-base sm:text-lg';
+  const eloSize = isGold
+    ? 'text-3xl sm:text-4xl'
+    : isSilver
+      ? 'text-2xl sm:text-3xl'
+      : 'text-xl sm:text-2xl';
+  const nameSize = isGold ? 'text-sm sm:text-base' : 'text-xs sm:text-sm';
+
   return (
     <div className={`flex-1 min-w-0 ${STEP_LAYOUT[tone]}`}>
       <div className={`${t.card} rounded-2xl ${t.cardPadding} pb-0 flex flex-col items-center gap-1.5 sm:gap-2`}>
         <span className={t.medalSize}>{t.emoji}</span>
-        <span className={`${t.eloLabel} text-[10px] font-black uppercase tracking-widest`}>
-          Empate · {players.length}
-        </span>
-        <div className="flex flex-col gap-1.5 w-full">
+
+        {/* Side-by-side avatars (each is its own link) */}
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2">
           {players.map((player) => (
-            <Link
-              key={player.id}
-              href={`/players/${player.id}`}
-              className="flex items-center gap-2 w-full bg-white/20 hover:bg-white/35 transition-colors rounded-lg px-2 py-1.5"
-            >
-              <div className={`w-8 h-8 rounded-full ${t.avatar} flex items-center justify-center text-sm font-black border shrink-0`}>
+            <Link key={player.id} href={`/players/${player.id}`} className="shrink-0">
+              <div
+                className={`${avatarSize} rounded-full ${t.avatar} flex items-center justify-center font-black border-2 hover:scale-105 transition-transform`}
+              >
                 {player.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-black text-xs ${t.name} truncate leading-tight`}>{player.name}</p>
-                <p className={`${t.eloLabel} text-[10px] tabular-nums`}>
-                  {Math.round(player.eloRating)} ELO · {variant === 'home'
-                    ? `${player.wins}V/${player.losses}D`
-                    : `${player.matchesPlayed > 0 ? Math.round((player.wins / player.matchesPlayed) * 100) : 0}% · ${player.matchesPlayed}P`}
-                </p>
               </div>
             </Link>
           ))}
         </div>
-        <div className={`w-full ${t.bar} rounded-b-xl ${t.rankBarPadding} text-center font-black ${t.rankFontSize} text-white mt-2`}>
+
+        {/* Shared ELO (the whole point of the tie) */}
+        <p className={`${eloSize} font-black ${t.elo} tabular-nums`}>{sharedElo}</p>
+        <p className={`${t.eloLabel} text-[10px] sm:text-xs uppercase tracking-widest -mt-1`}>
+          ELO · Empate
+        </p>
+
+        {/* Player names + per-player stats, full width, clean and readable */}
+        <div className="w-full flex flex-col gap-0.5 pb-2">
+          {players.map((player) => {
+            const winRate = player.matchesPlayed > 0
+              ? Math.round((player.wins / player.matchesPlayed) * 100)
+              : 0;
+            const stats = variant === 'home'
+              ? `${player.wins}V · ${player.losses}D`
+              : `${winRate}% · ${player.matchesPlayed}P`;
+            return (
+              <Link
+                key={player.id}
+                href={`/players/${player.id}`}
+                className="block hover:opacity-80 transition-opacity text-center"
+              >
+                <p className={`${nameSize} font-black ${t.name} leading-tight truncate`}>
+                  {player.name}
+                </p>
+                <p className={`${t.footer} text-[10px] sm:text-xs font-semibold leading-tight`}>
+                  {stats}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className={`w-full ${t.bar} rounded-b-xl ${t.rankBarPadding} text-center font-black ${t.rankFontSize} text-white`}>
           {rank}
         </div>
       </div>
