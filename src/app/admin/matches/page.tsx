@@ -26,7 +26,7 @@ export default async function MatchesAdminPage() {
   }
 
   const scheduled = allMatches.filter((m) => m.status === 'scheduled');
-  const completed = allMatches.filter((m) => m.status === 'completed');
+  const completed = allMatches.filter((m) => m.status === 'completed' || m.status === 'injury_aborted');
 
   return (
     <div className="space-y-6">
@@ -107,9 +107,11 @@ export default async function MatchesAdminPage() {
                 const t1p2 = playerMap[match.team1Player2Id];
                 const t2p1 = playerMap[match.team2Player1Id];
                 const t2p2 = playerMap[match.team2Player2Id];
+                const isInjury = match.status === 'injury_aborted';
+                const injured = match.injuredPlayerId ? playerMap[match.injuredPlayerId] : null;
 
                 return (
-                  <div key={match.id} className="bg-white border rounded-lg p-4">
+                  <div key={match.id} className={`border rounded-lg p-4 ${isInjury ? 'bg-rose-50 border-rose-200' : 'bg-white'}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -117,23 +119,32 @@ export default async function MatchesAdminPage() {
                           {match.location && (
                             <span className="text-xs text-gray-400">· {match.location}</span>
                           )}
+                          {isInjury && (
+                            <Badge variant="outline" className="text-rose-700 border-rose-300 bg-white text-xs">
+                              🤕 Lesión {injured ? `· ${injured.name}` : ''}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                          <div className={`flex-1 ${match.winnerTeam === 1 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
+                          <div className={`flex-1 ${!isInjury && match.winnerTeam === 1 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
                             <span>🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
-                            {match.winnerTeam === 1 && <Badge className="ml-2 text-xs" variant="default">Ganador</Badge>}
+                            {!isInjury && match.winnerTeam === 1 && <Badge className="ml-2 text-xs" variant="default">Ganador</Badge>}
                           </div>
                           <div className="flex gap-1 items-center">
-                            {sets.map((set) => (
-                              <div key={set.setNumber} className="text-center">
-                                <span className={`font-mono text-sm ${set.team1Games > set.team2Games ? 'font-bold' : ''}`}>{set.team1Games}</span>
-                                <span className="text-gray-300 mx-0.5">-</span>
-                                <span className={`font-mono text-sm ${set.team2Games > set.team1Games ? 'font-bold' : ''}`}>{set.team2Games}</span>
-                              </div>
-                            ))}
+                            {isInjury ? (
+                              <span className="text-xs font-bold text-rose-600">No terminado</span>
+                            ) : (
+                              sets.map((set) => (
+                                <div key={set.setNumber} className="text-center">
+                                  <span className={`font-mono text-sm ${set.team1Games > set.team2Games ? 'font-bold' : ''}`}>{set.team1Games}</span>
+                                  <span className="text-gray-300 mx-0.5">-</span>
+                                  <span className={`font-mono text-sm ${set.team2Games > set.team1Games ? 'font-bold' : ''}`}>{set.team2Games}</span>
+                                </div>
+                              ))
+                            )}
                           </div>
-                          <div className={`flex-1 text-right ${match.winnerTeam === 2 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
-                            {match.winnerTeam === 2 && <Badge className="mr-2 text-xs" variant="default">Ganador</Badge>}
+                          <div className={`flex-1 text-right ${!isInjury && match.winnerTeam === 2 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
+                            {!isInjury && match.winnerTeam === 2 && <Badge className="mr-2 text-xs" variant="default">Ganador</Badge>}
                             <span>{t2p1?.name ?? '?'} / {t2p2?.name ?? '?'} 🔴</span>
                           </div>
                         </div>

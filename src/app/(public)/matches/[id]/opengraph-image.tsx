@@ -180,6 +180,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         : null;
   const showVs = match.status !== 'completed';
 
+  const isInjury = match.status === 'injury_aborted';
+  const injuredPlayer = isInjury && match.injuredPlayerId ? pMap[match.injuredPlayerId] : null;
+
   const positions = resolveCourtPositions({
     team1: {
       p1Id: match.team1Player1Id,
@@ -203,7 +206,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: '#052e16',
+          background: isInjury ? '#3f0d12' : '#052e16',
           fontFamily: 'sans-serif',
           color: 'white',
         }}
@@ -234,7 +237,152 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Court area */}
-        {match.status === 'completed' ? (
+        {isInjury ? (
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 32,
+              padding: '0 60px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 20,
+                background: 'rgba(244, 63, 94, 0.18)',
+                border: '3px solid #fb7185',
+                borderRadius: 999,
+                padding: '14px 36px',
+              }}
+            >
+              <span style={{ fontSize: 56 }}>🤕</span>
+              <span
+                style={{
+                  fontSize: 44,
+                  fontWeight: 900,
+                  color: '#fecdd3',
+                  letterSpacing: 4,
+                  textTransform: 'uppercase',
+                }}
+              >
+                No terminado · Lesión
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32 }}>
+              {fourPlayers.map((p) => {
+                const isHurt = injuredPlayer?.id === p.id;
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ position: 'relative', display: 'flex' }}>
+                      {p.avatarUrl ? (
+                        <img
+                          src={p.avatarUrl}
+                          alt={p.name}
+                          width={130}
+                          height={130}
+                          style={{
+                            width: 130,
+                            height: 130,
+                            borderRadius: 65,
+                            objectFit: 'cover',
+                            border: isHurt ? '6px solid #fb7185' : '4px solid rgba(255,255,255,0.6)',
+                            opacity: isHurt ? 1 : 0.55,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 130,
+                            height: 130,
+                            borderRadius: 65,
+                            background: isHurt
+                              ? 'linear-gradient(135deg, #fb7185 0%, #881337 100%)'
+                              : 'linear-gradient(135deg, #6b7280 0%, #1f2937 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: 64,
+                            fontWeight: 900,
+                            border: isHurt ? '6px solid #fb7185' : '4px solid rgba(255,255,255,0.6)',
+                            opacity: isHurt ? 1 : 0.7,
+                          }}
+                        >
+                          {p.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {isHurt ? (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: -6,
+                            right: -6,
+                            width: 56,
+                            height: 56,
+                            borderRadius: 28,
+                            background: '#fb7185',
+                            border: '4px solid #3f0d12',
+                            fontSize: 32,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          🤕
+                        </div>
+                      ) : null}
+                    </div>
+                    <span
+                      style={{
+                        color: isHurt ? '#fecdd3' : 'rgba(255,255,255,0.75)',
+                        fontSize: 26,
+                        fontWeight: isHurt ? 900 : 700,
+                        textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                      }}
+                    >
+                      {p.name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {injuredPlayer ? (
+              <span
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: '#fecdd3',
+                  letterSpacing: 1,
+                }}
+              >
+                Lesión de {injuredPlayer.name} · Partido sin contar para ranking
+              </span>
+            ) : (
+              <span
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: '#fecdd3',
+                }}
+              >
+                Partido sin contar para ranking
+              </span>
+            )}
+          </div>
+        ) : match.status === 'completed' ? (
             <div
               style={{
                 flex: 1,

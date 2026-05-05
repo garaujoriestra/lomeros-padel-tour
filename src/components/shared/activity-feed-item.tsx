@@ -55,6 +55,28 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     );
   }
 
+  if (event.type === 'match_injury_aborted') {
+    const m = event.match;
+    const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);
+    const t2 = teamNames(playerMap[m.team2Player1Id], playerMap[m.team2Player2Id]);
+    const injured = m.injuredPlayerId ? playerMap[m.injuredPlayerId] : null;
+
+    return (
+      <Link href={`/matches/${m.id}`} className="block">
+        <div className="bg-white border border-rose-100 rounded-2xl p-4 flex items-start gap-3 hover:border-rose-200 hover:shadow-sm transition-all">
+          <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-lg shrink-0">🤕</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-gray-800 leading-snug">
+              Partido <span className="font-bold">{t1} vs {t2}</span> no terminado
+              {injured && <> — lesión de <span className="font-bold">{injured.name}</span></>}
+            </p>
+            <p className="text-xs text-gray-400 mt-1.5">{m.date} <span className="text-gray-300">·</span> {time}</p>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   if (event.type === 'match_scheduled') {
     const m = event.match;
     const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);

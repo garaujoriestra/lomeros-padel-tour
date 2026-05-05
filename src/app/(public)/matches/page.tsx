@@ -19,7 +19,7 @@ export default async function MatchesPage() {
   }
 
   const upcoming = allMatches.filter((m) => m.status === 'scheduled');
-  const completed = allMatches.filter((m) => m.status === 'completed');
+  const completed = allMatches.filter((m) => m.status === 'completed' || m.status === 'injury_aborted');
 
   return (
     <div className="space-y-8">

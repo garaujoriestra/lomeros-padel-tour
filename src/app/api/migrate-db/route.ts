@@ -76,6 +76,13 @@ export async function POST() {
       }
     }
 
+    // Step 4c: Add injured_player_id column for matches aborted due to injury
+    try {
+      await db.run(sql`ALTER TABLE matches ADD COLUMN injured_player_id TEXT REFERENCES players(id)`);
+    } catch {
+      // Column already exists — skip silently
+    }
+
     // Step 4b: Add photo_url column to matches if not present (Block 2 — match photo)
     // Must run BEFORE the heuristic backfill below, because that step does
     // db.select().from(matches) which Drizzle expands using the current schema

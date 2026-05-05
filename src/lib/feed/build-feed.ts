@@ -11,6 +11,7 @@ interface MatchLike {
   team2Player1Id: string;
   team2Player2Id: string;
   winnerTeam: number | null;
+  injuredPlayerId?: string | null;
   createdAt: string;
 }
 
@@ -43,6 +44,12 @@ export type FeedEvent =
     }
   | {
       type: 'match_scheduled';
+      matchId: string;
+      timestamp: string;
+      match: MatchLike;
+    }
+  | {
+      type: 'match_injury_aborted';
       matchId: string;
       timestamp: string;
       match: MatchLike;
@@ -113,6 +120,13 @@ export function buildFeed(input: BuildFeedInput): FeedEvent[] {
     } else if (m.status === 'scheduled') {
       events.push({
         type: 'match_scheduled',
+        matchId: m.id,
+        timestamp: m.createdAt,
+        match: m,
+      });
+    } else if (m.status === 'injury_aborted') {
+      events.push({
+        type: 'match_injury_aborted',
         matchId: m.id,
         timestamp: m.createdAt,
         match: m,

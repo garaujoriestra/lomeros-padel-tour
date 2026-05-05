@@ -64,6 +64,88 @@ function PredictionLine({
   );
 }
 
+function InjuryPlayerLine({
+  player,
+  side,
+  injured,
+  align,
+}: {
+  player: { id: string; name: string } | undefined;
+  side: string | null;
+  injured: boolean;
+  align: 'left' | 'right';
+}) {
+  const className = `text-lg sm:text-xl font-black hover:opacity-80 transition-colors ${injured ? 'text-rose-300' : 'text-green-200'} ${align === 'right' ? 'text-right' : ''}`;
+  return (
+    <Link href={player ? `/players/${player.id}` : '#'}>
+      <p className={className}>
+        {injured && '🤕 '}
+        {player?.name ?? '?'}
+        <SideBadge side={side} />
+      </p>
+    </Link>
+  );
+}
+
+function InjuryLayout({
+  t1p1,
+  t1p2,
+  t2p1,
+  t2p2,
+  injuredPlayerId,
+  sides,
+}: {
+  t1p1?: { id: string; name: string };
+  t1p2?: { id: string; name: string };
+  t2p1?: { id: string; name: string };
+  t2p2?: { id: string; name: string };
+  injuredPlayerId: string | null;
+  sides: {
+    team1Player1Side: string | null;
+    team1Player2Side: string | null;
+    team2Player1Side: string | null;
+    team2Player2Side: string | null;
+  };
+}) {
+  return (
+    <div className="space-y-5">
+      {/* Mobile stacked */}
+      <div className="sm:hidden space-y-3">
+        <div className="space-y-1">
+          <InjuryPlayerLine player={t1p1} side={sides.team1Player1Side} injured={t1p1?.id === injuredPlayerId} align="left" />
+          <InjuryPlayerLine player={t1p2} side={sides.team1Player2Side} injured={t1p2?.id === injuredPlayerId} align="left" />
+        </div>
+        <div className="text-center py-2">
+          <p className="text-4xl">🤕</p>
+          <p className="text-rose-300 text-sm font-black mt-1 uppercase tracking-widest">No terminado</p>
+          <p className="text-rose-200/80 text-xs mt-0.5">Partido sin contar para ranking</p>
+        </div>
+        <div className="space-y-1">
+          <InjuryPlayerLine player={t2p1} side={sides.team2Player1Side} injured={t2p1?.id === injuredPlayerId} align="left" />
+          <InjuryPlayerLine player={t2p2} side={sides.team2Player2Side} injured={t2p2?.id === injuredPlayerId} align="left" />
+        </div>
+      </div>
+
+      {/* ≥sm horizontal */}
+      <div className="hidden sm:grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
+        <div className="space-y-2">
+          <InjuryPlayerLine player={t1p1} side={sides.team1Player1Side} injured={t1p1?.id === injuredPlayerId} align="left" />
+          <InjuryPlayerLine player={t1p2} side={sides.team1Player2Side} injured={t1p2?.id === injuredPlayerId} align="left" />
+        </div>
+        <div className="text-center">
+          <p className="text-5xl">🤕</p>
+          <p className="text-rose-300 text-sm font-black mt-2 uppercase tracking-widest">No terminado</p>
+          <p className="text-rose-200/80 text-xs mt-0.5">Partido sin contar</p>
+        </div>
+        <div className="space-y-2">
+          <InjuryPlayerLine player={t2p1} side={sides.team2Player1Side} injured={t2p1?.id === injuredPlayerId} align="right" />
+          <InjuryPlayerLine player={t2p2} side={sides.team2Player2Side} injured={t2p2?.id === injuredPlayerId} align="right" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function pairMatchesPlayed(
   p1Id: string,
   p2Id: string,
@@ -102,6 +184,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       description,
       openGraph: {
         title: `${t1} vs ${t2} · ${setsStr}`,
+        description,
+      },
+    };
+  }
+
+  if (match.status === 'injury_aborted') {
+    const injured = match.injuredPlayerId ? pMap[match.injuredPlayerId]?.name : null;
+    const description = injured
+      ? `Partido del ${match.date} no completado por lesión de ${injured}.`
+      : `Partido del ${match.date} no completado por lesión.`;
+    return {
+      title: `${t1} vs ${t2} · 🤕 No terminado — LPT`,
+      description,
+      openGraph: {
+        title: `${t1} vs ${t2} · No terminado por lesión`,
         description,
       },
     };
@@ -213,13 +310,29 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             <span className={`self-start sm:ml-auto px-3 py-1 rounded-full text-xs font-black ${
               match.status === 'scheduled'
                 ? 'bg-blue-500/20 border border-blue-400/30 text-blue-200'
-                : 'bg-green-500/20 border border-green-400/30 text-green-200'
+                : match.status === 'injury_aborted'
+                  ? 'bg-rose-500/20 border border-rose-400/30 text-rose-200'
+                  : 'bg-green-500/20 border border-green-400/30 text-green-200'
             }`}>
-              {match.status === 'scheduled' ? '📅 Programado' : '✅ Completado'}
+              {match.status === 'scheduled' ? '📅 Programado' : match.status === 'injury_aborted' ? '🤕 No terminado · Lesión' : '✅ Completado'}
             </span>
           </div>
 
-          {match.status === 'completed' ? (
+          {match.status === 'injury_aborted' ? (
+            <InjuryLayout
+              t1p1={t1p1}
+              t1p2={t1p2}
+              t2p1={t2p1}
+              t2p2={t2p2}
+              injuredPlayerId={match.injuredPlayerId ?? null}
+              sides={{
+                team1Player1Side: match.team1Player1Side,
+                team1Player2Side: match.team1Player2Side,
+                team2Player1Side: match.team2Player1Side,
+                team2Player2Side: match.team2Player2Side,
+              }}
+            />
+          ) : match.status === 'completed' ? (
             <>
               {/* Mobile stacked */}
               <div className="sm:hidden space-y-4">

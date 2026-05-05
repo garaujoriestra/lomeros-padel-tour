@@ -13,6 +13,11 @@ interface SetScore {
   team2Games: number | '';
 }
 
+interface ResultFormPlayer {
+  id: string;
+  name: string;
+}
+
 interface ResultFormProps {
   matchId: string;
   team1Name: string;
@@ -23,6 +28,7 @@ interface ResultFormProps {
   team1Player2Name: string;
   team2Player1Name: string;
   team2Player2Name: string;
+  matchPlayers: [ResultFormPlayer, ResultFormPlayer, ResultFormPlayer, ResultFormPlayer];
   initialSides: {
     team1Player1Side: string | null;
     team1Player2Side: string | null;
@@ -31,9 +37,11 @@ interface ResultFormProps {
   };
 }
 
-export function ResultForm({ matchId, team1Name, team2Name, date, location, team1Player1Name, team1Player2Name, team2Player1Name, team2Player2Name, initialSides }: ResultFormProps) {
+export function ResultForm({ matchId, team1Name, team2Name, date, location, team1Player1Name, team1Player2Name, team2Player1Name, team2Player2Name, matchPlayers, initialSides }: ResultFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'normal' | 'injury'>('normal');
+  const [injuredPlayerId, setInjuredPlayerId] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string>('');
@@ -131,6 +139,89 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
     }
   }
 
+  async function handleInjurySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!injuredPlayerId) {
+      toast.error('Selecciona el jugador lesionado');
+      return;
+    }
+    setLoading(true);
+    const res = await fetch(`/api/matches/${matchId}/abandon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ injuredPlayerId }),
+    });
+
+    if (res.ok) {
+      toast.success('Partido marcado como no terminado por lesión');
+      router.push('/admin/matches');
+      router.refresh();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || 'Error al marcar la lesión');
+      setLoading(false);
+    }
+  }
+
+  if (mode === 'injury') {
+    return (
+      <form onSubmit={handleInjurySubmit} className="space-y-6 max-w-2xl">
+        <div className="bg-gradient-to-r from-red-950 to-rose-900 rounded-2xl p-6 text-white">
+          <p className="text-red-200 text-xs uppercase tracking-widest mb-3">🤕 No terminado por lesión</p>
+          <div className="flex items-center justify-between">
+            <p className="font-black text-xl">🔵 {team1Name}</p>
+            <span className="text-2xl font-black text-red-300">VS</span>
+            <p className="font-black text-xl text-right">🔴 {team2Name}</p>
+          </div>
+          <div className="flex gap-4 mt-3 text-red-200 text-sm">
+            <span>📅 {date}</span>
+            {location && <span>📍 {location}</span>}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div>
+            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Jugador lesionado</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {matchPlayers.map((p) => (
+                <button
+                  type="button"
+                  key={p.id}
+                  onClick={() => setInjuredPlayerId(p.id)}
+                  className={`flex items-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-colors ${
+                    injuredPlayerId === p.id
+                      ? 'border-red-500 bg-red-50 text-red-900'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  <span className="text-lg">🤕</span>
+                  <span className="truncate">{p.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Este partido no contará para ELO, victorias/derrotas, ni achievements.
+            Aparecerá en la lista de partidos con un distintivo de lesión.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            type="submit"
+            disabled={loading || !injuredPlayerId}
+            className="flex-1 min-h-[40px] px-4 text-sm bg-red-600 hover:bg-red-700 text-white font-bold"
+          >
+            {loading ? 'Guardando...' : '🤕 Marcar como lesión'}
+          </Button>
+          <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => setMode('normal')}>
+            ← Volver a resultado
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {/* Match info */}
@@ -149,6 +240,17 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
           <span>📅 {date}</span>
           {location && <span>📍 {location}</span>}
         </div>
+      </div>
+
+      {/* Mode toggle: switch to injury flow */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setMode('injury')}
+          className="text-xs font-bold text-red-700 hover:text-red-900 underline underline-offset-2"
+        >
+          🤕 No terminado por lesión →
+        </button>
       </div>
 
       {/* Photo upload (optional) */}

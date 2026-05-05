@@ -18,6 +18,14 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
       </div>
     );
   }
+  if (match.status === 'injury_aborted') {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <h1 className="text-2xl font-black">🤕 Marcado como lesión</h1>
+        <p className="text-gray-500">Este partido se marcó como no terminado por lesión y no cuenta para ranking.</p>
+      </div>
+    );
+  }
 
   const allPlayers = await db.select().from(players);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
@@ -41,6 +49,12 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
         team1Player2Name={pMap[match.team1Player2Id]?.name ?? '?'}
         team2Player1Name={pMap[match.team2Player1Id]?.name ?? '?'}
         team2Player2Name={pMap[match.team2Player2Id]?.name ?? '?'}
+        matchPlayers={[
+          { id: match.team1Player1Id, name: pMap[match.team1Player1Id]?.name ?? '?' },
+          { id: match.team1Player2Id, name: pMap[match.team1Player2Id]?.name ?? '?' },
+          { id: match.team2Player1Id, name: pMap[match.team2Player1Id]?.name ?? '?' },
+          { id: match.team2Player2Id, name: pMap[match.team2Player2Id]?.name ?? '?' },
+        ]}
         initialSides={{
           team1Player1Side: match.team1Player1Side,
           team1Player2Side: match.team1Player2Side,

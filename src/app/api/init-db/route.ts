@@ -30,6 +30,7 @@ export async function POST() {
         team2_player2_id TEXT NOT NULL,
         winner_team INTEGER,
         status TEXT NOT NULL DEFAULT 'completed',
+        injured_player_id TEXT REFERENCES players(id),
         notes TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
