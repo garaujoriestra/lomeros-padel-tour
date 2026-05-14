@@ -4,6 +4,7 @@ import { matches, matchSets, players, pairStats } from '@/lib/db/schema';
 import { eq, and, inArray, or } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { recommendPairings } from '@/lib/rating/recommend-pairs';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { expectedScore } from '@/lib/rating/elo';
@@ -283,12 +284,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
       {/* Photo hero */}
       {match.photoUrl && (
-        <div className="rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative w-full h-[60vh] sm:h-[500px] rounded-2xl overflow-hidden bg-gray-100">
+          <Image
             src={match.photoUrl}
             alt={`Foto del partido del ${match.date}`}
-            className="max-w-full max-h-[60vh] sm:max-h-[500px] w-auto h-auto object-contain"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 1024px"
+            className="object-contain"
           />
         </div>
       )}

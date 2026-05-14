@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface MatchPlayer {
   id: string;
@@ -53,9 +54,14 @@ export function MatchCard({ match, team1, team2, sets = [], href }: MatchCardPro
   const card = (
     <div className={`bg-white rounded-2xl shadow-md border ${cardBorder} overflow-hidden hover:shadow-lg transition-all`}>
       {match.photoUrl && (
-        <div className="h-20 bg-gray-100 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={match.photoUrl} alt="" className="w-full h-full object-cover" />
+        <div className="relative h-32 sm:h-40 bg-gray-100 overflow-hidden">
+          <Image
+            src={match.photoUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 640px"
+            className="object-cover object-top"
+          />
         </div>
       )}
       {/* Header strip: date + location */}
