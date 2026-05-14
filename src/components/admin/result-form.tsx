@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -20,14 +20,9 @@ interface ResultFormPlayer {
 
 interface ResultFormProps {
   matchId: string;
-  team1Name: string;
-  team2Name: string;
   date: string;
   location?: string | null;
-  team1Player1Name: string;
-  team1Player2Name: string;
-  team2Player1Name: string;
-  team2Player2Name: string;
+  // Order from the scheduled match: [team1Player1, team1Player2, team2Player1, team2Player2]
   matchPlayers: [ResultFormPlayer, ResultFormPlayer, ResultFormPlayer, ResultFormPlayer];
   initialSides: {
     team1Player1Side: string | null;
@@ -37,7 +32,23 @@ interface ResultFormProps {
   };
 }
 
-export function ResultForm({ matchId, team1Name, team2Name, date, location, team1Player1Name, team1Player2Name, team2Player1Name, team2Player2Name, matchPlayers, initialSides }: ResultFormProps) {
+type Pairing = {
+  team1: readonly [ResultFormPlayer, ResultFormPlayer];
+  team2: readonly [ResultFormPlayer, ResultFormPlayer];
+};
+
+function makePairingOptions(
+  players: readonly [ResultFormPlayer, ResultFormPlayer, ResultFormPlayer, ResultFormPlayer],
+): Pairing[] {
+  const [a, b, c, d] = players;
+  return [
+    { team1: [a, b], team2: [c, d] },
+    { team1: [a, c], team2: [b, d] },
+    { team1: [a, d], team2: [b, c] },
+  ];
+}
+
+export function ResultForm({ matchId, date, location, matchPlayers, initialSides }: ResultFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'normal' | 'injury'>('normal');
@@ -50,14 +61,21 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
     { team1Games: '', team2Games: '' },
     { team1Games: '', team2Games: '' },
   ]);
-  const [team1Sides, setTeam1Sides] = useState<[string, string]>([
-    initialSides.team1Player1Side ?? '',
-    initialSides.team1Player2Side ?? '',
-  ]);
-  const [team2Sides, setTeam2Sides] = useState<[string, string]>([
-    initialSides.team2Player1Side ?? '',
-    initialSides.team2Player2Side ?? '',
-  ]);
+
+  const pairingOptions = useMemo(() => makePairingOptions(matchPlayers), [matchPlayers]);
+  // Option 0 corresponds to the scheduled pairing because matchPlayers preserves that order.
+  const [pairingIdx, setPairingIdx] = useState<number>(0);
+  const pairing = pairingOptions[pairingIdx];
+
+  const [sidesByPlayerId, setSidesByPlayerId] = useState<Record<string, string>>({
+    [matchPlayers[0].id]: initialSides.team1Player1Side ?? '',
+    [matchPlayers[1].id]: initialSides.team1Player2Side ?? '',
+    [matchPlayers[2].id]: initialSides.team2Player1Side ?? '',
+    [matchPlayers[3].id]: initialSides.team2Player2Side ?? '',
+  });
+
+  const team1Name = `${pairing.team1[0].name} / ${pairing.team1[1].name}`;
+  const team2Name = `${pairing.team2[0].name} / ${pairing.team2[1].name}`;
 
   function handleSetChange(idx: number, team: 'team1' | 'team2', value: string) {
     const parsed = value === '' ? '' : Math.max(0, Math.min(7, parseInt(value) || 0));
@@ -120,10 +138,14 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
           team1Games: Number(s.team1Games),
           team2Games: Number(s.team2Games),
         })),
-        team1Player1Side: team1Sides[0] || null,
-        team1Player2Side: team1Sides[1] || null,
-        team2Player1Side: team2Sides[0] || null,
-        team2Player2Side: team2Sides[1] || null,
+        team1Player1Id: pairing.team1[0].id,
+        team1Player2Id: pairing.team1[1].id,
+        team2Player1Id: pairing.team2[0].id,
+        team2Player2Id: pairing.team2[1].id,
+        team1Player1Side: sidesByPlayerId[pairing.team1[0].id] || null,
+        team1Player2Side: sidesByPlayerId[pairing.team1[1].id] || null,
+        team2Player1Side: sidesByPlayerId[pairing.team2[0].id] || null,
+        team2Player2Side: sidesByPlayerId[pairing.team2[1].id] || null,
         photoUrl: photoUrl || null,
       }),
     });
@@ -253,6 +275,42 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
         </button>
       </div>
 
+      {/* Pairing selector */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+        <div>
+          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">👥 Parejas que jugaron</p>
+          <p className="text-xs text-gray-400 mt-1">Elige cómo se emparejaron los 4 jugadores en pista</p>
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          {pairingOptions.map((opt, i) => {
+            const active = i === pairingIdx;
+            return (
+              <button
+                type="button"
+                key={i}
+                onClick={() => setPairingIdx(i)}
+                aria-pressed={active}
+                className={`rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-colors ${
+                  active
+                    ? 'border-green-500 bg-green-50 text-green-900'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex-1 truncate">
+                    🔵 {opt.team1[0].name} / {opt.team1[1].name}
+                  </span>
+                  <span className={`text-xs ${active ? 'text-green-600' : 'text-gray-400'}`}>VS</span>
+                  <span className="flex-1 truncate text-right">
+                    🔴 {opt.team2[0].name} / {opt.team2[1].name}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Photo upload (optional) */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest">📷 Foto del partido (opcional)</p>
@@ -351,16 +409,15 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-3">
             <p className="font-semibold text-sm text-blue-700">🔵 {team1Name}</p>
-            {[
-              { name: team1Player1Name, value: team1Sides[0], onChange: (v: string) => setTeam1Sides([v, team1Sides[1]]) },
-              { name: team1Player2Name, value: team1Sides[1], onChange: (v: string) => setTeam1Sides([team1Sides[0], v]) },
-            ].map((row, i) => (
-              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                <span className="text-sm text-gray-700 truncate">{row.name}</span>
+            {pairing.team1.map((player) => (
+              <div key={player.id} className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <span className="text-sm text-gray-700 truncate">{player.name}</span>
                 <select
                   className="border rounded-md px-2 py-1 text-sm bg-white"
-                  value={row.value}
-                  onChange={(e) => row.onChange(e.target.value)}
+                  value={sidesByPlayerId[player.id] ?? ''}
+                  onChange={(e) =>
+                    setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
+                  }
                 >
                   <option value="">—</option>
                   <option value="drive">Drive</option>
@@ -371,16 +428,15 @@ export function ResultForm({ matchId, team1Name, team2Name, date, location, team
           </div>
           <div className="space-y-3">
             <p className="font-semibold text-sm text-red-700">🔴 {team2Name}</p>
-            {[
-              { name: team2Player1Name, value: team2Sides[0], onChange: (v: string) => setTeam2Sides([v, team2Sides[1]]) },
-              { name: team2Player2Name, value: team2Sides[1], onChange: (v: string) => setTeam2Sides([team2Sides[0], v]) },
-            ].map((row, i) => (
-              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                <span className="text-sm text-gray-700 truncate">{row.name}</span>
+            {pairing.team2.map((player) => (
+              <div key={player.id} className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                <span className="text-sm text-gray-700 truncate">{player.name}</span>
                 <select
                   className="border rounded-md px-2 py-1 text-sm bg-white"
-                  value={row.value}
-                  onChange={(e) => row.onChange(e.target.value)}
+                  value={sidesByPlayerId[player.id] ?? ''}
+                  onChange={(e) =>
+                    setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
+                  }
                 >
                   <option value="">—</option>
                   <option value="drive">Drive</option>

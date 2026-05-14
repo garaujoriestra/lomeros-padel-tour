@@ -41,7 +41,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { sets, team1Player1Side, team1Player2Side, team2Player1Side, team2Player2Side, photoUrl } = body;
+    const {
+      sets,
+      team1Player1Id,
+      team1Player2Id,
+      team2Player1Id,
+      team2Player2Id,
+      team1Player1Side,
+      team1Player2Side,
+      team2Player1Side,
+      team2Player2Side,
+      photoUrl,
+    } = body;
 
     if (!sets || sets.length < 2 || sets.length > 3) {
       return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
@@ -51,6 +62,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     if (match.status === 'completed') {
       return NextResponse.json({ error: 'Este partido ya tiene resultado' }, { status: 400 });
+    }
+
+    // Optional pairing reassignment: the 4 IDs must match the originally scheduled players.
+    const newPairingIds = [team1Player1Id, team1Player2Id, team2Player1Id, team2Player2Id];
+    const pairingProvided = newPairingIds.every((v) => typeof v === 'string' && v.length > 0);
+    if (pairingProvided) {
+      if (new Set(newPairingIds).size !== 4) {
+        return NextResponse.json({ error: 'Las parejas deben incluir 4 jugadores distintos' }, { status: 400 });
+      }
+      const originalIds = new Set([
+        match.team1Player1Id,
+        match.team1Player2Id,
+        match.team2Player1Id,
+        match.team2Player2Id,
+      ]);
+      if (!newPairingIds.every((id) => originalIds.has(id as string))) {
+        return NextResponse.json(
+          { error: 'Los jugadores deben coincidir con los del partido programado' },
+          { status: 400 },
+        );
+      }
     }
 
     // Calculate winner
@@ -74,6 +106,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Update match status + winner
     const updateFields: Record<string, unknown> = { winnerTeam, status: 'completed' };
+    if (pairingProvided) {
+      updateFields.team1Player1Id = team1Player1Id;
+      updateFields.team1Player2Id = team1Player2Id;
+      updateFields.team2Player1Id = team2Player1Id;
+      updateFields.team2Player2Id = team2Player2Id;
+    }
     if (team1Player1Side !== undefined) updateFields.team1Player1Side = coerceSide(team1Player1Side);
     if (team1Player2Side !== undefined) updateFields.team1Player2Side = coerceSide(team1Player2Side);
     if (team2Player1Side !== undefined) updateFields.team2Player1Side = coerceSide(team2Player1Side);

@@ -30,9 +30,6 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
   const allPlayers = await db.select().from(players);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
-  const team1Name = `${pMap[match.team1Player1Id]?.name ?? '?'} / ${pMap[match.team1Player2Id]?.name ?? '?'}`;
-  const team2Name = `${pMap[match.team2Player1Id]?.name ?? '?'} / ${pMap[match.team2Player2Id]?.name ?? '?'}`;
-
   return (
     <div className="space-y-6">
       <div>
@@ -41,14 +38,8 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
       </div>
       <ResultForm
         matchId={id}
-        team1Name={team1Name}
-        team2Name={team2Name}
         date={match.date}
         location={match.location}
-        team1Player1Name={pMap[match.team1Player1Id]?.name ?? '?'}
-        team1Player2Name={pMap[match.team1Player2Id]?.name ?? '?'}
-        team2Player1Name={pMap[match.team2Player1Id]?.name ?? '?'}
-        team2Player2Name={pMap[match.team2Player2Id]?.name ?? '?'}
         matchPlayers={[
           { id: match.team1Player1Id, name: pMap[match.team1Player1Id]?.name ?? '?' },
           { id: match.team1Player2Id, name: pMap[match.team1Player2Id]?.name ?? '?' },
