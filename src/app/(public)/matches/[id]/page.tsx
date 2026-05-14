@@ -283,12 +283,12 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
       {/* Photo hero */}
       {match.photoUrl && (
-        <div className="rounded-2xl overflow-hidden bg-gray-100">
+        <div className="rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={match.photoUrl}
             alt={`Foto del partido del ${match.date}`}
-            className="w-full h-auto max-h-[400px] object-cover"
+            className="max-w-full max-h-[60vh] sm:max-h-[500px] w-auto h-auto object-contain"
           />
         </div>
       )}
