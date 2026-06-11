@@ -15,6 +15,15 @@ export const players = sqliteTable('players', {
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
+// ─── USERS (cuentas de acceso) ───────────────────────────────────────────────
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text('email').notNull().unique(),
+  role: text('role').notNull().default('player'), // 'admin' | 'player'
+  playerId: text('player_id').references(() => players.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
 // ─── MATCHES ─────────────────────────────────────────────────────────────────
 export const matches = sqliteTable('matches', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -94,3 +103,5 @@ export type PairStat = typeof pairStats.$inferSelect;
 export type RatingHistory = typeof ratingHistory.$inferSelect;
 export type PlayerAchievement = typeof playerAchievements.$inferSelect;
 export type NewPlayerAchievement = typeof playerAchievements.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;

@@ -74,6 +74,16 @@ export async function POST() {
       )
     `);
 
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        role TEXT NOT NULL DEFAULT 'player',
+        player_id TEXT REFERENCES players(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+
     return NextResponse.json({ success: true, message: 'Base de datos inicializada' });
   } catch (error) {
     console.error(error);
