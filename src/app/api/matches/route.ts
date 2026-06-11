@@ -5,6 +5,7 @@ import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
+import { notifyMatchResult } from '@/lib/push/match-events';
 
 // GET /api/matches
 export async function GET() {
@@ -102,11 +103,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Update ratings
-      await processMatchRatings({
+      const ratingResult = await processMatchRatings({
         ...match,
         winnerTeam: winnerTeam as 1 | 2,
         sets,
       });
+
+      // Push best-effort (no debe romper el guardado del partido)
+      await notifyMatchResult({ ...match, winnerTeam }, ratingResult);
     }
 
     return NextResponse.json(match, { status: 201 });

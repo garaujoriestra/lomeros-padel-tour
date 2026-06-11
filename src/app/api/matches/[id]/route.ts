@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
+import { notifyMatchResult } from '@/lib/push/match-events';
 
 // GET /api/matches/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -130,7 +131,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .returning();
 
     // Trigger Elo calculation
-    await processMatchRatings({ ...updated, winnerTeam, sets });
+    const ratingResult = await processMatchRatings({ ...updated, winnerTeam, sets });
+
+    // Push best-effort (no debe romper el guardado del resultado)
+    await notifyMatchResult({ ...updated, winnerTeam }, ratingResult);
 
     return NextResponse.json(updated);
   } catch (error) {
