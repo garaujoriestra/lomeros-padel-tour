@@ -56,6 +56,7 @@ export default async function AdminDashboard() {
           <p>👉 Ve a <Link href="/admin/players" className="text-green-700 font-medium hover:underline">Jugadores</Link> para gestionar el equipo.</p>
           <p>👉 Ve a <Link href="/admin/matches" className="text-green-700 font-medium hover:underline">Partidos</Link> para ver o registrar resultados.</p>
           <p>👉 Visita el <Link href="/" className="text-green-700 font-medium hover:underline">Dashboard público</Link> para ver rankings y estadísticas.</p>
+          <p>👉 Ve a <Link href="/admin/notifications" className="text-green-700 font-medium hover:underline">Notificaciones</Link> para enviar avisos y ver quién las tiene activadas.</p>
         </CardContent>
       </Card>
     </div>
