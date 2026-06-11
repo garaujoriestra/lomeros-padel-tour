@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, unique } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // ─── PLAYERS ─────────────────────────────────────────────────────────────────
@@ -92,6 +92,27 @@ export const playerAchievements = sqliteTable('player_achievements', {
   triggerMatchId: text('trigger_match_id').references(() => matches.id, { onDelete: 'set null' }),
 });
 
+// ─── PUSH SUBSCRIPTIONS ──────────────────────────────────────────────────────
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userAgent: text('user_agent'),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
+// ─── NOTIFICATION LOG (idempotencia de recordatorios) ────────────────────────
+export const notificationLog = sqliteTable('notification_log', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  matchId: text('match_id').notNull(),
+  kind: text('kind').notNull(), // 'reminder_day' | 'reminder_eve'
+  sentAt: text('sent_at').notNull().default(sql`(datetime('now'))`),
+}, (t) => ([
+  unique().on(t.matchId, t.kind),
+]));
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -105,3 +126,6 @@ export type PlayerAchievement = typeof playerAchievements.$inferSelect;
 export type NewPlayerAchievement = typeof playerAchievements.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type NotificationLogRow = typeof notificationLog.$inferSelect;
