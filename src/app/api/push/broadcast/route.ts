@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
     if (!title || !body) {
       return NextResponse.json({ error: 'Título y cuerpo son obligatorios' }, { status: 400 });
     }
-    await sendToAll({
+    const sent = await sendToAll({
       title: String(title),
       body: String(body),
       url: typeof url === 'string' && url.length > 0 ? url : '/',
       tag: 'broadcast',
     });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, sent });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error al enviar el aviso' }, { status: 500 });

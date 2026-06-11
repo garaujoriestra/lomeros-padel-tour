@@ -18,7 +18,12 @@ export function BroadcastForm() {
         body: JSON.stringify({ title, body }),
       });
       if (!res.ok) throw new Error('failed');
-      toast.success('Aviso enviado');
+      const data = await res.json();
+      if (data.sent === 0) {
+        toast.warning('Aviso enviado, pero no hay dispositivos suscritos');
+      } else {
+        toast.success(`Aviso enviado a ${data.sent ?? 0} dispositivo(s)`);
+      }
       setTitle('');
       setBody('');
     } catch {
@@ -35,6 +40,7 @@ export function BroadcastForm() {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Título (ej. ¡Hueco para jugar!)"
+        aria-label="Título del aviso"
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
         required
       />
@@ -42,6 +48,7 @@ export function BroadcastForm() {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Mensaje"
+        aria-label="Mensaje del aviso"
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
         rows={3}
         required

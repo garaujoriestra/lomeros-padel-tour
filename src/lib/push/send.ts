@@ -33,10 +33,11 @@ export function shouldDeleteSubscription(statusCode: number): boolean {
 
 type SubRow = typeof pushSubscriptions.$inferSelect;
 
-async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promise<void> {
-  if (subs.length === 0) return;
+async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promise<number> {
+  if (subs.length === 0) return 0;
   ensureVapid();
   const body = JSON.stringify({ icon: DEFAULT_ICON, ...payload });
+  let sent = 0;
   await Promise.all(
     subs.map(async (s) => {
       try {
@@ -44,6 +45,7 @@ async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promis
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           body,
         );
+        sent++;
       } catch (err) {
         const statusCode = (err as { statusCode?: number }).statusCode ?? 0;
         if (shouldDeleteSubscription(statusCode)) {
@@ -54,6 +56,7 @@ async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promis
       }
     }),
   );
+  return sent;
 }
 
 // Returns the userIds linked to any of the given playerIds.
@@ -75,7 +78,7 @@ export async function sendToUsers(userIds: string[], payload: PushPayload): Prom
   await sendToSubscriptions(subs, payload);
 }
 
-export async function sendToAll(payload: PushPayload): Promise<void> {
+export async function sendToAll(payload: PushPayload): Promise<number> {
   const subs = await db.select().from(pushSubscriptions);
-  await sendToSubscriptions(subs, payload);
+  return sendToSubscriptions(subs, payload);
 }

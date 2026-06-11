@@ -8,6 +8,7 @@ const adminLinks = [
   { href: '/admin', label: '📊 Dashboard' },
   { href: '/admin/players', label: '👤 Jugadores' },
   { href: '/admin/matches', label: '🎾 Partidos' },
+  { href: '/admin/notifications', label: '🔔 Notificaciones' },
 ];
 
 export function AdminSidebar() {
