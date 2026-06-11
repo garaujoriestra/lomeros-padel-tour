@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
+import { getSession } from '@/lib/auth/session';
 
 // POST /api/admin/flip-sides?confirm=YES
 //
@@ -9,11 +10,11 @@ import { sql } from 'drizzle-orm';
 // every match. Idempotent in the sense of "running twice returns to the
 // original (wrong) state" — only call ONCE.
 //
-// Requires the admin cookie (set via /api/login) and an explicit ?confirm=YES
+// Requires an admin session and an explicit ?confirm=YES
 // to avoid accidental triggers.
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get('admin-token')?.value;
-  if (token !== process.env.ADMIN_SECRET) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
