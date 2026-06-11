@@ -12,3 +12,12 @@ export async function requireAdmin(): Promise<{ session: Session } | { response:
   }
   return { session };
 }
+
+// Devuelve { session } si hay CUALQUIER usuario autenticado, o { response } 401.
+export async function requireSession(): Promise<{ session: Session } | { response: NextResponse }> {
+  const session = await getSession();
+  if (!session) {
+    return { response: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+  }
+  return { session };
+}

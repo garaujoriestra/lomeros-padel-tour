@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
-import { requireAdmin } from '@/lib/auth/guard';
+import { requireSession } from '@/lib/auth/guard';
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin();
+  // Subida de avatar: la usa el admin (fichas de jugador) y también el propio
+  // jugador desde /me/edit, así que basta con estar autenticado (no solo admin).
+  const auth = await requireSession();
   if ('response' in auth) return auth.response;
   try {
     const formData = await req.formData();
