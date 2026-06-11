@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { pushSubscriptions } from '@/lib/db/schema';
 import { requireSession } from '@/lib/auth/guard';
 
+export const runtime = 'nodejs';
+
 // POST /api/push/subscribe — guarda la suscripción del usuario actual.
 // Body: { subscription: { endpoint, keys: { p256dh, auth } } }
 export async function POST(request: NextRequest) {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/guard';
 import { sendToAll } from '@/lib/push/send';
 
+export const runtime = 'nodejs';
+
 // POST /api/push/broadcast — envía un aviso a todas las suscripciones (solo admin).
 // Body: { title, body, url? }
 export async function POST(request: NextRequest) {

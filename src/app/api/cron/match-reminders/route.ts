@@ -7,6 +7,7 @@ import { buildReminderNotification } from '@/lib/push/notifications';
 import { sendToUsers, userIdsForPlayers } from '@/lib/push/send';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // GET /api/cron/match-reminders?kind=day|eve
 // Lo invoca Vercel Cron con el header Authorization: Bearer <CRON_SECRET>.
