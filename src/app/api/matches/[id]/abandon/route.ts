@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // POST /api/matches/[id]/abandon
 // Marks a scheduled match as not finished due to injury. The match keeps its
@@ -11,6 +12,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     const body = await req.json();

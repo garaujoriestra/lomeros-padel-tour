@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { upsertPlayerUser } from '@/lib/auth/users';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // GET /api/players - listar todos los jugadores
 export async function GET() {
@@ -19,6 +20,8 @@ export async function GET() {
 
 // POST /api/players - crear jugador
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const body = await request.json();
     const { name, nickname, avatarUrl, isLeftHanded, email } = body;

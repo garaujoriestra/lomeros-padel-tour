@@ -3,9 +3,12 @@ import { db } from '@/lib/db';
 import { matches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { coerceSide } from '@/lib/rating/side-stats';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // PATCH /api/matches/[id]/sides — update only the side columns
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();

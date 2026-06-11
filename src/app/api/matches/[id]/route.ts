@@ -4,6 +4,7 @@ import { matches, matchSets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // GET /api/matches/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
 // DELETE /api/matches/[id]
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     // Los sets se borran en cascada (ON DELETE CASCADE)
@@ -38,6 +41,8 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
 
 // PUT /api/matches/[id] — add result to a scheduled match
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();

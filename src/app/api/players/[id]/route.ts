@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { upsertPlayerUser } from '@/lib/auth/users';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // GET /api/players/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
 // PUT /api/players/[id]
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     const body = await request.json();
@@ -53,6 +56,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 // DELETE /api/players/[id]
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
     await db.delete(players).where(eq(players.id, id));

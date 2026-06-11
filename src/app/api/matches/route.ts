@@ -4,6 +4,7 @@ import { matches, matchSets } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
+import { requireAdmin } from '@/lib/auth/guard';
 
 // GET /api/matches
 export async function GET() {
@@ -23,6 +24,8 @@ export async function GET() {
 //   - With sets  → status='completed', calculates winner, triggers Elo
 //   - Without sets → status='scheduled', winnerTeam=null, no Elo yet
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
   try {
     const body = await request.json();
     const {
