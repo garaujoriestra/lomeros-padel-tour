@@ -5,12 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { navLinks } from './nav-links';
 
-export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
+interface NavSession { role: 'admin' | 'player'; hasPlayer: boolean }
+
+export function Navbar({ session = null }: { session?: NavSession | null }) {
   const pathname = usePathname();
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch('/api/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/');
     router.refresh();
   }
@@ -42,13 +44,21 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {isAdmin ? (
+          {session ? (
             <>
+              {session.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 border border-orange-500/30 transition-all"
+                >
+                  ⚙️ Admin
+                </Link>
+              )}
               <Link
-                href="/admin"
-                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 border border-orange-500/30 transition-all"
+                href="/me"
+                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-green-400/15 text-green-200 hover:bg-green-400/25 border border-green-400/30 transition-all"
               >
-                ⚙️ Admin
+                👤 Mi perfil
               </Link>
               <button
                 onClick={handleLogout}
@@ -62,7 +72,7 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
               href="/login"
               className="inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all"
             >
-              Admin
+              Entrar
             </Link>
           )}
         </div>
