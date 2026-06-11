@@ -1,22 +1,24 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifySession } from '@/lib/auth/jwt';
+import { decideAccess } from '@/lib/auth/authorize';
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const payload = await verifySession(request.cookies.get('session')?.value);
+  const decision = decideAccess(pathname, payload);
 
-  // Rutas que requieren autenticación de admin
-  if (pathname.startsWith('/admin')) {
-    const token = request.cookies.get('admin-token')?.value;
-    if (token !== process.env.ADMIN_SECRET) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (decision === 'redirect-login') {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
-
+  if (decision === 'redirect-home') {
+    return NextResponse.redirect(new URL('/me', request.url));
+  }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/me/:path*'],
 };
