@@ -51,7 +51,20 @@ Se gestiona desde el **formulario de jugador del admin** (`/admin/players/[id]/e
 
 ### Seed inicial
 
-Una fila admin: `users(email='garaujoriestra@gmail.com', role='admin', playerId=null)`. Si el admin además juega, se le asigna su `playerId` más adelante.
+Una fila admin: `users(email='garaujoriestra@gmail.com', role='admin', playerId=<ficha del admin>)`. El admin **también juega** en el tour, así que su `users` se vincula a su ficha de jugador (su `/me` muestra sus datos como cualquier jugador, además del acceso al panel admin).
+
+### Flujo de alta de un jugador nuevo
+
+El "alta de usuario" y el "alta de jugador" son **el mismo gesto** — no hay pantalla separada de gestión de cuentas:
+
+1. El admin va a `/admin/players/new`, rellena los datos del jugador **+ el campo "Email de Gmail"** (opcional).
+2. Al guardar: se crea la fila en `players` (como hoy) y, si hay email, se hace upsert de la fila `users` (`role='player'`, `playerId`=ese jugador). Eso es la autorización.
+3. El admin pasa la URL al jugador. El jugador pulsa "Entrar con Google" con ese mismo Gmail → encontrado en `users` → sesión → ve su `/me`. Sin formulario de registro.
+
+Casos:
+- **Email no coincide** con el Gmail real → "Cuenta no autorizada"; el admin corrige el email en la ficha y se reintenta.
+- **Jugador sin email** → existe en rankings/partidos pero sin acceso. El campo email es opcional.
+- **Jugador preexistente** → se le edita la ficha, se le pone el Gmail, y ya puede entrar.
 
 ## 4. Flujo de autenticación
 
