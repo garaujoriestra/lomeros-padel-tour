@@ -294,15 +294,16 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
       </Link>
 
       {/* Foto del partido */}
+      {/* object-contain: las fotos verticales deben verse enteras (letterbox), no recortadas */}
       {match.photoUrl && (
-        <div className="lpt-card" style={{ position: 'relative', height: 'clamp(200px, 45vw, 380px)', marginBottom: 18, overflow: 'hidden' }}>
+        <div className="lpt-card" style={{ position: 'relative', height: 'min(60vh, 500px)', marginBottom: 18, overflow: 'hidden', background: 'var(--surface-2)' }}>
           <Image
             src={match.photoUrl}
             alt={`Foto del partido del ${match.date}`}
             fill
             priority
             sizes="(max-width: 768px) 100vw, 1024px"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       )}

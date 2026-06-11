@@ -29,13 +29,14 @@ export function MatchCard({ match, team1, team2, sets = [], href, predictionPct 
   const card = (
     <div className={`lpt-card ${href ? 'clickable' : ''}`} style={{ overflow: 'hidden' }}>
       {match.photoUrl && (
-        <div className="ph-img" style={{ height: 84, position: 'relative' }}>
+        // object-contain: foto completa con letterbox; object-cover recortaba caras en fotos verticales
+        <div className="ph-img" style={{ height: 160, position: 'relative' }}>
           <Image
             src={match.photoUrl}
             alt=""
             fill
             sizes="(max-width: 760px) 100vw, 520px"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       )}
