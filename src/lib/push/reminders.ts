@@ -10,7 +10,11 @@ export function madridDateParts(now: Date): { today: string; tomorrow: string } 
       day: '2-digit',
     }).format(d);
   const today = fmt(now);
-  const tomorrow = fmt(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  // 25h en lugar de 24h: en el cambio de hora de otoño (DST fall-back) el día
+  // tiene 25 horas, por lo que sumar exactamente 24h puede quedar en el mismo
+  // día de Madrid. Sumar 25h garantiza cruzar siempre al día siguiente sin
+  // nunca saltar dos días (el día más largo posible es 25h).
+  const tomorrow = fmt(new Date(now.getTime() + 25 * 60 * 60 * 1000));
   return { today, tomorrow };
 }
 

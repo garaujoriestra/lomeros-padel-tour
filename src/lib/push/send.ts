@@ -9,10 +9,16 @@ const DEFAULT_ICON = '/icon';
 let configured = false;
 function ensureVapid() {
   if (configured) return;
+  const publicKey = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+  const privateKey = process.env.VAPID_PRIVATE_KEY || '';
+  if (!publicKey || !privateKey) {
+    console.warn('push: faltan claves VAPID, no se enviarán notificaciones');
+    return;
+  }
   webpush.setVapidDetails(
     process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
-    process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-    process.env.VAPID_PRIVATE_KEY || '',
+    publicKey,
+    privateKey,
   );
   configured = true;
 }

@@ -14,6 +14,13 @@ describe('madridDateParts', () => {
     const { today } = madridDateParts(new Date('2026-06-11T23:30:00Z'));
     expect(today).toBe('2026-06-12');
   });
+
+  it('tomorrow cruza de día incluso en el cambio de hora de otoño (DST fall-back)', () => {
+    // 2026-10-24T22:30:00Z: en Madrid es 2026-10-25 00:30 (la madrugada del cambio de hora)
+    const { today, tomorrow } = madridDateParts(new Date('2026-10-24T22:30:00Z'));
+    expect(today).toBe('2026-10-25');
+    expect(tomorrow).toBe('2026-10-26');
+  });
 });
 
 describe('selectReminders', () => {
