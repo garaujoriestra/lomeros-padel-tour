@@ -10,6 +10,11 @@ import {
   type PlayerForElo,
 } from './elo';
 
+export interface MatchRatingResult {
+  eloChanges: { playerId: string; eloAfter: number; eloChange: number }[];
+  newAchievements: { playerId: string; achievementId: string }[];
+}
+
 type MatchInput = {
   id: string;
   date: string;
@@ -48,7 +53,7 @@ async function getOrCreatePairStats(player1Id: string, player2Id: string) {
 /**
  * Procesa un partido: actualiza Elos individuales, Elos de pareja y guarda historial.
  */
-export async function processMatchRatings(match: MatchInput) {
+export async function processMatchRatings(match: MatchInput): Promise<MatchRatingResult> {
   const playerIds = [
     match.team1Player1Id,
     match.team1Player2Id,
@@ -161,10 +166,19 @@ export async function processMatchRatings(match: MatchInput) {
   }
 
   // Apply achievements for the 4 players based on the freshly-updated state.
-  await applyAchievementsForMatch(match.id);
+  const newAchievements = await applyAchievementsForMatch(match.id);
+
+  return {
+    eloChanges: eloResults.map((r) => ({
+      playerId: r.playerId,
+      eloAfter: r.eloAfter,
+      eloChange: r.eloChange,
+    })),
+    newAchievements,
+  };
 }
 
-async function applyAchievementsForMatch(matchId: string) {
+async function applyAchievementsForMatch(matchId: string): Promise<{ playerId: string; achievementId: string }[]> {
   // Load history + sets + matches + players. We need globals to compute
   // bagel/doubleBagel and rank changes correctly.
   const allHistory = await db.select().from(ratingHistory);
@@ -226,7 +240,7 @@ async function applyAchievementsForMatch(matchId: string) {
 
   // Find the 4 player ids of the match we just closed
   const thisMatch = allMatchesRows.find((m) => m.id === matchId);
-  if (!thisMatch) return;
+  if (!thisMatch) return [];
   const affectedPlayers = new Set<string>([
     thisMatch.team1Player1Id,
     thisMatch.team1Player2Id,
@@ -256,4 +270,6 @@ async function applyAchievementsForMatch(matchId: string) {
       triggerMatchId: g.triggerMatchId,
     });
   }
+
+  return grantsToInsert.map((g) => ({ playerId: g.playerId, achievementId: g.achievementId }));
 }
