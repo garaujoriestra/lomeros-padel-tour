@@ -15,12 +15,12 @@ export default async function MePage() {
     return (
       <div className="max-w-md mx-auto mt-10 text-center space-y-4">
         <div className="text-4xl">👋</div>
-        <h1 className="text-2xl font-bold text-gray-800">¡Bienvenido!</h1>
-        <p className="text-gray-500">
+        <h1 className="display" style={{ fontSize: 28 }}>¡Bienvenido!</h1>
+        <p className="muted">
           Tu cuenta está activa pero aún no está vinculada a un jugador del tour.
           Pide al organizador que te vincule a tu ficha.
         </p>
-        <Link href="/" className="inline-block text-green-700 font-semibold">Ver el tour →</Link>
+        <Link href="/" className="sec-link" style={{ justifyContent: 'center' }}>Ver el tour →</Link>
         <div className="mt-6 text-left">
           <PushNotificationsToggle />
         </div>

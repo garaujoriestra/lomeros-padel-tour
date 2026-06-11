@@ -2,43 +2,48 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { navLinks } from './nav-links';
+import { navLinks, isNavActive } from './nav-links';
+import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 
-export function BottomNav() {
+export function BottomNav({ player = null }: { player?: LptPlayer | null }) {
   const pathname = usePathname();
+  // En móvil "Info" cede su sitio a "Yo" (perfil propio); Info queda en el menú superior.
+  const items = navLinks.slice(0, 4);
+  const meActive = pathname === '/me' || pathname.startsWith('/me/');
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-green-950/95 backdrop-blur border-t border-green-900/50 pb-[env(safe-area-inset-bottom)]"
-      aria-label="Navegación inferior"
-    >
-      <ul className="grid grid-cols-5">
-        {navLinks.map((link) => {
-          const active = pathname === link.href;
-          return (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                aria-current={active ? 'page' : undefined}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 min-h-14 py-1.5 transition-colors',
-                  active
-                    ? 'bg-green-400/15 text-white'
-                    : 'text-green-300 hover:text-white'
-                )}
-              >
-                <span className="text-xl leading-none" aria-hidden="true">
-                  {link.icon}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wide leading-none">
-                  {link.label}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav className="bottomnav" aria-label="Navegación inferior">
+      {items.map((link) => {
+        const Icon = link.icon;
+        const active = isNavActive(link.href, pathname) && !meActive;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={active ? 'page' : undefined}
+            className={`bn-item ${active ? 'active' : ''}`}
+          >
+            <Icon size={19} strokeWidth={active ? 2.5 : 2} />
+            {link.label}
+          </Link>
+        );
+      })}
+      <Link
+        href={player ? '/me' : '/login'}
+        aria-current={meActive ? 'page' : undefined}
+        className={`bn-item ${meActive ? 'active' : ''}`}
+      >
+        {player ? (
+          <LptAvatar
+            player={player}
+            size={20}
+            className={meActive ? '' : undefined}
+          />
+        ) : (
+          <span className="lpt-avatar" style={{ width: 20, height: 20, fontSize: 10, background: 'var(--surface-2)', color: 'var(--ink-3)' }}>?</span>
+        )}
+        Yo
+      </Link>
     </nav>
   );
 }

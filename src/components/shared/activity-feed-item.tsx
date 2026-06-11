@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import { Swords, Bandage, Calendar, TrendingUp, TrendingDown, UserPlus, Award, type LucideIcon } from 'lucide-react';
 import type { FeedEvent } from '@/lib/feed/build-feed';
 import { relativeTime } from '@/lib/format/relative-time';
 
 interface PlayerMap {
-  [id: string]: { id: string; name: string };
+  [id: string]: { id: string; name: string; nickname?: string | null };
 }
 
 const RANK_LABELS: Record<string, string> = {
@@ -13,15 +14,43 @@ const RANK_LABELS: Record<string, string> = {
   rank_loses_top3: 'sale del top 3',
 };
 
-const RANK_ICONS: Record<string, string> = {
-  rank_into_top1: '🥇',
-  rank_loses_top1: '📉',
-  rank_into_top3: '📈',
-  rank_loses_top3: '📉',
+const RANK_UP: Record<string, boolean> = {
+  rank_into_top1: true,
+  rank_loses_top1: false,
+  rank_into_top3: true,
+  rank_loses_top3: false,
 };
 
-function teamNames(p1: { name: string } | undefined, p2: { name: string } | undefined) {
-  return `${p1?.name ?? '?'} & ${p2?.name ?? '?'}`;
+function pName(p: { name: string; nickname?: string | null } | undefined) {
+  return p ? p.nickname || p.name : '?';
+}
+
+function teamNames(p1: PlayerMap[string] | undefined, p2: PlayerMap[string] | undefined) {
+  return `${pName(p1)} & ${pName(p2)}`;
+}
+
+function Row({
+  icon: Icon,
+  href,
+  time,
+  emoji,
+  children,
+}: {
+  icon?: LucideIcon;
+  emoji?: string;
+  href: string;
+  time: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="feed-row" style={{ display: 'flex' }}>
+      <div className="feed-ico">{emoji ? <span style={{ fontSize: 15 }}>{emoji}</span> : Icon && <Icon size={15} />}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, lineHeight: 1.45 }}>{children}</div>
+        <div className="small muted" style={{ marginTop: 2, fontSize: 11.5 }}>{time}</div>
+      </div>
+    </Link>
+  );
 }
 
 export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playerMap: PlayerMap }) {
@@ -31,27 +60,14 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     const m = event.match;
     const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);
     const t2 = teamNames(playerMap[m.team2Player1Id], playerMap[m.team2Player2Id]);
-    const winnerNames = m.winnerTeam === 1 ? t1 : m.winnerTeam === 2 ? t2 : null;
-    const loserNames = m.winnerTeam === 1 ? t2 : m.winnerTeam === 2 ? t1 : null;
-    const setsStr = event.sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' · ');
-
+    const winnerNames = m.winnerTeam === 1 ? t1 : t2;
+    const loserNames = m.winnerTeam === 1 ? t2 : t1;
+    const setsStr = event.sets.map((s) => `${s.team1Games}–${s.team2Games}`).join(' · ');
     return (
-      <Link href={`/matches/${m.id}`} className="block">
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-start gap-3 hover:border-green-200 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-lg shrink-0">✅</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              <span className="font-bold">{winnerNames}</span> ganan a <span className="font-bold">{loserNames}</span>
-            </p>
-            <div className="flex items-center gap-2 mt-1.5">
-              {setsStr && (
-                <span className="font-mono text-xs bg-gray-50 px-2 py-0.5 rounded text-gray-700">{setsStr}</span>
-              )}
-              <span className="text-xs text-gray-400">· {time}</span>
-            </div>
-          </div>
-        </div>
-      </Link>
+      <Row icon={Swords} href={`/matches/${m.id}`} time={time}>
+        <b>{winnerNames}</b> ganan a {loserNames}{' '}
+        {setsStr && <span className="num" style={{ fontWeight: 700 }}>({setsStr})</span>}
+      </Row>
     );
   }
 
@@ -60,20 +76,10 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);
     const t2 = teamNames(playerMap[m.team2Player1Id], playerMap[m.team2Player2Id]);
     const injured = m.injuredPlayerId ? playerMap[m.injuredPlayerId] : null;
-
     return (
-      <Link href={`/matches/${m.id}`} className="block">
-        <div className="bg-white border border-rose-100 rounded-2xl p-4 flex items-start gap-3 hover:border-rose-200 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-lg shrink-0">🤕</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              Partido <span className="font-bold">{t1} vs {t2}</span> no terminado
-              {injured && <> — lesión de <span className="font-bold">{injured.name}</span></>}
-            </p>
-            <p className="text-xs text-gray-400 mt-1.5">{m.date} <span className="text-gray-300">·</span> {time}</p>
-          </div>
-        </div>
-      </Link>
+      <Row icon={Bandage} href={`/matches/${m.id}`} time={time}>
+        <b>{t1}</b> vs <b>{t2}</b> — no terminado{injured && <> por lesión de <b>{pName(injured)}</b></>}
+      </Row>
     );
   }
 
@@ -81,79 +87,40 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     const m = event.match;
     const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);
     const t2 = teamNames(playerMap[m.team2Player1Id], playerMap[m.team2Player2Id]);
-    const meta = [m.date, m.location].filter(Boolean).join(' · ');
-
     return (
-      <Link href={`/matches/${m.id}`} className="block">
-        <div className="bg-white border border-amber-100 rounded-2xl p-4 flex items-start gap-3 hover:border-amber-200 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-lg shrink-0">📅</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              Programado: <span className="font-bold">{t1} vs {t2}</span>
-            </p>
-            <p className="text-xs text-gray-500 mt-1.5">
-              {meta} <span className="text-gray-400">· {time}</span>
-            </p>
-          </div>
-        </div>
-      </Link>
+      <Row icon={Calendar} href={`/matches/${m.id}`} time={time}>
+        Programado: <b>{t1}</b> vs <b>{t2}</b>
+      </Row>
     );
   }
 
   if (event.type === 'rank_change') {
     const player = playerMap[event.event.playerId];
+    const up = RANK_UP[event.event.type];
     return (
-      <Link href={`/players/${event.event.playerId}`} className="block">
-        <div className="bg-white border border-blue-100 rounded-2xl p-4 flex items-start gap-3 hover:border-blue-200 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-lg shrink-0">{RANK_ICONS[event.event.type]}</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              <span className="font-bold">{player?.name ?? '?'}</span> {RANK_LABELS[event.event.type]}
-            </p>
-            <p className="text-xs text-gray-400 mt-1.5">{Math.round(event.event.newElo)} ELO · {time}</p>
-          </div>
-        </div>
-      </Link>
+      <Row icon={up ? TrendingUp : TrendingDown} href={`/players/${event.event.playerId}`} time={time}>
+        <b>{pName(player)}</b> {RANK_LABELS[event.event.type]}{' '}
+        <span className="num muted">({Math.round(event.event.newElo)} Elo)</span>
+      </Row>
     );
   }
 
-  // new_player
   if (event.type === 'new_player') {
     return (
-      <Link href={`/players/${event.player.id}`} className="block">
-        <div className="bg-white border border-pink-100 rounded-2xl p-4 flex items-start gap-3 hover:border-pink-200 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-pink-100 flex items-center justify-center text-lg shrink-0">👤</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              Nuevo jugador en el grupo: <span className="font-bold">{event.player.name}</span>
-            </p>
-            <p className="text-xs text-gray-400 mt-1.5">{time}</p>
-          </div>
-        </div>
-      </Link>
+      <Row icon={UserPlus} href={`/players/${event.player.id}`} time={time}>
+        <b>{event.player.name}</b> se une al tour
+      </Row>
     );
   }
 
   if (event.type === 'achievement_unlocked') {
     const player = playerMap[event.playerId];
     return (
-      <Link href={`/players/${event.playerId}`} className="block">
-        <div className="bg-white border border-yellow-200 rounded-2xl p-4 flex items-start gap-3 hover:border-yellow-300 hover:shadow-sm transition-all">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 flex items-center justify-center text-lg shrink-0">
-            {event.achievement.icon}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 leading-snug">
-              <span className="font-bold">{player?.name ?? '?'}</span> desbloquea{' '}
-              <span className="font-bold">{event.achievement.name}</span>
-            </p>
-            <p className="text-xs text-gray-400 mt-1.5">{event.achievement.description} · {time}</p>
-          </div>
-        </div>
-      </Link>
+      <Row icon={Award} href={`/players/${event.playerId}`} time={time}>
+        <b>{pName(player)}</b> desbloquea <b>{event.achievement.icon} {event.achievement.name}</b>
+      </Row>
     );
   }
 
-  // Should not reach here; all variants have explicit handlers
   return null;
 }

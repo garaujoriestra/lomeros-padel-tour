@@ -104,7 +104,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="relative w-20 h-20 rounded-full overflow-hidden shrink-0 border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors group"
+                className="relative w-20 h-20 rounded-full overflow-hidden shrink-0 border-2 border-dashed border-line hover:border-acc transition-colors group"
               >
                 {preview ? (
                   <Image src={preview} alt="Avatar" fill className="object-cover" />
@@ -128,11 +128,11 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                 >
                   {uploading ? 'Subiendo...' : '📁 Seleccionar imagen'}
                 </Button>
-                <p className="text-xs text-gray-400">JPG, PNG, WEBP · Máx. 2MB</p>
+                <p className="text-xs text-ink-3">JPG, PNG, WEBP · Máx. 2MB</p>
                 {preview && (
                   <button
                     type="button"
-                    className="text-xs text-red-400 hover:text-red-600"
+                    className="text-xs text-loss hover:text-loss"
                     onClick={() => { setPreview(''); setForm((f) => ({ ...f, avatarUrl: '' })); }}
                   >
                     ✕ Quitar foto
@@ -178,7 +178,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="jugador@gmail.com"
             />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-ink-3">
               Opcional. Si lo dejas vacío, el jugador no podrá iniciar sesión.
             </p>
           </div>
@@ -189,7 +189,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               type="checkbox"
               checked={form.isLeftHanded}
               onChange={(e) => setForm({ ...form, isLeftHanded: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-line"
             />
             <Label htmlFor="isLeftHanded" className="cursor-pointer">🤚 Zurdo</Label>
           </div>

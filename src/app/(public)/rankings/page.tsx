@@ -1,169 +1,131 @@
 import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
+import { players, ratingHistory } from '@/lib/db/schema';
 import { desc, sql } from 'drizzle-orm';
 import Link from 'next/link';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Trophy, UserPlus } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { buildPodiumGroups, assignCompetitionRanks } from '@/lib/rankings/podium-groups';
-import { PlayerAvatar } from '@/components/shared/player-avatar';
+import { SectionHead, LptAvatar, Delta, Sparkline } from '@/components/lpt/ui';
 
 export const dynamic = 'force-dynamic';
 
 export default async function RankingsPage() {
-  const ranked = await db
-    .select()
-    .from(players)
-    .where(sql`${players.matchesPlayed} > 0`)
-    .orderBy(desc(players.eloRating));
+  const [ranked, unranked, history] = await Promise.all([
+    db.select().from(players).where(sql`${players.matchesPlayed} > 0`).orderBy(desc(players.eloRating)),
+    db.select().from(players).where(sql`${players.matchesPlayed} = 0`).orderBy(players.name),
+    db.select().from(ratingHistory).orderBy(ratingHistory.recordedAt),
+  ]);
 
-  const unranked = await db
-    .select()
-    .from(players)
-    .where(sql`${players.matchesPlayed} = 0`)
-    .orderBy(players.name);
+  // Historial de Elo por jugador (para sparkline, delta y racha)
+  const histByPlayer: Record<string, { elo: number[]; changes: number[] }> = {};
+  for (const rh of history) {
+    const h = (histByPlayer[rh.playerId] ??= { elo: [rh.eloBefore], changes: [] });
+    h.elo.push(rh.eloAfter);
+    h.changes.push(rh.eloChange);
+  }
+  function streakOf(changes: number[]): { type: 'W' | 'L'; count: number } | null {
+    if (changes.length === 0) return null;
+    const lastWin = changes[changes.length - 1] > 0;
+    let count = 0;
+    for (let i = changes.length - 1; i >= 0; i--) {
+      if (changes[i] > 0 === lastWin) count++;
+      else break;
+    }
+    return { type: lastWin ? 'W' : 'L', count };
+  }
 
-  const podiumGroups = buildPodiumGroups(ranked);
-  const rankedWithRanks = assignCompetitionRanks(ranked);
+  const podiumPlayers = ranked.map((p) => ({
+    ...p,
+    delta: histByPlayer[p.id]?.changes.at(-1) ?? null,
+  }));
+  const podiumGroups = buildPodiumGroups(podiumPlayers);
+  const rankedWithRanks = assignCompetitionRanks(podiumPlayers);
 
   return (
-    <div className="space-y-8">
+    <>
+      <section className="section">
+        <SectionHead icon={Trophy} title="Ranking individual" />
+        {ranked.length === 0 ? (
+          <div className="muted" style={{ textAlign: 'center', padding: '60px 0' }}>
+            <p style={{ fontSize: 40, margin: '0 0 10px' }}>🏆</p>
+            <p style={{ fontWeight: 600, margin: 0 }}>Aún no hay partidos registrados</p>
+          </div>
+        ) : (
+          podiumGroups.length >= 3 && <Podium groups={podiumGroups} />
+        )}
+      </section>
 
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-green-950 to-emerald-900 p-5 sm:p-7 md:p-10 text-white shadow-xl">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(74,222,128,0.08)_0%,transparent_70%)]" />
-        <div className="relative">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">🏆 CLASIFICACIÓN</h1>
-          <p className="text-green-200 mt-1 font-medium text-sm sm:text-base">Ranking individual ordenado por Elo · {ranked.length} jugadores clasificados</p>
-        </div>
-      </div>
-
-      {ranked.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-6xl mb-4">🏆</p>
-          <p className="text-xl font-semibold">Aún no hay partidos registrados</p>
-        </div>
-      ) : (
-        <>
-          {/* Podium top 3 */}
-          {podiumGroups.length >= 3 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Podio</p>
-              <Podium groups={podiumGroups} variant="rankings" />
+      {ranked.length > 0 && (
+        <section className="section">
+          <div className="lpt-card" style={{ overflow: 'hidden' }}>
+            <div className="rank-row" style={{ cursor: 'default', background: 'transparent', padding: 'calc(9px * var(--sp)) calc(16px * var(--sp))' }}>
+              <span className="kicker" style={{ width: 34, justifyContent: 'center' }}>#</span>
+              <span className="kicker" style={{ flex: 1 }}>Jugador</span>
+              <span className="kicker hide-sm" style={{ width: 90, justifyContent: 'center' }}>Forma</span>
+              <span className="kicker hide-sm" style={{ width: 64, justifyContent: 'center' }}>V–D</span>
+              <span className="kicker" style={{ width: 56, justifyContent: 'flex-end' }}>Elo</span>
+              <span style={{ width: 48 }} />
             </div>
-          )}
-
-          {/* Full table */}
-          <Card className="shadow-sm overflow-hidden border-0 shadow-md">
-            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b">
-              <h2 className="font-black text-gray-600 text-xs uppercase tracking-widest">Clasificación completa · {ranked.length} jugadores</h2>
-            </div>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50/60 hover:bg-gray-50/60">
-                    <TableHead className="w-12 sm:w-14 pl-3 sm:pl-6 font-black text-gray-500 text-xs uppercase tracking-wider">#</TableHead>
-                    <TableHead className="font-black text-gray-500 text-xs uppercase tracking-wider">Jugador</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider">ELO</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">P</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">V</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">D</TableHead>
-                    <TableHead className="text-center font-black text-gray-500 text-xs uppercase tracking-wider pr-3 sm:pr-6">Win%</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rankedWithRanks.map((player) => {
-                    const winRate = Math.round((player.wins / player.matchesPlayed) * 100);
-                    const eloChange = Math.round(player.eloRating - 1500);
-                    return (
-                      <TableRow key={player.id} className={player.rank <= 3 ? 'bg-green-50/20' : 'hover:bg-gray-50/50'}>
-                        <TableCell className="pl-3 sm:pl-6 w-12 sm:w-14">
-                          {player.rank === 1 ? <span className="text-xl">🥇</span>
-                            : player.rank === 2 ? <span className="text-xl">🥈</span>
-                            : player.rank === 3 ? <span className="text-xl">🥉</span>
-                            : <span className="text-gray-400 font-bold text-sm w-6 inline-block text-center">{player.rank}</span>}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <PlayerAvatar
-                              name={player.name}
-                              avatarUrl={player.avatarUrl}
-                              className="w-9 h-9 rounded-full shadow-sm"
-                              fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white text-sm font-black"
-                              sizes="36px"
-                            />
-                            <div>
-                              <Link href={`/players/${player.id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors">
-                                {player.name}
-                              </Link>
-                              {player.nickname && <p className="text-xs text-gray-400">{player.nickname}</p>}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center">
-                            <span className="font-black text-sm sm:text-base tabular-nums">{Math.round(player.eloRating)}</span>
-                            <span className={`text-xs font-bold tabular-nums ${eloChange >= 0 ? 'text-green-500' : 'text-red-400'}`}>
-                              {eloChange >= 0 ? '+' : ''}{eloChange}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center text-sm hidden sm:table-cell text-gray-600">{player.matchesPlayed}</TableCell>
-                        <TableCell className="text-center text-sm font-bold text-green-600 hidden sm:table-cell">{player.wins}</TableCell>
-                        <TableCell className="text-center text-sm font-bold text-red-400 hidden sm:table-cell">{player.losses}</TableCell>
-                        <TableCell className="text-center pr-3 sm:pr-6">
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-14 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
-                              <div
-                                className={`h-full rounded-full transition-all ${winRate >= 60 ? 'bg-green-500' : winRate >= 40 ? 'bg-yellow-400' : 'bg-red-400'}`}
-                                style={{ width: `${winRate}%` }}
-                              />
-                            </div>
-                            <span className={`text-sm font-black tabular-nums ${winRate >= 60 ? 'text-green-600' : winRate >= 40 ? 'text-yellow-600' : 'text-red-500'}`}>
-                              {winRate}%
-                            </span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
+            {rankedWithRanks.map((player) => {
+              const winRate = Math.round((player.wins / player.matchesPlayed) * 100);
+              const h = histByPlayer[player.id];
+              const streak = h ? streakOf(h.changes) : null;
+              return (
+                <Link key={player.id} href={`/players/${player.id}`} className="rank-row" style={{ display: 'flex' }}>
+                  <span className={`rank-pos ${player.rank <= 3 ? 'top' : ''}`}>{player.rank}</span>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
+                    <LptAvatar player={player} size={34} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {player.nickname || player.name}
+                        {streak && streak.count >= 3 && (
+                          <span title={`Racha de ${streak.count}`} style={{ marginLeft: 6, fontSize: 12 }}>
+                            {streak.type === 'W' ? '🔥' : '❄️'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="small muted" style={{ fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <span className="hide-sm">{player.name}</span>
+                        <span className="only-sm num">{player.wins}V – {player.losses}D · {winRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hide-sm" style={{ width: 90, display: 'flex', justifyContent: 'center' }}>
+                    {h && h.elo.length >= 2 && <Sparkline data={h.elo.slice(-8)} />}
+                  </div>
+                  <span className="num small hide-sm" style={{ width: 64, textAlign: 'center', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--win)' }}>{player.wins}</span>
+                    <span className="muted">–</span>
+                    <span style={{ color: 'var(--loss)' }}>{player.losses}</span>
+                  </span>
+                  <span className="elo-num num" style={{ width: 56, textAlign: 'right' }}>{Math.round(player.eloRating)}</span>
+                  <span style={{ width: 48, textAlign: 'right' }}>
+                    <Delta value={player.delta} />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Unranked */}
+      {/* Sin partidos */}
       {unranked.length > 0 && (
-        <div className="bg-white/60 rounded-2xl p-5 border border-dashed border-gray-200">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Sin clasificar · 0 partidos</p>
-          <div className="flex flex-wrap gap-2">
-            {unranked.map((player) => (
-              <Link key={player.id} href={`/players/${player.id}`}>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-600 hover:border-green-300 hover:text-green-700 transition-all shadow-sm">
-                  <PlayerAvatar
-                    name={player.name}
-                    avatarUrl={player.avatarUrl}
-                    className="w-5 h-5 rounded-full"
-                    fallbackClassName="bg-gray-200 text-xs font-bold"
-                    sizes="20px"
-                  />
-                  {player.name}
-                </span>
+        <section className="section">
+          <SectionHead icon={UserPlus} title="Aún sin partidos" />
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {unranked.map((p) => (
+              <Link key={p.id} href={`/players/${p.id}`} className="lpt-card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px' }}>
+                <LptAvatar player={p} size={30} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>{p.nickname || p.name}</div>
+                  <div className="small muted" style={{ fontSize: 11 }}>Debuta pronto · Elo 1500</div>
+                </div>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       )}
-    </div>
+    </>
   );
 }
-

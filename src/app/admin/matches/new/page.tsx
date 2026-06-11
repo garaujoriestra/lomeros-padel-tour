@@ -11,10 +11,10 @@ export default async function NewMatchPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Registrar partido</h1>
-        <p className="text-gray-500 text-sm">Selecciona los jugadores, asigna equipos e introduce el resultado set a set</p>
+        <p className="text-ink-3 text-sm">Selecciona los jugadores, asigna equipos e introduce el resultado set a set</p>
       </div>
       {allPlayers.length < 4 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-ink-3">
           <p className="text-4xl mb-2">⚠️</p>
           <p>Necesitas al menos 4 jugadores para registrar un partido.</p>
           <p className="text-sm mt-1">Tienes {allPlayers.length} jugador{allPlayers.length !== 1 ? 'es' : ''} registrado{allPlayers.length !== 1 ? 's' : ''}.</p>

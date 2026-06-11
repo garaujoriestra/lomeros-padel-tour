@@ -4,12 +4,23 @@ import { getSession } from '@/lib/auth/session';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+  const player = session?.player
+    ? {
+        id: session.player.id,
+        name: session.player.name,
+        nickname: session.player.nickname,
+        avatarUrl: session.player.avatarUrl,
+      }
+    : null;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar session={session ? { role: session.role, hasPlayer: !!session.player } : null} />
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 flex flex-col md:flex-row gap-4 md:gap-8">
-        <AdminSidebar />
-        <main className="flex-1 min-w-0">{children}</main>
+    <div className="min-h-screen">
+      <Navbar session={session ? { role: session.role, player } : null} />
+      <div className="lpt-container" style={{ paddingTop: 'calc(22px * var(--sp))', paddingBottom: 'calc(48px * var(--sp))' }}>
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+          <AdminSidebar />
+          <main className="flex-1 min-w-0">{children}</main>
+        </div>
       </div>
     </div>
   );

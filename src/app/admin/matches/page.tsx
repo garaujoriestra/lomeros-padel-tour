@@ -33,8 +33,8 @@ export default async function MatchesAdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Partidos</h1>
-          <p className="text-gray-500 text-sm">
-            {scheduled.length > 0 && <span className="text-blue-600 font-medium">{scheduled.length} pendiente{scheduled.length !== 1 ? 's' : ''} · </span>}
+          <p className="text-ink-3 text-sm">
+            {scheduled.length > 0 && <span className="text-acc-text font-medium">{scheduled.length} pendiente{scheduled.length !== 1 ? 's' : ''} · </span>}
             {completed.length} completado{completed.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -44,7 +44,7 @@ export default async function MatchesAdminPage() {
       </div>
 
       {allMatches.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-ink-3">
           <p className="text-4xl mb-2">🎾</p>
           <p>No hay partidos todavía.</p>
           <Link href="/admin/matches/new">
@@ -56,30 +56,30 @@ export default async function MatchesAdminPage() {
           {/* Scheduled */}
           {scheduled.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">📅 Próximos partidos</p>
+              <p className="text-xs font-black text-ink-3 uppercase tracking-widest">📅 Próximos partidos</p>
               {scheduled.map((match) => {
                 const t1p1 = playerMap[match.team1Player1Id];
                 const t1p2 = playerMap[match.team1Player2Id];
                 const t2p1 = playerMap[match.team2Player1Id];
                 const t2p2 = playerMap[match.team2Player2Id];
                 return (
-                  <div key={match.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div key={match.id} className="bg-acc/10 border border-acc/30 rounded-lg p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-blue-600 border-blue-300 bg-white text-xs">📅 Programado</Badge>
-                          <span className="text-xs text-gray-400">{match.date}</span>
-                          {match.location && <span className="text-xs text-gray-400">· {match.location}</span>}
+                          <Badge variant="outline" className="text-acc-text border-acc/30 bg-card text-xs">📅 Programado</Badge>
+                          <span className="text-xs text-ink-3">{match.date}</span>
+                          {match.location && <span className="text-xs text-ink-3">· {match.location}</span>}
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                          <span className="text-blue-700 font-semibold">🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
-                          <span className="text-gray-400 font-black">vs</span>
-                          <span className="text-red-700 font-semibold">🔴 {t2p1?.name ?? '?'} / {t2p2?.name ?? '?'}</span>
+                          <span className="text-acc-text font-semibold">🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
+                          <span className="text-ink-3 font-black">vs</span>
+                          <span className="text-loss font-semibold">🔴 {t2p1?.name ?? '?'} / {t2p2?.name ?? '?'}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Link href={`/admin/matches/${match.id}/result`}>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs">
+                          <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs">
                             + Resultado
                           </Button>
                         </Link>
@@ -99,7 +99,7 @@ export default async function MatchesAdminPage() {
           {completed.length > 0 && (
             <div className="space-y-3">
               {scheduled.length > 0 && (
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">✅ Partidos completados</p>
+                <p className="text-xs font-black text-ink-3 uppercase tracking-widest">✅ Partidos completados</p>
               )}
               {completed.map((match) => {
                 const sets = setsMap[match.id] || [];
@@ -111,39 +111,39 @@ export default async function MatchesAdminPage() {
                 const injured = match.injuredPlayerId ? playerMap[match.injuredPlayerId] : null;
 
                 return (
-                  <div key={match.id} className={`border rounded-lg p-4 ${isInjury ? 'bg-rose-50 border-rose-200' : 'bg-white'}`}>
+                  <div key={match.id} className={`border rounded-lg p-4 ${isInjury ? 'bg-loss/10 border-loss/30' : 'bg-card'}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs text-gray-400">{match.date}</span>
+                          <span className="text-xs text-ink-3">{match.date}</span>
                           {match.location && (
-                            <span className="text-xs text-gray-400">· {match.location}</span>
+                            <span className="text-xs text-ink-3">· {match.location}</span>
                           )}
                           {isInjury && (
-                            <Badge variant="outline" className="text-rose-700 border-rose-300 bg-white text-xs">
+                            <Badge variant="outline" className="text-loss border-loss/30 bg-card text-xs">
                               🤕 Lesión {injured ? `· ${injured.name}` : ''}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                          <div className={`flex-1 ${!isInjury && match.winnerTeam === 1 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
+                          <div className={`flex-1 ${!isInjury && match.winnerTeam === 1 ? 'font-bold text-win' : 'text-ink-2'}`}>
                             <span>🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
                             {!isInjury && match.winnerTeam === 1 && <Badge className="ml-2 text-xs" variant="default">Ganador</Badge>}
                           </div>
                           <div className="flex gap-1 items-center">
                             {isInjury ? (
-                              <span className="text-xs font-bold text-rose-600">No terminado</span>
+                              <span className="text-xs font-bold text-loss">No terminado</span>
                             ) : (
                               sets.map((set) => (
                                 <div key={set.setNumber} className="text-center">
                                   <span className={`font-mono text-sm ${set.team1Games > set.team2Games ? 'font-bold' : ''}`}>{set.team1Games}</span>
-                                  <span className="text-gray-300 mx-0.5">-</span>
+                                  <span className="text-ink-3 mx-0.5">-</span>
                                   <span className={`font-mono text-sm ${set.team2Games > set.team1Games ? 'font-bold' : ''}`}>{set.team2Games}</span>
                                 </div>
                               ))
                             )}
                           </div>
-                          <div className={`flex-1 text-right ${!isInjury && match.winnerTeam === 2 ? 'font-bold text-green-700' : 'text-gray-600'}`}>
+                          <div className={`flex-1 text-right ${!isInjury && match.winnerTeam === 2 ? 'font-bold text-win' : 'text-ink-2'}`}>
                             {!isInjury && match.winnerTeam === 2 && <Badge className="mr-2 text-xs" variant="default">Ganador</Badge>}
                             <span>{t2p1?.name ?? '?'} / {t2p2?.name ?? '?'} 🔴</span>
                           </div>

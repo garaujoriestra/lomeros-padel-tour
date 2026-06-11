@@ -23,28 +23,28 @@ export default async function AdminNotificationsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-800">Notificaciones</h1>
+      <h1 className="text-2xl font-bold text-foreground">Notificaciones</h1>
 
       <BroadcastForm />
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-semibold text-gray-800">Estado por usuario</h2>
-        <ul className="divide-y divide-gray-100">
+      <div className="rounded-xl border border-line bg-card p-4">
+        <h2 className="mb-3 font-semibold text-foreground">Estado por usuario</h2>
+        <ul className="divide-y divide-line">
           {allUsers.map((u) => {
             const count = subCount.get(u.id) ?? 0;
             const name = u.playerId ? playerName.get(u.playerId) : null;
             return (
               <li key={u.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-gray-700">
+                <span className="text-ink-2">
                   {name ?? u.email}
-                  {name && <span className="ml-2 text-gray-400">{u.email}</span>}
+                  {name && <span className="ml-2 text-ink-3">{u.email}</span>}
                 </span>
                 {count > 0 ? (
-                  <span className="font-medium text-green-700">
+                  <span className="font-medium text-win">
                     🔔 Activadas{count > 1 ? ` · ${count} disp.` : ''}
                   </span>
                 ) : (
-                  <span className="text-gray-400">🔕 Desactivadas</span>
+                  <span className="text-ink-3">🔕 Desactivadas</span>
                 )}
               </li>
             );

@@ -35,7 +35,7 @@ export function DeletePlayerButton({ id, name }: { id: string; name: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+        <Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15">
           Eliminar
         </Button>
       </DialogTrigger>

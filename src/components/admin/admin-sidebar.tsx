@@ -23,8 +23,8 @@ export function AdminSidebar() {
             className={cn(
               'inline-flex items-center min-h-[40px] px-4 md:px-3 md:py-2 rounded-full md:rounded-md text-sm font-medium transition-colors whitespace-nowrap shrink-0 md:shrink',
               pathname === link.href
-                ? 'bg-orange-100 text-orange-800'
-                : 'bg-white text-gray-700 hover:bg-gray-100 md:bg-transparent'
+                ? 'bg-warn/10 text-warn'
+                : 'bg-card text-ink-2 hover:bg-surface-2 md:bg-transparent'
             )}
           >
             {link.label}

@@ -17,13 +17,13 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Panel de Administración</h1>
-        <p className="text-gray-500 text-sm mt-1">Gestiona jugadores y partidos</p>
+        <p className="text-ink-3 text-sm mt-1">Gestiona jugadores y partidos</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Jugadores</CardTitle>
+            <CardTitle className="text-sm font-medium text-ink-3">Jugadores</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{playerCount[0].count}</p>
@@ -31,7 +31,7 @@ export default async function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Partidos jugados</CardTitle>
+            <CardTitle className="text-sm font-medium text-ink-3">Partidos jugados</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{matchCount[0].count}</p>
@@ -52,11 +52,11 @@ export default async function AdminDashboard() {
         <CardHeader>
           <CardTitle className="text-base">Acciones rápidas</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-gray-600">
-          <p>👉 Ve a <Link href="/admin/players" className="text-green-700 font-medium hover:underline">Jugadores</Link> para gestionar el equipo.</p>
-          <p>👉 Ve a <Link href="/admin/matches" className="text-green-700 font-medium hover:underline">Partidos</Link> para ver o registrar resultados.</p>
-          <p>👉 Visita el <Link href="/" className="text-green-700 font-medium hover:underline">Dashboard público</Link> para ver rankings y estadísticas.</p>
-          <p>👉 Ve a <Link href="/admin/notifications" className="text-green-700 font-medium hover:underline">Notificaciones</Link> para enviar avisos y ver quién las tiene activadas.</p>
+        <CardContent className="space-y-2 text-sm text-ink-2">
+          <p>👉 Ve a <Link href="/admin/players" className="text-win font-medium hover:underline">Jugadores</Link> para gestionar el equipo.</p>
+          <p>👉 Ve a <Link href="/admin/matches" className="text-win font-medium hover:underline">Partidos</Link> para ver o registrar resultados.</p>
+          <p>👉 Visita el <Link href="/" className="text-win font-medium hover:underline">Dashboard público</Link> para ver rankings y estadísticas.</p>
+          <p>👉 Ve a <Link href="/admin/notifications" className="text-win font-medium hover:underline">Notificaciones</Link> para enviar avisos y ver quién las tiene activadas.</p>
         </CardContent>
       </Card>
     </div>

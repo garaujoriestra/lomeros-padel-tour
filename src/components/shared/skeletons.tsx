@@ -5,14 +5,14 @@ import { cn } from '@/lib/utils';
  * Pass `className` to control size (e.g. `className="h-32"`).
  */
 export function SkeletonBox({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse bg-gray-200 rounded-lg', className)} />;
+  return <div className={cn('animate-pulse bg-surface-2 rounded-lg', className)} />;
 }
 
 /**
  * Animated grey line of text (default 16px tall). Use width via `className`.
  */
 export function SkeletonText({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse bg-gray-200 rounded h-4', className)} />;
+  return <div className={cn('animate-pulse bg-surface-2 rounded h-4', className)} />;
 }
 
 /**
@@ -26,14 +26,11 @@ export function SkeletonText({ className }: { className?: string }) {
  */
 export function SkeletonHero({ tall = false }: { tall?: boolean }) {
   const padding = tall ? 'p-5 sm:p-8 md:p-14' : 'p-5 sm:p-7 md:p-10';
-  const rounded = tall ? 'rounded-2xl sm:rounded-3xl' : 'rounded-xl sm:rounded-2xl';
   return (
-    <div
-      className={`relative overflow-hidden ${rounded} bg-gradient-to-r from-green-950 to-emerald-900 ${padding} text-white shadow-xl`}
-    >
+    <div className={`hero ${padding}`}>
       <div className="space-y-3">
-        <div className="animate-pulse bg-green-800/50 rounded h-8 sm:h-9 md:h-10 w-3/4 max-w-md" />
-        <div className="animate-pulse bg-green-800/40 rounded h-4 w-1/2 max-w-xs" />
+        <div className="animate-pulse rounded h-8 sm:h-9 md:h-10 w-3/4 max-w-md" style={{ background: 'color-mix(in oklab, currentcolor 14%, transparent)' }} />
+        <div className="animate-pulse rounded h-4 w-1/2 max-w-xs" style={{ background: 'color-mix(in oklab, currentcolor 10%, transparent)' }} />
       </div>
     </div>
   );

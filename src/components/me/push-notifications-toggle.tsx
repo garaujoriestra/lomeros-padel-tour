@@ -100,17 +100,17 @@ export function PushNotificationsToggle() {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-line bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h3 className="font-semibold text-gray-800">🔔 Notificaciones</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="font-semibold text-foreground">🔔 Notificaciones</h3>
+          <p className="text-sm text-ink-3">
             Recordatorios de partido, resultados y logros.
           </p>
         </div>
-        {state === 'loading' && <span className="text-sm text-gray-400">…</span>}
+        {state === 'loading' && <span className="text-sm text-ink-3">…</span>}
         {state === 'unsupported' && (
-          <span className="text-sm text-gray-400">No soportado</span>
+          <span className="text-sm text-ink-3">No soportado</span>
         )}
         {state === 'off' && (
           <button
@@ -118,7 +118,7 @@ export function PushNotificationsToggle() {
             aria-label="Activar notificaciones"
             onClick={enable}
             disabled={busy}
-            className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             Activar
           </button>
@@ -129,14 +129,14 @@ export function PushNotificationsToggle() {
             aria-label="Desactivar notificaciones"
             onClick={disable}
             disabled={busy}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 disabled:opacity-50"
+            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-ink-2 disabled:opacity-50"
           >
             Desactivar
           </button>
         )}
       </div>
       {state === 'needs-install' && (
-        <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="mt-3 rounded-lg bg-warn/10 p-3 text-sm text-warn">
           Para recibir notificaciones en iPhone, añade la app a tu pantalla de inicio:
           pulsa <strong>Compartir</strong> → <strong>Añadir a pantalla de inicio</strong>, y
           ábrela desde ahí.

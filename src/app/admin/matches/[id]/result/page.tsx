@@ -14,7 +14,7 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
     return (
       <div className="max-w-2xl space-y-4">
         <h1 className="text-2xl font-black">Resultado ya registrado</h1>
-        <p className="text-gray-500">Este partido ya tiene resultado guardado.</p>
+        <p className="text-ink-3">Este partido ya tiene resultado guardado.</p>
       </div>
     );
   }
@@ -22,7 +22,7 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
     return (
       <div className="max-w-2xl space-y-4">
         <h1 className="text-2xl font-black">🤕 Marcado como lesión</h1>
-        <p className="text-gray-500">Este partido se marcó como no terminado por lesión y no cuenta para ranking.</p>
+        <p className="text-ink-3">Este partido se marcó como no terminado por lesión y no cuenta para ranking.</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black">Añadir resultado</h1>
-        <p className="text-gray-500 text-sm">Introduce el marcador para completar el partido</p>
+        <p className="text-ink-3 text-sm">Introduce el marcador para completar el partido</p>
       </div>
       <ResultForm
         matchId={id}

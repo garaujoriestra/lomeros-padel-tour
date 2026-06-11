@@ -150,7 +150,7 @@ export function MatchForm({ players }: MatchFormProps) {
           <Label className="text-xs">Jugador {slot + 1}</Label>
           <div className="grid grid-cols-[1fr_auto] gap-2">
             <select
-              className="w-full border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border rounded-md px-3 py-2 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               value={team[slot]}
               onChange={(e) => {
                 const next: [string, string] = [...team] as [string, string];
@@ -167,7 +167,7 @@ export function MatchForm({ players }: MatchFormProps) {
               ))}
             </select>
             <select
-              className="border rounded-md px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="border rounded-md px-2 py-2 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               value={sides[slot]}
               onChange={(e) => {
                 const next: [string, string] = [...sides] as [string, string];
@@ -190,14 +190,14 @@ export function MatchForm({ players }: MatchFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
 
       {/* Mode toggle */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-1 flex gap-1">
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-1 flex gap-1">
         <button
           type="button"
           onClick={() => setMode('scheduled')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
             mode === 'scheduled'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ? 'bg-acc text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink-2 hover:bg-surface-2'
           }`}
         >
           📅 Programar partido
@@ -207,8 +207,8 @@ export function MatchForm({ players }: MatchFormProps) {
           onClick={() => setMode('completed')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
             mode === 'completed'
-              ? 'bg-green-600 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-ink-3 hover:text-ink-2 hover:bg-surface-2'
           }`}
         >
           🏆 Registrar con resultado
@@ -216,14 +216,14 @@ export function MatchForm({ players }: MatchFormProps) {
       </div>
 
       {mode === 'scheduled' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
+        <div className="bg-acc/10 border border-acc/30 rounded-xl px-4 py-3 text-sm text-acc-text">
           📅 <strong>Modo programado:</strong> Se crea el partido sin resultado. Podrás añadir el marcador después desde la lista de partidos.
         </div>
       )}
 
       {/* Fecha y lugar */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">📅 Datos del partido</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">📅 Datos del partido</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="date">Fecha *</Label>
@@ -237,19 +237,19 @@ export function MatchForm({ players }: MatchFormProps) {
       </div>
 
       {/* Equipos */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">👥 Equipos</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">👥 Equipos</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {playerSlot(team1, setTeam1, team1Sides, setTeam1Sides, '🔵 Equipo 1', 'text-blue-700')}
-          {playerSlot(team2, setTeam2, team2Sides, setTeam2Sides, '🔴 Equipo 2', 'text-red-700')}
+          {playerSlot(team1, setTeam1, team1Sides, setTeam1Sides, '🔵 Equipo 1', 'text-acc-text')}
+          {playerSlot(team2, setTeam2, team2Sides, setTeam2Sides, '🔴 Equipo 2', 'text-loss')}
         </div>
       </div>
 
       {/* Sets — only shown in completed mode */}
       {mode === 'completed' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Resultado (sets)</p>
+            <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🏆 Resultado (sets)</p>
             <div className="flex gap-2">
               {sets.length === 2 && (
                 <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
@@ -266,10 +266,10 @@ export function MatchForm({ players }: MatchFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 text-center">
+          <div className="grid grid-cols-3 gap-2 text-xs font-medium text-ink-3 text-center">
             <span className="text-left">Set</span>
-            <span className="text-blue-700 truncate">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
-            <span className="text-red-700 truncate">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
+            <span className="text-acc-text truncate">🔵 {team1[0] ? getPlayerName(team1[0]) + ' / ' + (team1[1] ? getPlayerName(team1[1]) : '?') : 'Equipo 1'}</span>
+            <span className="text-loss truncate">🔴 {team2[0] ? getPlayerName(team2[0]) + ' / ' + (team2[1] ? getPlayerName(team2[1]) : '?') : 'Equipo 2'}</span>
           </div>
 
           {sets.map((set, idx) => (
@@ -285,8 +285,8 @@ export function MatchForm({ players }: MatchFormProps) {
           ))}
 
           {matchResult && (
-            <div className="mt-2 p-3 rounded-xl bg-green-50 border border-green-200 text-sm text-center">
-              <p className="font-bold text-green-800">
+            <div className="mt-2 p-3 rounded-xl bg-win/10 border border-win/30 text-sm text-center">
+              <p className="font-bold text-win">
                 🏆 Gana {matchResult.winner === 1 ? '🔵 Equipo 1' : '🔴 Equipo 2'}{' '}
                 <Badge variant="outline" className="ml-1">
                   {matchResult.team1SetsWon} — {matchResult.team2SetsWon}
@@ -301,7 +301,7 @@ export function MatchForm({ players }: MatchFormProps) {
         <Button
           type="submit"
           disabled={loading || !playersComplete || (mode === 'completed' && !matchResult)}
-          className={`flex-1 min-h-[40px] px-4 text-sm font-bold ${mode === 'scheduled' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
+          className={`flex-1 min-h-[40px] px-4 text-sm font-bold ${mode === 'scheduled' ? 'bg-acc hover:bg-blue-700' : 'bg-primary hover:bg-primary/90'} text-white`}
         >
           {loading
             ? 'Guardando...'

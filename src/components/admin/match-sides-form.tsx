@@ -57,7 +57,7 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
     <div className={`grid grid-cols-[1fr_auto] gap-3 items-center py-2 ${color}`}>
       <span className="text-sm font-medium truncate">{label}</span>
       <select
-        className="border rounded-md px-3 py-2 text-sm bg-white min-w-[120px]"
+        className="border rounded-md px-3 py-2 text-sm bg-card min-w-[120px]"
         value={sides[sideKey]}
         onChange={(e) => setSides({ ...sides, [sideKey]: e.target.value })}
       >
@@ -70,18 +70,18 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🔵 Equipo 1</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🔵 Equipo 1</p>
         {playerRow(props.team1Player1Name, 'team1Player1Side', 'text-blue-900')}
         {playerRow(props.team1Player2Name, 'team1Player2Side', 'text-blue-900')}
       </div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🔴 Equipo 2</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🔴 Equipo 2</p>
         {playerRow(props.team2Player1Name, 'team2Player1Side', 'text-red-900')}
         {playerRow(props.team2Player2Name, 'team2Player2Side', 'text-red-900')}
       </div>
       <div className="flex gap-3">
-        <Button type="submit" disabled={loading} className="flex-1 min-h-[40px] px-4 text-sm bg-green-600 hover:bg-green-700 text-white font-bold">
+        <Button type="submit" disabled={loading} className="flex-1 min-h-[40px] px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
           {loading ? 'Guardando...' : '✓ Guardar lados'}
         </Button>
         <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>

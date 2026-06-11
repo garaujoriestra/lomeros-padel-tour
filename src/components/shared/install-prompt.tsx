@@ -74,20 +74,16 @@ export function InstallPrompt() {
   if (mode === 'hidden') return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-green-200 shadow-sm p-4 flex items-start gap-3">
-      <div className="text-3xl shrink-0" aria-hidden="true">📱</div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-900 text-sm">Instala LPT como app</p>
-        <p className="text-xs text-gray-500 mt-0.5">
+    <div className="lpt-card card-pad section" style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      <div style={{ fontSize: 26, flexShrink: 0 }} aria-hidden="true">📱</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontWeight: 800, fontSize: 14, margin: 0 }}>Instala LPT como app</p>
+        <p className="small muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
           Acceso directo desde tu pantalla de inicio, sin barra del navegador.
         </p>
         {mode === 'android' && (
-          <button
-            type="button"
-            onClick={handleInstall}
-            className="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg"
-          >
-            📥 Instalar
+          <button type="button" onClick={handleInstall} className="lpt-btn primary" style={{ marginTop: 12 }}>
+            Instalar
           </button>
         )}
         {mode === 'ios' && (
@@ -95,12 +91,13 @@ export function InstallPrompt() {
             <button
               type="button"
               onClick={() => setIosInstructionsOpen((v) => !v)}
-              className="mt-3 text-sm font-bold text-green-700 hover:text-green-900"
+              className="sec-link"
+              style={{ marginTop: 12 }}
             >
               {iosInstructionsOpen ? 'Ocultar instrucciones ↑' : 'Cómo instalar →'}
             </button>
             {iosInstructionsOpen && (
-              <ol className="mt-3 text-xs text-gray-600 space-y-1 list-decimal pl-4">
+              <ol className="small muted" style={{ marginTop: 10, paddingLeft: 18, display: 'grid', gap: 4, fontSize: 12 }}>
                 <li>
                   Toca el botón <strong>Compartir</strong> ⬆️ en la barra inferior de Safari.
                 </li>
@@ -119,7 +116,8 @@ export function InstallPrompt() {
         type="button"
         onClick={dismiss}
         aria-label="Descartar"
-        className="text-gray-400 hover:text-gray-600 shrink-0 text-lg leading-none"
+        className="muted"
+        style={{ flexShrink: 0, fontSize: 16, lineHeight: 1 }}
       >
         ✕
       </button>

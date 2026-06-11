@@ -34,14 +34,14 @@ export function BroadcastForm() {
   }
 
   return (
-    <form onSubmit={send} className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
-      <h2 className="font-semibold text-gray-800">📢 Enviar aviso a todos</h2>
+    <form onSubmit={send} className="space-y-3 rounded-xl border border-line bg-card p-4">
+      <h2 className="font-semibold text-foreground">📢 Enviar aviso a todos</h2>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Título (ej. ¡Hueco para jugar!)"
         aria-label="Título del aviso"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
         required
       />
       <textarea
@@ -49,14 +49,14 @@ export function BroadcastForm() {
         onChange={(e) => setBody(e.target.value)}
         placeholder="Mensaje"
         aria-label="Mensaje del aviso"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-line px-3 py-2 text-sm"
         rows={3}
         required
       />
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
       >
         {busy ? 'Enviando…' : 'Enviar'}
       </button>

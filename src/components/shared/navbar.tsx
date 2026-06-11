@@ -2,10 +2,33 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { navLinks } from './nav-links';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
+import { navLinks, isNavActive } from './nav-links';
+import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 
-interface NavSession { role: 'admin' | 'player'; hasPlayer: boolean }
+export interface NavSession {
+  role: 'admin' | 'player';
+  player: LptPlayer | null;
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const dark = resolvedTheme === 'dark';
+  return (
+    <button
+      className="icon-btn"
+      title="Cambiar tema"
+      aria-label="Cambiar tema"
+      onClick={() => setTheme(dark ? 'light' : 'dark')}
+    >
+      {mounted ? (dark ? <Sun size={16} /> : <Moon size={16} />) : <Moon size={16} />}
+    </button>
+  );
+}
 
 export function Navbar({ session = null }: { session?: NavSession | null }) {
   const pathname = usePathname();
@@ -18,65 +41,53 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
   }
 
   return (
-    <nav aria-label="Barra superior" className="bg-gradient-to-r from-green-950 via-green-900 to-green-950 text-white shadow-2xl sticky top-0 z-50 border-b border-green-800/50">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-black text-xl tracking-tight hover:opacity-80 transition-opacity shrink-0">
-          <span className="text-2xl">🎾</span>
-          <span>LPT<span className="text-green-400 ml-1">·</span></span>
-          <span className="hidden lg:block text-xs text-green-300 font-semibold uppercase tracking-widest">Lomeros Padel Tour</span>
+    <header className="topbar" aria-label="Barra superior">
+      <div className="topbar-inner">
+        <Link href="/" className="brand" aria-label="Inicio">
+          <span className="brand-mark">LPT</span>
+          <span className="brand-name">Lomeros Padel Tour</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200',
-                pathname === link.href
-                  ? 'bg-green-400/20 text-white border border-green-400/30 shadow-inner'
-                  : 'text-green-200 hover:text-white hover:bg-white/10'
-              )}
-            >
-              {link.icon} {link.label}
-            </Link>
-          ))}
-        </div>
+        <nav className="nav-tabs" aria-label="Navegación principal">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`nav-tab ${isNavActive(link.href, pathname) ? 'active' : ''}`}
+              >
+                <Icon size={15} strokeWidth={2.2} /> {link.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="topbar-actions">
+          <ThemeToggle />
           {session ? (
             <>
               {session.role === 'admin' && (
-                <Link
-                  href="/admin"
-                  className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 border border-orange-500/30 transition-all"
-                >
-                  ⚙️ Admin
+                <Link href="/admin" className="icon-btn" title="Admin" aria-label="Admin">
+                  <Settings size={16} />
                 </Link>
               )}
-              <Link
-                href="/me"
-                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-semibold bg-green-400/15 text-green-200 hover:bg-green-400/25 border border-green-400/30 transition-all"
-              >
-                👤 Mi perfil
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center min-h-[40px] px-3 rounded-full text-sm font-medium text-green-300 hover:text-white hover:bg-white/10 transition-all"
-              >
-                Salir
+              <button className="icon-btn" title="Salir" aria-label="Salir" onClick={handleLogout}>
+                <LogOut size={16} />
               </button>
+              {session.player && (
+                <Link href="/me" title="Mi perfil" aria-label="Mi perfil" style={{ borderRadius: 99, display: 'inline-flex' }}>
+                  <LptAvatar player={session.player} size={34} />
+                </Link>
+              )}
             </>
           ) : (
-            <Link
-              href="/login"
-              className="inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-semibold border border-green-600 text-green-300 hover:bg-green-800 hover:text-white transition-all"
-            >
-              Entrar
+            <Link href="/login" className="lpt-btn" style={{ minHeight: 36, padding: '6px 14px' }}>
+              <LogIn size={14} /> Entrar
             </Link>
           )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

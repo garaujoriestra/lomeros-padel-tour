@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Player } from '@/lib/db/schema';
-import { PlayerAvatar } from '@/components/shared/player-avatar';
+import { LptAvatar, displayName } from '@/components/lpt/ui';
 
 interface PartnerCardProps {
   variant: 'best' | 'worst';
@@ -9,42 +9,30 @@ interface PartnerCardProps {
     matchesPlayed: number;
     wins: number;
     losses: number;
+    synergyScore?: number;
   };
 }
 
 export function PartnerCard({ variant, partner, pairStat }: PartnerCardProps) {
   const winRate = Math.round((pairStat.wins / pairStat.matchesPlayed) * 100);
   const isBest = variant === 'best';
-  const headline = isBest ? '🤝 Mejor compañero' : '😬 Peor compañero';
-  const avatarGradient = isBest
-    ? 'from-green-400 to-green-600'
-    : 'from-red-400 to-red-500';
-  const winRateColor = isBest
-    ? winRate >= 60 ? 'text-green-600' : 'text-gray-700'
-    : winRate < 40 ? 'text-red-500' : 'text-gray-700';
+  const tone = isBest ? 'var(--win)' : 'var(--loss)';
+  const synergyPct = pairStat.synergyScore != null ? Math.round(pairStat.synergyScore * 100) : null;
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{headline}</p>
-      <Link href={`/players/${partner.id}`} className="flex items-center justify-between hover:opacity-80 transition-opacity">
-        <div className="flex items-center gap-3">
-          <PlayerAvatar
-            name={partner.name}
-            avatarUrl={partner.avatarUrl}
-            className="w-12 h-12 rounded-xl shadow-sm"
-            fallbackClassName={`bg-gradient-to-br ${avatarGradient} text-white text-xl font-black`}
-            sizes="48px"
-          />
-          <div>
-            <p className="font-black text-gray-800">{partner.name}</p>
-            <p className="text-xs text-gray-400">{pairStat.matchesPlayed} partidos juntos</p>
-          </div>
+    <Link href={`/players/${partner.id}`} className="lpt-card card-pad clickable" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <LptAvatar player={partner} size={40} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="kicker" style={{ fontSize: 9.5, color: tone }}>
+          {isBest ? 'Mejor compañero' : 'Peor compañero'}
         </div>
-        <div className="text-right">
-          <p className={`text-2xl font-black tabular-nums ${winRateColor}`}>{winRate}%</p>
-          <p className="text-xs text-gray-400">{pairStat.wins}V · {pairStat.losses}D</p>
+        <div style={{ fontWeight: 700, marginTop: 2 }}>{displayName(partner)}</div>
+        <div className="small muted" style={{ fontSize: 11.5 }}>
+          {pairStat.matchesPlayed} juntos · {pairStat.wins}V {pairStat.losses}D
+          {synergyPct != null && <> · sinergia {synergyPct >= 0 ? '+' : ''}{synergyPct}%</>}
         </div>
-      </Link>
-    </div>
+      </div>
+      <span className="elo-num num" style={{ color: tone }}>{winRate}%</span>
+    </Link>
   );
 }

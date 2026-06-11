@@ -1,137 +1,134 @@
 import Link from 'next/link';
+import { Info, BookOpen, Mail, House } from 'lucide-react';
+import { SectionHead, HeroLines } from '@/components/lpt/ui';
+
+const FEATURES = [
+  { icon: '🏆', title: 'Ranking individual', desc: 'Clasificación de todos los jugadores por Elo actual.' },
+  { icon: '👥', title: 'Ranking de parejas', desc: 'Las mejores combinaciones históricas por win rate y partidos juntos.' },
+  { icon: '📋', title: 'Historial de partidos', desc: 'Todos los resultados con marcadores set a set.' },
+  { icon: '📈', title: 'Perfil del jugador', desc: 'Evolución de Elo, racha actual, estadísticas y partidos recientes.' },
+  { icon: '📅', title: 'Partidos programados', desc: 'Mira qué partidos hay pendientes antes de que se jueguen.' },
+  { icon: '🤝', title: 'Recomendador de parejas', desc: 'Sugiere la distribución más equilibrada para un partido programado.' },
+];
+
+const GLOSSARY = [
+  { term: 'Elo', def: 'Puntuación que mide el nivel relativo de un jugador. Sube al ganar y baja al perder, según la dificultad del rival.' },
+  { term: 'Sinergia', def: 'Si una pareja rinde mejor (verde) o peor (rojo) juntos que por separado.' },
+  { term: 'Win rate', def: 'Porcentaje de partidos ganados sobre el total de partidos jugados.' },
+  { term: 'Racha', def: 'Número de victorias o derrotas consecutivas desde el último partido.' },
+  { term: 'Factor-K', def: 'Velocidad a la que cambia el Elo. Más alto = cambios más bruscos. Baja a medida que juegas más.' },
+  { term: 'Bagel 🍩', def: 'Ganar un set 6-0.' },
+  { term: 'Pareja inédita ✦', def: 'Dos jugadores que nunca han jugado juntos.' },
+  { term: 'Drive / Revés', def: 'Lado de pista de cada jugador.' },
+];
 
 export default function InfoPage() {
   return (
-    <div className="space-y-10">
-
+    <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 text-white shadow-2xl">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(74,222,128,0.07)_0%,transparent_60%)]" />
-        <div className="relative px-5 sm:px-8 md:px-12 py-10 sm:py-14 md:py-16 max-w-3xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
-            <span>📖</span> Guía del torneo
+      <div className="hero section" style={{ padding: 'calc(30px * var(--sp)) calc(26px * var(--sp))' }}>
+        <HeroLines />
+        <div style={{ position: 'relative' }}>
+          <div className="kicker" style={{ color: 'currentcolor', opacity: 0.65 }}>
+            <BookOpen size={13} /> Guía del tour
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight mb-4">
-            ¿CÓMO FUNCIONA?
+          <h1 className="display" style={{ fontSize: 'clamp(30px, 6vw, 48px)', margin: '10px 0 8px' }}>
+            ¿Cómo funciona <span style={{ color: 'var(--acc)' }}>el LPT</span>?
           </h1>
-          <p className="text-green-200 text-base sm:text-lg md:text-xl font-medium max-w-2xl">
-            Todo lo que necesitas saber sobre el <strong className="text-white">Lomeros Padel Tour</strong> —
-            el ranking oficial de nuestro grupo de amigos.
+          <p style={{ opacity: 0.7, margin: 0, fontSize: 14.5, maxWidth: '52ch' }}>
+            El <b>Lomeros Padel Tour</b> es el ranking privado de nuestro grupo de pádel. Cada partido se registra
+            y se traduce en puntos de Elo — el mismo sistema que usa el ajedrez profesional.
           </p>
         </div>
       </div>
 
-      {/* ¿Qué es LPT? */}
-      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-4">
-        <h2 className="text-2xl font-black text-gray-900">🎾 ¿Qué es el LPT?</h2>
-        <p className="text-gray-600 leading-relaxed text-lg">
-          El <strong>Lomeros Padel Tour (LPT)</strong> es el ranking privado de nuestro grupo de pádel.
-          Cada partido que jugamos se registra aquí y se traduce en puntos de <strong>Elo</strong> —
-          el mismo sistema que usa el ajedrez profesional y los videojuegos competitivos.
-        </p>
-        <p className="text-gray-600 leading-relaxed">
-          Las parejas son siempre dinámicas: en cada partido se pueden formar cualquier combinación de 4 jugadores.
-          No hay equipos fijos, lo que hace que el <strong>ranking individual</strong> refleje con precisión
-          el nivel real de cada jugador independientemente de quién fue su compañero.
-        </p>
-      </section>
-
-      {/* El Sistema Elo */}
-      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-6">
-        <h2 className="text-2xl font-black text-gray-900">📊 El sistema Elo</h2>
-        <p className="text-gray-600 leading-relaxed">
-          Todos los jugadores empiezan con <strong>1500 puntos de Elo</strong>.
-          Lo que lo hace especial es que premia la <strong>calidad sobre la cantidad</strong>:
-        </p>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
-            <p className="font-black text-green-800 mb-2">✅ Ganar contra rivales fuertes</p>
-            <p className="text-green-700 text-sm">Si tu equipo tiene Elo 1400 y gana a uno de 1600, el beneficio es grande. Fue una victoria inesperada.</p>
-            <p className="mt-3 text-3xl font-black text-green-600">+25 pts</p>
-          </div>
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-5">
-            <p className="font-black text-red-800 mb-2">⚠️ Ganar contra rivales débiles</p>
-            <p className="text-red-700 text-sm">Si tu equipo de 1600 gana a uno de 1400, los puntos son pocos. Era lo esperado.</p>
-            <p className="mt-3 text-3xl font-black text-orange-500">+8 pts</p>
+      <div className="stagger" style={{ display: 'grid', gap: 14 }}>
+        <div className="lpt-card card-pad">
+          <div className="kicker" style={{ marginBottom: 8 }}>El ranking Elo</div>
+          <p className="small" style={{ margin: 0, lineHeight: 1.6 }}>
+            Todos empiezan con <b>1500 puntos</b>. Cada partido transfiere puntos del equipo perdedor al ganador:
+            ganar a rivales mejores da más puntos; perder contra rivales peores quita más. Las parejas son dinámicas
+            — cualquier combinación de 4 — así que el ranking individual refleja tu nivel real, juegues con quien juegues.
+          </p>
+          <div className="grid-2" style={{ marginTop: 14 }}>
+            <div style={{ borderRadius: 10, padding: '12px 14px', background: 'color-mix(in oklab, var(--win) 10%, transparent)', border: '1px solid color-mix(in oklab, var(--win) 25%, transparent)' }}>
+              <div className="small" style={{ fontWeight: 800, color: 'var(--win)' }}>Ganar a rivales fuertes</div>
+              <p className="small muted" style={{ margin: '4px 0 6px' }}>Tu equipo de 1400 gana a uno de 1600: victoria inesperada.</p>
+              <span className="elo-num" style={{ color: 'var(--win)' }}>+25</span>
+            </div>
+            <div style={{ borderRadius: 10, padding: '12px 14px', background: 'color-mix(in oklab, var(--warn) 10%, transparent)', border: '1px solid color-mix(in oklab, var(--warn) 25%, transparent)' }}>
+              <div className="small" style={{ fontWeight: 800, color: 'var(--warn)' }}>Ganar a rivales débiles</div>
+              <p className="small muted" style={{ margin: '4px 0 6px' }}>Tu equipo de 1600 gana a uno de 1400: era lo esperado.</p>
+              <span className="elo-num" style={{ color: 'var(--warn)' }}>+8</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-5 space-y-2">
-          <p className="font-bold text-gray-700 text-sm">⚡ Factor-K (velocidad de cambio)</p>
-          <div className="space-y-1.5 text-sm text-gray-600">
-            <p>• <strong>&lt;10 partidos:</strong> K=40 — cambios rápidos para calibrar el nivel inicial</p>
-            <p>• <strong>10–30 partidos:</strong> K=32 — cambios moderados</p>
-            <p>• <strong>&gt;30 partidos:</strong> K=24 — el ranking se estabiliza y refleja el historial largo</p>
+        <div className="lpt-card card-pad">
+          <div className="kicker" style={{ marginBottom: 8 }}>Factor-K (velocidad de cambio)</div>
+          <div className="small" style={{ display: 'grid', gap: 7, lineHeight: 1.55 }}>
+            <span><b className="num">&lt;10 partidos:</b> K=40 — cambios rápidos para calibrar el nivel inicial.</span>
+            <span><b className="num">10–30 partidos:</b> K=32 — cambios moderados.</span>
+            <span><b className="num">&gt;30 partidos:</b> K=24 — el ranking se estabiliza y refleja el historial largo.</span>
           </div>
         </div>
-      </section>
 
-      {/* Features */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-black text-gray-900">🛠️ ¿Qué hay en la app?</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { icon: '🏆', title: 'Ranking individual', desc: 'Clasificación de todos los jugadores por Elo actual.' },
-            { icon: '👥', title: 'Ranking de parejas', desc: 'Las mejores combinaciones históricas por win rate y partidos juntos.' },
-            { icon: '📋', title: 'Historial de partidos', desc: 'Todos los resultados con marcadores set a set.' },
-            { icon: '📈', title: 'Perfil del jugador', desc: 'Evolución de Elo, racha actual, estadísticas y partidos recientes.' },
-            { icon: '📅', title: 'Partidos programados', desc: 'Mira qué partidos hay pendientes antes de que se jueguen.' },
-            { icon: '🤝', title: 'Recomendador de parejas', desc: 'Sugiere la distribución más equilibrada para un partido programado.' },
-          ].map((feat) => (
-            <div key={feat.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="text-3xl mb-3">{feat.icon}</div>
-              <p className="font-black text-gray-900 mb-1">{feat.title}</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{feat.desc}</p>
+        <div className="lpt-card card-pad">
+          <div className="kicker" style={{ marginBottom: 8 }}>Elo de pareja y sinergia</div>
+          <p className="small" style={{ margin: 0, lineHeight: 1.6 }}>
+            Cada pareja tiene su propio Elo. La <b>sinergia</b> compara ese rendimiento con el esperado por los
+            niveles individuales: positiva (verde) si juntos sois mejores, negativa (roja) si os hacéis peores.
+          </p>
+        </div>
+      </div>
+
+      <section className="section" style={{ marginTop: 'calc(34px * var(--sp))' }}>
+        <SectionHead icon={Info} title="Qué hay en la app" />
+        <div className="grid-2 stagger">
+          {FEATURES.map((feat) => (
+            <div key={feat.title} className="lpt-card card-pad">
+              <div style={{ fontSize: 24, marginBottom: 6 }}>{feat.icon}</div>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>{feat.title}</div>
+              <p className="small muted" style={{ margin: '4px 0 0', lineHeight: 1.5 }}>{feat.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Contact */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-green-900 to-emerald-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 text-white shadow-xl">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_70%,rgba(74,222,128,0.1)_0%,transparent_60%)]" />
-        <div className="relative">
-          <p className="text-green-300 font-semibold text-sm uppercase tracking-widest mb-3">📬 Contacto</p>
-          <h2 className="text-2xl md:text-3xl font-black mb-4">¿Quieres registrar un partido?</h2>
-          <p className="text-green-100 text-lg leading-relaxed mb-2">
+      <section className="section">
+        <SectionHead icon={BookOpen} title="Glosario" />
+        <div className="lpt-card card-pad">
+          <div className="small" style={{ display: 'grid', gap: 9, lineHeight: 1.55 }}>
+            {GLOSSARY.map((item) => (
+              <span key={item.term}>
+                <b style={{ color: 'var(--acc-text)' }}>{item.term}</b> — {item.def}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="hero" style={{ padding: 'calc(24px * var(--sp))' }}>
+          <div className="kicker" style={{ color: 'currentcolor', opacity: 0.65 }}>
+            <Mail size={13} /> Contacto
+          </div>
+          <h2 className="display" style={{ fontSize: 26, margin: '10px 0 8px' }}>¿Quieres registrar un partido?</h2>
+          <p style={{ opacity: 0.7, margin: '0 0 14px', fontSize: 14 }}>
             Para registrar partidos, añadir resultados o dar de alta a nuevos jugadores, habla con:
           </p>
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4 inline-block mt-2">
-            <p className="text-2xl font-black text-white">Guillermo Araujo Riestra</p>
-            <p className="text-green-300 text-sm mt-1">Administrador del LPT · Lomeros Padel Tour</p>
+          <div style={{ display: 'inline-block', borderRadius: 12, padding: '12px 18px', background: 'color-mix(in oklab, currentcolor 10%, transparent)', border: '1px solid color-mix(in oklab, currentcolor 18%, transparent)' }}>
+            <div className="display" style={{ fontSize: 20 }}>Guillermo Araujo Riestra</div>
+            <div className="small" style={{ opacity: 0.65, marginTop: 2 }}>Administrador del LPT · Lomeros Padel Tour</div>
           </div>
         </div>
       </section>
 
-      {/* Glosario */}
-      <section className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8 md:p-10 space-y-4">
-        <h2 className="text-2xl font-black text-gray-900">📚 Glosario</h2>
-        <div className="divide-y divide-gray-100">
-          {[
-            { term: 'Elo', def: 'Puntuación que mide el nivel relativo de un jugador. Sube al ganar y baja al perder, según la dificultad del rival.' },
-            { term: 'Sinergia', def: 'Win rate que tiene una pareja específica cuando juegan juntos.' },
-            { term: 'Win Rate', def: 'Porcentaje de partidos ganados sobre el total de partidos jugados.' },
-            { term: 'Racha', def: 'Número de victorias o derrotas consecutivas desde el último partido.' },
-            { term: 'Factor-K', def: 'Velocidad a la que cambia el Elo. Más alto = cambios más bruscos. Baja a medida que juegas más.' },
-          ].map((item) => (
-            <div key={item.term} className="py-4 flex flex-col sm:flex-row sm:gap-4">
-              <p className="font-black text-green-700 sm:w-24 sm:shrink-0 mb-1 sm:mb-0">{item.term}</p>
-              <p className="text-gray-600 text-sm leading-relaxed">{item.def}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="text-center pb-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-        >
-          🏠 Volver al inicio
+      <div style={{ textAlign: 'center', paddingBottom: 16 }}>
+        <Link href="/" className="lpt-btn primary">
+          <House size={14} /> Volver al inicio
         </Link>
       </div>
-
     </div>
   );
 }

@@ -192,7 +192,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           <p className="text-red-200 text-xs uppercase tracking-widest mb-3">🤕 No terminado por lesión</p>
           <div className="flex items-center justify-between">
             <p className="font-black text-xl">🔵 {team1Name}</p>
-            <span className="text-2xl font-black text-red-300">VS</span>
+            <span className="text-2xl font-black text-loss">VS</span>
             <p className="font-black text-xl text-right">🔴 {team2Name}</p>
           </div>
           <div className="flex gap-4 mt-3 text-red-200 text-sm">
@@ -201,9 +201,9 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
           <div>
-            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Jugador lesionado</p>
+            <p className="text-xs font-black text-ink-3 uppercase tracking-widest mb-3">Jugador lesionado</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {matchPlayers.map((p) => (
                 <button
@@ -212,8 +212,8 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
                   onClick={() => setInjuredPlayerId(p.id)}
                   className={`flex items-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-colors ${
                     injuredPlayerId === p.id
-                      ? 'border-red-500 bg-red-50 text-red-900'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      ? 'border-red-500 bg-loss/10 text-red-900'
+                      : 'border-line hover:border-line text-ink-2'
                   }`}
                 >
                   <span className="text-lg">🤕</span>
@@ -222,7 +222,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
               ))}
             </div>
           </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-ink-3 leading-relaxed">
             Este partido no contará para ELO, victorias/derrotas, ni achievements.
             Aparecerá en la lista de partidos con un distintivo de lesión.
           </p>
@@ -232,7 +232,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           <Button
             type="submit"
             disabled={loading || !injuredPlayerId}
-            className="flex-1 min-h-[40px] px-4 text-sm bg-red-600 hover:bg-red-700 text-white font-bold"
+            className="flex-1 min-h-[40px] px-4 text-sm bg-loss hover:bg-red-700 text-white font-bold"
           >
             {loading ? 'Guardando...' : '🤕 Marcar como lesión'}
           </Button>
@@ -247,18 +247,18 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {/* Match info */}
-      <div className="bg-gradient-to-r from-green-950 to-emerald-900 rounded-2xl p-6 text-white">
-        <p className="text-green-300 text-xs uppercase tracking-widest mb-3">Añadir resultado a</p>
+      <div className="hero rounded-2xl p-6">
+        <p className="text-acc-text text-xs uppercase tracking-widest mb-3">Añadir resultado a</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="font-black text-xl">🔵 {team1Name}</p>
           </div>
-          <span className="text-2xl font-black text-green-400">VS</span>
+          <span className="text-2xl font-black text-acc-text">VS</span>
           <div className="text-right">
             <p className="font-black text-xl">🔴 {team2Name}</p>
           </div>
         </div>
-        <div className="flex gap-4 mt-3 text-green-300 text-sm">
+        <div className="flex gap-4 mt-3 text-acc-text text-sm">
           <span>📅 {date}</span>
           {location && <span>📍 {location}</span>}
         </div>
@@ -269,17 +269,17 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         <button
           type="button"
           onClick={() => setMode('injury')}
-          className="text-xs font-bold text-red-700 hover:text-red-900 underline underline-offset-2"
+          className="text-xs font-bold text-loss hover:text-red-900 underline underline-offset-2"
         >
           🤕 No terminado por lesión →
         </button>
       </div>
 
       {/* Pairing selector */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-3">
         <div>
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">👥 Parejas que jugaron</p>
-          <p className="text-xs text-gray-400 mt-1">Elige cómo se emparejaron los 4 jugadores en pista</p>
+          <p className="text-xs font-black text-ink-3 uppercase tracking-widest">👥 Parejas que jugaron</p>
+          <p className="text-xs text-ink-3 mt-1">Elige cómo se emparejaron los 4 jugadores en pista</p>
         </div>
         <div className="grid grid-cols-1 gap-2">
           {pairingOptions.map((opt, i) => {
@@ -292,15 +292,15 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
                 aria-pressed={active}
                 className={`rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-colors ${
                   active
-                    ? 'border-green-500 bg-green-50 text-green-900'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                    ? 'border-acc bg-win/10 text-win'
+                    : 'border-line hover:border-line text-ink-2'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex-1 truncate">
                     🔵 {opt.team1[0].name} / {opt.team1[1].name}
                   </span>
-                  <span className={`text-xs ${active ? 'text-green-600' : 'text-gray-400'}`}>VS</span>
+                  <span className={`text-xs ${active ? 'text-win' : 'text-ink-3'}`}>VS</span>
                   <span className="flex-1 truncate text-right">
                     🔴 {opt.team2[0].name} / {opt.team2[1].name}
                   </span>
@@ -312,19 +312,19 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
       </div>
 
       {/* Photo upload (optional) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">📷 Foto del partido (opcional)</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">📷 Foto del partido (opcional)</p>
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors group bg-gray-50"
+            className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-line hover:border-acc transition-colors group bg-surface-2"
             aria-label="Seleccionar foto"
           >
             {preview ? (
               <Image src={preview} alt="Preview" fill className="object-cover" unoptimized />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl">📷</div>
+              <div className="w-full h-full flex items-center justify-center text-ink-3 text-3xl">📷</div>
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
               {uploading ? '⏳' : preview ? '🔄 Cambiar' : '📁 Elegir'}
@@ -341,7 +341,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
             >
               {uploading ? 'Subiendo...' : preview ? 'Cambiar foto' : '📁 Seleccionar imagen'}
             </Button>
-            <p className="text-xs text-gray-400">JPG, PNG, WEBP · Máx. 5MB</p>
+            <p className="text-xs text-ink-3">JPG, PNG, WEBP · Máx. 5MB</p>
           </div>
 
           <input
@@ -355,9 +355,9 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
       </div>
 
       {/* Sets */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Resultado (sets)</p>
+          <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🏆 Resultado (sets)</p>
           <div className="flex gap-2">
             {sets.length === 2 && (
               <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
@@ -374,10 +374,10 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 text-center">
+        <div className="grid grid-cols-3 gap-2 text-xs font-medium text-ink-3 text-center">
           <span className="text-left">Set</span>
-          <span className="text-blue-700 truncate">🔵 {team1Name}</span>
-          <span className="text-red-700 truncate">🔴 {team2Name}</span>
+          <span className="text-acc-text truncate">🔵 {team1Name}</span>
+          <span className="text-loss truncate">🔴 {team2Name}</span>
         </div>
 
         {sets.map((set, idx) => (
@@ -393,8 +393,8 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         ))}
 
         {matchResult && (
-          <div className="mt-2 p-3 rounded-xl bg-green-50 border border-green-200 text-sm text-center">
-            <p className="font-bold text-green-800">
+          <div className="mt-2 p-3 rounded-xl bg-win/10 border border-win/30 text-sm text-center">
+            <p className="font-bold text-win">
               🏆 Gana {matchResult.winner === 1 ? `🔵 ${team1Name}` : `🔴 ${team2Name}`}{' '}
               <Badge variant="outline" className="ml-1">
                 {matchResult.t1} — {matchResult.t2}
@@ -404,16 +404,16 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🎾 Lado de pista (opcional)</p>
+      <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
+        <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🎾 Lado de pista (opcional)</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-3">
-            <p className="font-semibold text-sm text-blue-700">🔵 {team1Name}</p>
+            <p className="font-semibold text-sm text-acc-text">🔵 {team1Name}</p>
             {pairing.team1.map((player) => (
               <div key={player.id} className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                <span className="text-sm text-gray-700 truncate">{player.name}</span>
+                <span className="text-sm text-ink-2 truncate">{player.name}</span>
                 <select
-                  className="border rounded-md px-2 py-1 text-sm bg-white"
+                  className="border rounded-md px-2 py-1 text-sm bg-card"
                   value={sidesByPlayerId[player.id] ?? ''}
                   onChange={(e) =>
                     setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
@@ -427,12 +427,12 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
             ))}
           </div>
           <div className="space-y-3">
-            <p className="font-semibold text-sm text-red-700">🔴 {team2Name}</p>
+            <p className="font-semibold text-sm text-loss">🔴 {team2Name}</p>
             {pairing.team2.map((player) => (
               <div key={player.id} className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                <span className="text-sm text-gray-700 truncate">{player.name}</span>
+                <span className="text-sm text-ink-2 truncate">{player.name}</span>
                 <select
-                  className="border rounded-md px-2 py-1 text-sm bg-white"
+                  className="border rounded-md px-2 py-1 text-sm bg-card"
                   value={sidesByPlayerId[player.id] ?? ''}
                   onChange={(e) =>
                     setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
@@ -452,7 +452,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         <Button
           type="submit"
           disabled={loading || !matchResult}
-          className="flex-1 min-h-[40px] px-4 text-sm bg-green-600 hover:bg-green-700 text-white font-bold"
+          className="flex-1 min-h-[40px] px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar resultado y actualizar rankings'}
         </Button>

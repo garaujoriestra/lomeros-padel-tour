@@ -13,11 +13,14 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #052e16 0%, #14532d 100%)',
-          fontSize: 130,
+          background: 'linear-gradient(160deg, #1d2f2c 0%, #0c1715 60%)',
+          fontSize: 68,
+          color: '#c8f03c',
+          fontWeight: 800,
+          fontStyle: 'italic',
         }}
       >
-        🎾
+        LPT
       </div>
     ),
     { ...size },

@@ -1,4 +1,6 @@
+import { Award } from 'lucide-react';
 import { ACHIEVEMENTS, type Achievement } from '@/lib/achievements/catalog';
+import { SectionHead } from '@/components/lpt/ui';
 
 interface EarnedGrant {
   achievementId: string;
@@ -15,40 +17,40 @@ function formatEarnedDate(iso: string): string {
 
 export function AchievementsCard({ earned }: AchievementsCardProps) {
   const earnedMap = new Map(earned.map((g) => [g.achievementId, g.earnedAt]));
-  const earnedCount = earned.length;
-  const total = ACHIEVEMENTS.length;
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">🏆 Logros</p>
-        <span className="text-xs text-gray-400">{earnedCount} / {total}</span>
-      </div>
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+    <div className="section">
+      <SectionHead icon={Award} title="Logros" />
+      <div className="lpt-card card-pad" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 10 }}>
         {ACHIEVEMENTS.map((a: Achievement) => {
           const earnedAt = earnedMap.get(a.id);
-          const isEarned = earnedAt !== undefined;
-          const tooltip = isEarned
-            ? `${a.description} · Desbloqueado el ${formatEarnedDate(earnedAt)}`
-            : `${a.description} (bloqueado)`;
+          const got = earnedAt !== undefined;
+          const tooltip = got
+            ? `${a.name} — ${a.description} · Desbloqueado el ${formatEarnedDate(earnedAt)}`
+            : `${a.name} — ${a.description} (bloqueado)`;
           return (
             <div
               key={a.id}
               title={tooltip}
-              className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 px-1 py-2 text-center ${
-                isEarned
-                  ? 'bg-gradient-to-br from-yellow-100 to-yellow-300 ring-1 ring-yellow-400/50'
-                  : 'bg-gray-100 opacity-50 grayscale'
-              }`}
+              style={{
+                textAlign: 'center',
+                padding: '10px 4px',
+                borderRadius: 10,
+                background: got ? 'color-mix(in oklab, var(--acc) 12%, transparent)' : 'var(--surface-2)',
+                border: got ? '1px solid color-mix(in oklab, var(--acc) 35%, transparent)' : '1px dashed var(--line)',
+                opacity: got ? 1 : 0.45,
+                filter: got ? 'none' : 'grayscale(1)',
+              }}
             >
-              <span className="text-2xl leading-none">{a.icon}</span>
-              <span className={`text-[10px] font-bold leading-tight line-clamp-2 ${isEarned ? 'text-yellow-900' : 'text-gray-600'}`}>
-                {a.name}
-              </span>
+              <div style={{ fontSize: 22 }}>{a.icon}</div>
+              <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, lineHeight: 1.2 }}>{a.name}</div>
             </div>
           );
         })}
       </div>
+      <p className="small muted" style={{ marginTop: 8, textAlign: 'right' }}>
+        {earned.length} / {ACHIEVEMENTS.length} desbloqueados
+      </p>
     </div>
   );
 }
