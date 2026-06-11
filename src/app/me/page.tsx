@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { loadPlayerProfile } from '@/lib/players/profile-data';
 import { PlayerProfileView } from '@/components/players/player-profile-view';
+import { PushNotificationsToggle } from '@/components/me/push-notifications-toggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +21,19 @@ export default async function MePage() {
           Pide al organizador que te vincule a tu ficha.
         </p>
         <Link href="/" className="inline-block text-green-700 font-semibold">Ver el tour →</Link>
+        <div className="mt-6 text-left">
+          <PushNotificationsToggle />
+        </div>
       </div>
     );
   }
 
   const data = await loadPlayerProfile(session.player.id);
   if (!data) redirect('/');
-  return <PlayerProfileView data={data} editable />;
+  return (
+    <div className="space-y-6">
+      <PlayerProfileView data={data} editable />
+      <PushNotificationsToggle />
+    </div>
+  );
 }
