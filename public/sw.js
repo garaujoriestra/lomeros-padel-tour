@@ -1,6 +1,11 @@
 self.addEventListener('push', function (event) {
   if (!event.data) return;
-  const data = event.data.json();
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    return;
+  }
   const options = {
     body: data.body,
     icon: data.icon || '/icon',
@@ -18,8 +23,7 @@ self.addEventListener('notificationclick', function (event) {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
       for (const client of clientList) {
         if ('focus' in client) {
-          client.navigate(url);
-          return client.focus();
+          return client.navigate(url).then((c) => (c || client).focus());
         }
       }
       if (clients.openWindow) return clients.openWindow(url);

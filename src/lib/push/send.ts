@@ -7,18 +7,22 @@ import type { PushPayload } from './types';
 const DEFAULT_ICON = '/icon';
 
 let configured = false;
+let warnedMissingVapid = false;
 function ensureVapid() {
   if (configured) return;
-  const publicKey = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-  const privateKey = process.env.VAPID_PRIVATE_KEY || '';
-  if (!publicKey || !privateKey) {
-    console.warn('push: faltan claves VAPID, no se enviarán notificaciones');
+  const pub = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+  const priv = process.env.VAPID_PRIVATE_KEY || '';
+  if (!pub || !priv) {
+    if (!warnedMissingVapid) {
+      console.warn('push: faltan claves VAPID, no se enviarán notificaciones');
+      warnedMissingVapid = true;
+    }
     return;
   }
   webpush.setVapidDetails(
     process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
-    publicKey,
-    privateKey,
+    pub,
+    priv,
   );
   configured = true;
 }
