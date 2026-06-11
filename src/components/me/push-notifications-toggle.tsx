@@ -63,6 +63,13 @@ export function PushNotificationsToggle() {
       setState('on');
       toast.success('Notificaciones activadas');
     } catch {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        await existing?.unsubscribe();
+      } catch {
+        /* best-effort cleanup */
+      }
       toast.error('No se pudieron activar las notificaciones');
     } finally {
       setBusy(false);
@@ -75,12 +82,13 @@ export function PushNotificationsToggle() {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
         await fetch('/api/push/unsubscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
+          body: JSON.stringify({ endpoint }),
         });
-        await sub.unsubscribe();
       }
       setState('off');
       toast.success('Notificaciones desactivadas');
@@ -106,6 +114,8 @@ export function PushNotificationsToggle() {
         )}
         {state === 'off' && (
           <button
+            type="button"
+            aria-label="Activar notificaciones"
             onClick={enable}
             disabled={busy}
             className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
@@ -115,6 +125,8 @@ export function PushNotificationsToggle() {
         )}
         {state === 'on' && (
           <button
+            type="button"
+            aria-label="Desactivar notificaciones"
             onClick={disable}
             disabled={busy}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 disabled:opacity-50"
