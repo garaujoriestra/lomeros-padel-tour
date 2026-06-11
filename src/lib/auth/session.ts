@@ -32,19 +32,27 @@ export async function deleteSession(): Promise<void> {
 }
 
 // Autorización SEGURA: lee la cookie y carga user/player frescos de la DB.
+// Tolerante a fallos: si la consulta falla (p. ej. la tabla `users` aún no
+// existe porque no se ha ejecutado /api/migrate-auth tras el primer deploy),
+// devuelve null en vez de lanzar, para no tumbar la web pública.
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
   const payload = await verifySession(cookieStore.get(COOKIE)?.value);
   if (!payload) return null;
 
-  const [user] = await db.select().from(users).where(eq(users.id, payload.userId));
-  if (!user) return null;
+  try {
+    const [user] = await db.select().from(users).where(eq(users.id, payload.userId));
+    if (!user) return null;
 
-  let player: Player | null = null;
-  if (user.playerId) {
-    const [p] = await db.select().from(players).where(eq(players.id, user.playerId));
-    player = p ?? null;
+    let player: Player | null = null;
+    if (user.playerId) {
+      const [p] = await db.select().from(players).where(eq(players.id, user.playerId));
+      player = p ?? null;
+    }
+
+    return { userId: user.id, role: user.role as Role, email: user.email, player };
+  } catch (error) {
+    console.error('getSession DB error (¿falta ejecutar /api/migrate-auth?)', error);
+    return null;
   }
-
-  return { userId: user.id, role: user.role as Role, email: user.email, player };
 }
