@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { computeAllRivalries, type MatchForRivalry } from './head-to-head';
 
 const players = [
-  { id: 'p1', name: 'Alice' },
-  { id: 'p2', name: 'Bob' },
-  { id: 'p3', name: 'Carol' },
-  { id: 'p4', name: 'Dave' },
-  { id: 'p5', name: 'Eve' },
+  { id: 'p1', name: 'Alice', avatarUrl: null },
+  { id: 'p2', name: 'Bob', avatarUrl: null },
+  { id: 'p3', name: 'Carol', avatarUrl: null },
+  { id: 'p4', name: 'Dave', avatarUrl: null },
+  { id: 'p5', name: 'Eve', avatarUrl: null },
 ];
 
 function makeMatch(overrides: Partial<MatchForRivalry>): MatchForRivalry {
@@ -59,6 +59,7 @@ describe('computeAllRivalries', () => {
     expect(vsP3).toEqual({
       opponentId: 'p3',
       opponentName: 'Carol',
+      opponentAvatarUrl: null,
       matches: 1,
       wins: 1,
       losses: 0,
@@ -79,6 +80,7 @@ describe('computeAllRivalries', () => {
     expect(vsP3).toEqual({
       opponentId: 'p3',
       opponentName: 'Carol',
+      opponentAvatarUrl: null,
       matches: 1,
       wins: 0,
       losses: 1,

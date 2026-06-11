@@ -9,6 +9,7 @@ import { recommendPairings } from '@/lib/rating/recommend-pairs';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { expectedScore } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -581,9 +582,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <div className="space-y-2">
                     {opt.team1.map((p, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-black shrink-0">
-                          {p.name.charAt(0)}
-                        </div>
+                        <PlayerAvatar
+                          name={p.name}
+                          avatarUrl={playerMap[p.id]?.avatarUrl}
+                          className="w-8 h-8 rounded-full"
+                          fallbackClassName="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-black"
+                          sizes="32px"
+                        />
                         <div className="min-w-0">
                           <p className="font-bold text-gray-800 text-sm truncate">
                             {p.name}
@@ -618,9 +623,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <div className="space-y-2 sm:text-right">
                     {opt.team2.map((p, i) => (
                       <div key={i} className="flex items-center gap-2 sm:justify-end">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xs font-black shrink-0 sm:order-2">
-                          {p.name.charAt(0)}
-                        </div>
+                        <PlayerAvatar
+                          name={p.name}
+                          avatarUrl={playerMap[p.id]?.avatarUrl}
+                          className="w-8 h-8 rounded-full sm:order-2"
+                          fallbackClassName="bg-gradient-to-br from-red-400 to-red-600 text-white text-xs font-black"
+                          sizes="32px"
+                        />
                         <div className="min-w-0 sm:order-1">
                           <p className="font-bold text-gray-800 text-sm truncate sm:text-right">
                             {p.name}
@@ -674,12 +683,20 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <div key={pair.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="flex -space-x-2">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-sm font-black ring-2 ring-white">
-                          {p1?.name.charAt(0) ?? '?'}
-                        </div>
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-black ring-2 ring-white">
-                          {p2?.name.charAt(0) ?? '?'}
-                        </div>
+                        <PlayerAvatar
+                          name={p1?.name ?? '?'}
+                          avatarUrl={p1?.avatarUrl}
+                          className="w-9 h-9 rounded-full ring-2 ring-white"
+                          fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white text-sm font-black"
+                          sizes="36px"
+                        />
+                        <PlayerAvatar
+                          name={p2?.name ?? '?'}
+                          avatarUrl={p2?.avatarUrl}
+                          className="w-9 h-9 rounded-full ring-2 ring-white"
+                          fallbackClassName="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white text-sm font-black"
+                          sizes="36px"
+                        />
                       </div>
                       <div>
                         <p className="font-bold text-gray-800 text-sm">{p1?.name ?? '?'} & {p2?.name ?? '?'}</p>

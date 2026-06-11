@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { RankGroup } from '@/lib/rankings/podium-groups';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 interface PodiumPlayer {
   id: string;
@@ -9,6 +10,7 @@ interface PodiumPlayer {
   wins: number;
   losses: number;
   matchesPlayed: number;
+  avatarUrl?: string | null;
 }
 
 interface PodiumProps {
@@ -139,9 +141,13 @@ function SinglePlayerCard({
     <Link href={`/players/${player.id}`} className={`flex-1 min-w-0 group ${STEP_LAYOUT[tone]}`}>
       <div className={`${t.card} rounded-2xl ${t.cardPadding} pb-0 flex flex-col items-center gap-1.5 sm:gap-2 group-hover:scale-105 transition-transform`}>
         <span className={t.medalSize}>{t.emoji}</span>
-        <div className={`${avatarSize} rounded-full ${t.avatar} flex items-center justify-center font-black border-2`}>
-          {player.name.charAt(0)}
-        </div>
+        <PlayerAvatar
+          name={player.name}
+          avatarUrl={player.avatarUrl}
+          className={`${avatarSize} rounded-full border-2`}
+          fallbackClassName={`${t.avatar} flex items-center justify-center font-black`}
+          sizes="64px"
+        />
         <p className={`font-black ${nameSize} text-center ${t.name} leading-tight w-full truncate`}>{player.name}</p>
         {player.nickname && <p className={`${t.nickname} text-xs truncate w-full text-center`}>{player.nickname}</p>}
         <p className={`${eloSize} font-black ${t.elo} tabular-nums`}>{Math.round(player.eloRating)}</p>
@@ -192,12 +198,14 @@ function TiedPlayersCard({
         {/* Side-by-side avatars (each is its own link) */}
         <div className="flex items-center justify-center gap-1.5 sm:gap-2">
           {players.map((player) => (
-            <Link key={player.id} href={`/players/${player.id}`} className="shrink-0">
-              <div
-                className={`${avatarSize} rounded-full ${t.avatar} flex items-center justify-center font-black border-2 hover:scale-105 transition-transform`}
-              >
-                {player.name.charAt(0)}
-              </div>
+            <Link key={player.id} href={`/players/${player.id}`} className="shrink-0 hover:scale-105 transition-transform">
+              <PlayerAvatar
+                name={player.name}
+                avatarUrl={player.avatarUrl}
+                className={`${avatarSize} rounded-full border-2`}
+                fallbackClassName={`${t.avatar} flex items-center justify-center font-black`}
+                sizes="56px"
+              />
             </Link>
           ))}
         </div>

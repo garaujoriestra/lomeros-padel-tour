@@ -13,6 +13,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Podium } from '@/components/shared/podium';
 import { buildPodiumGroups, assignCompetitionRanks } from '@/lib/rankings/podium-groups';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,9 +92,13 @@ export default async function RankingsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-sm font-black shrink-0 shadow-sm">
-                              {player.name.charAt(0)}
-                            </div>
+                            <PlayerAvatar
+                              name={player.name}
+                              avatarUrl={player.avatarUrl}
+                              className="w-9 h-9 rounded-full shadow-sm"
+                              fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white text-sm font-black"
+                              sizes="36px"
+                            />
                             <div>
                               <Link href={`/players/${player.id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors">
                                 {player.name}
@@ -144,7 +149,13 @@ export default async function RankingsPage() {
             {unranked.map((player) => (
               <Link key={player.id} href={`/players/${player.id}`}>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-600 hover:border-green-300 hover:text-green-700 transition-all shadow-sm">
-                  <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold">{player.name.charAt(0)}</span>
+                  <PlayerAvatar
+                    name={player.name}
+                    avatarUrl={player.avatarUrl}
+                    className="w-5 h-5 rounded-full"
+                    fallbackClassName="bg-gray-200 text-xs font-bold"
+                    sizes="20px"
+                  />
                   {player.name}
                 </span>
               </Link>

@@ -4,6 +4,7 @@ import { EloSparkline } from '@/components/charts/elo-sparkline';
 import { PartnerCard } from '@/components/shared/partner-card';
 import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card';
 import { AchievementsCard } from '@/components/shared/achievements-card';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 import type { RivalryStats } from '@/lib/rating/head-to-head';
 import type { PlayerProfileData } from '@/lib/players/profile-data';
 
@@ -54,9 +55,13 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
         <div className="relative p-5 sm:p-8 md:p-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
             {/* Avatar */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center text-4xl sm:text-5xl font-black text-white shadow-xl shrink-0">
-              {player.name.charAt(0)}
-            </div>
+            <PlayerAvatar
+              name={player.name}
+              avatarUrl={player.avatarUrl}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-xl"
+              fallbackClassName="bg-white/10 border-2 border-white/20 text-4xl sm:text-5xl font-black text-white"
+              sizes="96px"
+            />
             {/* Info */}
             <div className="flex-1 min-w-0 w-full">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight sm:truncate">{player.name}</h1>
@@ -281,9 +286,13 @@ function RivalryRow({ rivalry }: { rivalry: RivalryStats }) {
   return (
     <Link href={`/players/${rivalry.opponentId}`} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/50 transition-colors">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-sm font-black shrink-0">
-          {rivalry.opponentName.charAt(0)}
-        </div>
+        <PlayerAvatar
+          name={rivalry.opponentName}
+          avatarUrl={rivalry.opponentAvatarUrl}
+          className="w-8 h-8 rounded-full"
+          fallbackClassName="bg-gradient-to-br from-gray-300 to-gray-400 text-white text-sm font-black"
+          sizes="32px"
+        />
         <span className="text-sm font-bold text-gray-800 truncate">{rivalry.opponentName}</span>
       </div>
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">

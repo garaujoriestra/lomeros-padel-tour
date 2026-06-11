@@ -1,6 +1,7 @@
 export interface RivalryStats {
   opponentId: string;
   opponentName: string;
+  opponentAvatarUrl: string | null;
   matches: number;
   wins: number;
   losses: number;
@@ -18,6 +19,7 @@ export interface MatchForRivalry {
 interface PlayerForRivalry {
   id: string;
   name: string;
+  avatarUrl?: string | null;
 }
 
 function findPlayerTeam(playerId: string, m: MatchForRivalry): 1 | 2 | null {
@@ -57,12 +59,14 @@ export function computeAllRivalries(
   }
 
   const playerNameMap = new Map(allPlayers.map((p) => [p.id, p.name]));
+  const playerAvatarMap = new Map(allPlayers.map((p) => [p.id, p.avatarUrl ?? null]));
 
   const result: RivalryStats[] = [];
   for (const [opponentId, t] of tally) {
     result.push({
       opponentId,
       opponentName: playerNameMap.get(opponentId) ?? '?',
+      opponentAvatarUrl: playerAvatarMap.get(opponentId) ?? null,
       matches: t.matches,
       wins: t.wins,
       losses: t.losses,

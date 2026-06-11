@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Player } from '@/lib/db/schema';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 interface PartnerCardProps {
   variant: 'best' | 'worst';
@@ -27,9 +28,13 @@ export function PartnerCard({ variant, partner, pairStat }: PartnerCardProps) {
       <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{headline}</p>
       <Link href={`/players/${partner.id}`} className="flex items-center justify-between hover:opacity-80 transition-opacity">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white text-xl font-black shadow-sm`}>
-            {partner.name.charAt(0)}
-          </div>
+          <PlayerAvatar
+            name={partner.name}
+            avatarUrl={partner.avatarUrl}
+            className="w-12 h-12 rounded-xl shadow-sm"
+            fallbackClassName={`bg-gradient-to-br ${avatarGradient} text-white text-xl font-black`}
+            sizes="48px"
+          />
           <div>
             <p className="font-black text-gray-800">{partner.name}</p>
             <p className="text-xs text-gray-400">{pairStat.matchesPlayed} partidos juntos</p>

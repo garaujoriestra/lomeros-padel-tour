@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 interface PartnerLike {
   id: string;
@@ -28,14 +29,13 @@ export function UnplayedPartnersCard({ unplayed, totalCandidates }: UnplayedPart
             href={`/players/${p.id}`}
             className="inline-flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
           >
-            {p.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.avatarUrl} alt={p.name} className="w-5 h-5 rounded-full object-cover" />
-            ) : (
-              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white font-black text-[10px] flex items-center justify-center">
-                {p.name.charAt(0).toUpperCase()}
-              </span>
-            )}
+            <PlayerAvatar
+              name={p.name}
+              avatarUrl={p.avatarUrl}
+              className="w-5 h-5 rounded-full"
+              fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white font-black text-[10px]"
+              sizes="20px"
+            />
             {p.name}
           </Link>
         ))}

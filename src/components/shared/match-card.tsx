@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 interface MatchPlayer {
   id: string;
   name: string;
   nickname?: string | null;
+  avatarUrl?: string | null;
 }
 
 interface MatchSet {
@@ -170,9 +172,27 @@ function TeamRow({
           return (
             <div key={i} className={`flex items-center gap-2 min-w-0 ${isRight ? 'justify-end' : ''}`}>
               {!isRight && <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />}
+              {!isRight && p && (
+                <PlayerAvatar
+                  name={p.name}
+                  avatarUrl={p.avatarUrl}
+                  className="w-6 h-6 rounded-full"
+                  fallbackClassName="bg-gradient-to-br from-green-400 to-emerald-600 text-white text-[10px] font-black"
+                  sizes="24px"
+                />
+              )}
               <p className={`font-bold truncate min-w-0 ${winner ? 'text-green-700' : isInjured ? 'text-rose-700' : 'text-gray-700'}`}>
                 {isInjured && '🤕 '}{p?.name ?? '?'}
               </p>
+              {isRight && p && (
+                <PlayerAvatar
+                  name={p.name}
+                  avatarUrl={p.avatarUrl}
+                  className="w-6 h-6 rounded-full"
+                  fallbackClassName="bg-gradient-to-br from-green-400 to-emerald-600 text-white text-[10px] font-black"
+                  sizes="24px"
+                />
+              )}
               {isRight && <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />}
             </div>
           );

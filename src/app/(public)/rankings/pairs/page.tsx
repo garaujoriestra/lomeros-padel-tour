@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
+import { PlayerAvatar } from '@/components/shared/player-avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,17 +84,25 @@ export default async function PairsRankingPage() {
                       {/* Players */}
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-black shrink-0">
-                            {p1?.name.charAt(0) ?? '?'}
-                          </div>
+                          <PlayerAvatar
+                            name={p1?.name ?? '?'}
+                            avatarUrl={p1?.avatarUrl}
+                            className="w-8 h-8 rounded-full"
+                            fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white text-xs font-black"
+                            sizes="32px"
+                          />
                           <Link href={`/players/${pair.player1Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-sm">
                             {p1?.name ?? '?'}
                           </Link>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-xs font-black shrink-0">
-                            {p2?.name.charAt(0) ?? '?'}
-                          </div>
+                          <PlayerAvatar
+                            name={p2?.name ?? '?'}
+                            avatarUrl={p2?.avatarUrl}
+                            className="w-8 h-8 rounded-full"
+                            fallbackClassName="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white text-xs font-black"
+                            sizes="32px"
+                          />
                           <Link href={`/players/${pair.player2Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-sm">
                             {p2?.name ?? '?'}
                           </Link>
@@ -175,17 +184,25 @@ export default async function PairsRankingPage() {
                         <TableCell>
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
-                                {p1?.name.charAt(0) ?? '?'}
-                              </div>
+                              <PlayerAvatar
+                                name={p1?.name ?? '?'}
+                                avatarUrl={p1?.avatarUrl}
+                                className="w-4 h-4 sm:w-5 sm:h-5 rounded-full"
+                                fallbackClassName="bg-gradient-to-br from-green-400 to-green-600 text-white text-[10px] sm:text-xs font-black"
+                                sizes="20px"
+                              />
                               <Link href={`/players/${pair.player1Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-xs sm:text-sm truncate">
                                 {p1?.name ?? '?'}
                               </Link>
                             </div>
                             <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-black shrink-0">
-                                {p2?.name.charAt(0) ?? '?'}
-                              </div>
+                              <PlayerAvatar
+                                name={p2?.name ?? '?'}
+                                avatarUrl={p2?.avatarUrl}
+                                className="w-4 h-4 sm:w-5 sm:h-5 rounded-full"
+                                fallbackClassName="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white text-[10px] sm:text-xs font-black"
+                                sizes="20px"
+                              />
                               <Link href={`/players/${pair.player2Id}`} className="font-bold text-gray-800 hover:text-green-700 transition-colors text-xs sm:text-sm truncate">
                                 {p2?.name ?? '?'}
                               </Link>
