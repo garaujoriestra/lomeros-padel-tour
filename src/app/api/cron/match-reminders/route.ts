@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic';
 // GET /api/cron/match-reminders?kind=day|eve
 // Lo invoca Vercel Cron con el header Authorization: Bearer <CRON_SECRET>.
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -28,7 +28,11 @@ export async function GET(request: NextRequest) {
     // Idempotencia: insertar en notification_log; si choca con UNIQUE, ya se envió.
     try {
       await db.insert(notificationLog).values({ matchId: r.matchId, kind: r.kind });
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!msg.includes('UNIQUE') && !msg.includes('constraint')) {
+        console.error('notification_log insert failed unexpectedly', r.matchId, err);
+      }
       continue;
     }
     const m = scheduled.find((x) => x.id === r.matchId);
