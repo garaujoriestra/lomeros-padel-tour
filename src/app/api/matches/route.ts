@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Push best-effort (no debe romper el guardado del partido)
-      await notifyMatchResult({ ...match, winnerTeam }, ratingResult);
+      await notifyMatchResult({ ...match, winnerTeam: winnerTeam as 1 | 2 }, ratingResult);
     }
 
     return NextResponse.json(match, { status: 201 });

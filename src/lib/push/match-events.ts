@@ -4,7 +4,7 @@ import type { MatchRatingResult } from '@/lib/rating/process-match';
 
 interface MatchTeams {
   id: string;
-  winnerTeam: number | null;
+  winnerTeam: 1 | 2;
   team1Player1Id: string;
   team1Player2Id: string;
   team2Player1Id: string;
