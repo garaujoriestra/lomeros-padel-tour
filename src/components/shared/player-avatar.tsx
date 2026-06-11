@@ -15,9 +15,17 @@ interface PlayerAvatarProps {
 export function PlayerAvatar({ name, avatarUrl, className, fallbackClassName, sizes }: PlayerAvatarProps) {
   const initial = name?.charAt(0)?.toUpperCase() ?? '?';
   if (avatarUrl) {
+    // next/image no puede optimizar data: URIs (avatares antiguos en base64);
+    // para esos usamos un <img> normal. Los https (Vercel Blob) van por next/image.
+    const isDataUri = avatarUrl.startsWith('data:');
     return (
       <div className={cn('relative overflow-hidden shrink-0', className)}>
-        <Image src={avatarUrl} alt={name} fill className="object-cover" sizes={sizes ?? '96px'} />
+        {isDataUri ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt={name} className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <Image src={avatarUrl} alt={name} fill className="object-cover" sizes={sizes ?? '96px'} />
+        )}
       </div>
     );
   }
