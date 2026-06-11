@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { upsertPlayerUser } from '@/lib/auth/users';
 
 // GET /api/players/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, nickname, avatarUrl, isLeftHanded } = body;
+    const { name, nickname, avatarUrl, isLeftHanded, email } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -38,6 +39,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .returning();
 
     if (!updated) return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 });
+
+    const result = await upsertPlayerUser(id, email);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 409 });
+    }
+
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });

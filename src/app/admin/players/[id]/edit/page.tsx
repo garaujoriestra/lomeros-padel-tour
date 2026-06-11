@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
+import { players, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { PlayerForm } from '@/components/admin/player-form';
@@ -11,13 +11,15 @@ export default async function EditPlayerPage({ params }: { params: Promise<{ id:
   const [player] = await db.select().from(players).where(eq(players.id, id));
   if (!player) notFound();
 
+  const [linkedUser] = await db.select().from(users).where(eq(users.playerId, id));
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Editar jugador</h1>
         <p className="text-gray-500 text-sm">{player.name}</p>
       </div>
-      <PlayerForm initialData={player} />
+      <PlayerForm initialData={{ ...player, email: linkedUser?.email ?? '' }} />
     </div>
   );
 }

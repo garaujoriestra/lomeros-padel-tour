@@ -16,6 +16,7 @@ interface PlayerFormProps {
     nickname: string | null;
     avatarUrl: string | null;
     isLeftHanded: boolean | null;
+    email?: string | null;
   };
 }
 
@@ -29,6 +30,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     nickname: initialData?.nickname ?? '',
     avatarUrl: initialData?.avatarUrl ?? '',
     isLeftHanded: initialData?.isLeftHanded ?? false,
+    email: initialData?.email ?? '',
   });
   const [preview, setPreview] = useState<string>(initialData?.avatarUrl ?? '');
 
@@ -165,6 +167,20 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               onChange={(e) => setForm({ ...form, nickname: e.target.value })}
               placeholder="Ej: El Cañón"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email de Gmail (para que pueda entrar)</Label>
+            <Input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="jugador@gmail.com"
+            />
+            <p className="text-xs text-gray-400">
+              Opcional. Si lo dejas vacío, el jugador no podrá iniciar sesión.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">

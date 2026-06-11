@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
+import { upsertPlayerUser } from '@/lib/auth/users';
 
 // GET /api/players - listar todos los jugadores
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, nickname, avatarUrl, isLeftHanded } = body;
+    const { name, nickname, avatarUrl, isLeftHanded, email } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -32,6 +33,11 @@ export async function POST(request: NextRequest) {
       avatarUrl: avatarUrl?.trim() || null,
       isLeftHanded: !!isLeftHanded,
     }).returning();
+
+    const result = await upsertPlayerUser(player.id, email);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 409 });
+    }
 
     return NextResponse.json(player, { status: 201 });
   } catch (error) {
