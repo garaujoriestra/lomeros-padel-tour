@@ -94,6 +94,11 @@ export async function loadPlayerProfile(id: string) {
   const rivalries = computeAllRivalries(id, completedMatches, allPlayers);
 
   const chartData = history.map((h) => ({ date: h.recordedAt, elo: Math.round(h.eloAfter) }));
+  // Per-match ELO change for this player, keyed by matchId (used in the match history list).
+  const eloChangeByMatch: Record<string, number> = {};
+  for (const h of history) {
+    eloChangeByMatch[h.matchId] = Math.round(h.eloChange);
+  }
   const eloChange = Math.round(player.eloRating - 1500);
   const streak = (() => {
     let count = 0;
@@ -126,6 +131,7 @@ export async function loadPlayerProfile(id: string) {
     rivalries,
     chartData,
     eloChange,
+    eloChangeByMatch,
     streak,
   };
 }

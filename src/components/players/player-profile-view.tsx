@@ -30,6 +30,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
     rivalries,
     chartData,
     eloChange,
+    eloChangeByMatch,
     streak,
   } = data;
   const id = player.id;
@@ -221,21 +222,42 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
             {completedMatches.slice(0, 10).map((match) => {
               const isTeam1 = match.team1Player1Id === id || match.team1Player2Id === id;
               const won = (isTeam1 && match.winnerTeam === 1) || (!isTeam1 && match.winnerTeam === 2);
+              const partnerId = isTeam1
+                ? (match.team1Player1Id === id ? match.team1Player2Id : match.team1Player1Id)
+                : (match.team2Player1Id === id ? match.team2Player2Id : match.team2Player1Id);
+              const partner = playerMap[partnerId];
               const opponents = isTeam1
                 ? [playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]]
                 : [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
+              const delta = eloChangeByMatch[match.id];
               return (
-                <div key={match.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+                <Link
+                  key={match.id}
+                  href={`/matches/${match.id}`}
+                  className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+                >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0 ${won ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-gradient-to-br from-red-400 to-red-500'}`}>
                       {won ? 'V' : 'D'}
                     </div>
-                    <span className="text-xs text-gray-400 font-medium shrink-0">{match.date}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-700 font-medium truncate">
+                        <span className="text-gray-400">con</span> {partner?.name ?? '?'}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        <span className="text-gray-400">vs</span> {opponents.map((p) => p?.name ?? '?').join(' & ')}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-600 font-medium truncate text-right">
-                    vs {opponents.map((p) => p?.name ?? '?').join(' & ')}
-                  </span>
-                </div>
+                  <div className="flex flex-col items-end shrink-0">
+                    {delta != null && (
+                      <span className={`text-sm font-black tabular-nums ${delta >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {delta >= 0 ? '+' : ''}{delta}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400 font-medium">{match.date}</span>
+                  </div>
+                </Link>
               );
             })}
           </div>
