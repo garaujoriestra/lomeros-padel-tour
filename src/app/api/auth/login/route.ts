@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   // Guardamos el destino final (opcional).
   const from = request.nextUrl.searchParams.get('from');
   if (from) {
-    res.cookies.set('oauth_from', from, { httpOnly: true, sameSite: 'lax', maxAge: 600, path: '/' });
+    res.cookies.set('oauth_from', from, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600, path: '/' });
   }
   return res;
 }

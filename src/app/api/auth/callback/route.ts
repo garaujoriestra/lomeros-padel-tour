@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
     }
 
     const token = await signSession({ userId: user.id, role: user.role as Role });
-    const dest = from && from.startsWith('/') ? from : '/me';
+    // Solo rutas internas: evita open-redirect (incl. protocol-relative //evil.com y /\evil.com).
+    const isInternal = !!from && from.startsWith('/') && !from.startsWith('//') && !from.startsWith('/\\');
+    const dest = isInternal ? from : '/me';
     const res = NextResponse.redirect(new URL(dest, base));
     res.cookies.set('session', token, {
       httpOnly: true,
