@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { penalties } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/guard';
-import { applyTokenMovement } from '@/lib/betting/bank';
+import { applyTokenMovement, hasLedgerEntry } from '@/lib/betting/bank';
 
 const now = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 
@@ -32,7 +32,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (body.status === 'fulfilled') {
-      await applyTokenMovement(penalty.playerId, penalty.rechargeAmount, 'recharge', penalty.id);
+      if (!(await hasLedgerEntry('recharge', penalty.id))) {
+        await applyTokenMovement(penalty.playerId, penalty.rechargeAmount, 'recharge', penalty.id);
+      }
       const [updated] = await db.update(penalties)
         .set({ status: 'fulfilled', fulfilledAt: now() })
         .where(eq(penalties.id, id))

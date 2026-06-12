@@ -8,36 +8,40 @@ import { hasPendingPenalty, detectBankruptcies } from '@/lib/betting/settle';
 
 // GET /api/redemptions?all=1 (admin) | sin params → los míos
 export async function GET(request: NextRequest) {
-  const all = request.nextUrl.searchParams.get('all');
-  if (all) {
-    const auth = await requireAdmin();
+  try {
+    const all = request.nextUrl.searchParams.get('all');
+    if (all) {
+      const auth = await requireAdmin();
+      if ('response' in auth) return auth.response;
+      const rows = await db
+        .select({
+          id: redemptions.id, playerId: redemptions.playerId, cost: redemptions.cost,
+          status: redemptions.status, requestedAt: redemptions.requestedAt,
+          rewardTitle: rewards.title, playerName: players.name, playerNickname: players.nickname,
+        })
+        .from(redemptions)
+        .innerJoin(rewards, eq(rewards.id, redemptions.rewardId))
+        .innerJoin(players, eq(players.id, redemptions.playerId))
+        .orderBy(desc(redemptions.requestedAt));
+      return NextResponse.json(rows);
+    }
+
+    const auth = await requireSession();
     if ('response' in auth) return auth.response;
+    if (!auth.session.player) return NextResponse.json([]);
     const rows = await db
       .select({
-        id: redemptions.id, playerId: redemptions.playerId, cost: redemptions.cost,
-        status: redemptions.status, requestedAt: redemptions.requestedAt,
-        rewardTitle: rewards.title, playerName: players.name, playerNickname: players.nickname,
+        id: redemptions.id, cost: redemptions.cost, status: redemptions.status,
+        requestedAt: redemptions.requestedAt, rewardTitle: rewards.title,
       })
       .from(redemptions)
       .innerJoin(rewards, eq(rewards.id, redemptions.rewardId))
-      .innerJoin(players, eq(players.id, redemptions.playerId))
+      .where(eq(redemptions.playerId, auth.session.player.id))
       .orderBy(desc(redemptions.requestedAt));
     return NextResponse.json(rows);
+  } catch {
+    return NextResponse.json({ error: 'Error al obtener canjes' }, { status: 500 });
   }
-
-  const auth = await requireSession();
-  if ('response' in auth) return auth.response;
-  if (!auth.session.player) return NextResponse.json([]);
-  const rows = await db
-    .select({
-      id: redemptions.id, cost: redemptions.cost, status: redemptions.status,
-      requestedAt: redemptions.requestedAt, rewardTitle: rewards.title,
-    })
-    .from(redemptions)
-    .innerJoin(rewards, eq(rewards.id, redemptions.rewardId))
-    .where(eq(redemptions.playerId, auth.session.player.id))
-    .orderBy(desc(redemptions.requestedAt));
-  return NextResponse.json(rows);
 }
 
 // POST /api/redemptions — canjear. Body: { rewardId }

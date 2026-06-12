@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { redemptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/guard';
-import { applyTokenMovement } from '@/lib/betting/bank';
+import { applyTokenMovement, hasLedgerEntry } from '@/lib/betting/bank';
 
 const now = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 
@@ -23,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Este canje ya está resuelto' }, { status: 400 });
     }
 
-    if (status === 'cancelled') {
+    if (status === 'cancelled' && !(await hasLedgerEntry('redemption_refunded', redemption.id))) {
       await applyTokenMovement(redemption.playerId, redemption.cost, 'redemption_refunded', redemption.id);
     }
     const [updated] = await db.update(redemptions)
