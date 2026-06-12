@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
       isLeftHanded: !!isLeftHanded,
     }).returning();
 
-    // Saldo inicial de «La Timba» (el default de la columna ya pone 500)
+    // Saldo inicial de «La Timba» (el default de la columna ya pone 500).
+    // Requiere haber ejecutado POST /api/migrate-betting antes de crear jugadores.
     await db.insert(tokenLedger).values({
       playerId: player.id,
       amount: BETTING.initialBalance,
