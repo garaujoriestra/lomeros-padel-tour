@@ -15,7 +15,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
   const [cost, setCost] = useState(100);
   const [loading, setLoading] = useState(false);
 
-  async function call(path: string, init: RequestInit, ok: string) {
+  async function call(path: string, init: RequestInit, ok: string): Promise<boolean> {
     setLoading(true);
     try {
       const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init });
@@ -23,21 +23,26 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
       if (!res.ok) throw new Error(data.error || 'Error');
       toast.success(ok);
       router.refresh();
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
+      return false;
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCreate() {
-    await call(
+    const ok = await call(
       '/api/rewards',
       { method: 'POST', body: JSON.stringify({ title, description, cost }) },
       'Premio creado'
     );
-    setTitle('');
-    setDescription('');
+    if (ok) {
+      setTitle('');
+      setDescription('');
+      setCost(100);
+    }
   }
 
   return (

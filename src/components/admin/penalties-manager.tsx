@@ -77,7 +77,7 @@ export function PenaltiesManager({ penalties }: { penalties: PenaltyRow[] }) {
                       size="sm"
                       disabled={loading || !draft.trim()}
                       onClick={() =>
-                        update(p.id, { description: drafts[p.id] }, 'Penalización asignada')
+                        update(p.id, { description: draft }, 'Penalización asignada')
                       }
                     >
                       Asignar
