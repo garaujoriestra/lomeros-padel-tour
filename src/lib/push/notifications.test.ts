@@ -3,6 +3,7 @@ import {
   buildResultNotification,
   buildAchievementNotification,
   buildReminderNotification,
+  buildBetSettledNotification,
 } from './notifications';
 
 describe('buildResultNotification', () => {
@@ -45,5 +46,25 @@ describe('buildReminderNotification', () => {
   it('dice "Mañana" para reminder_eve sin detalle', () => {
     const p = buildReminderNotification('reminder_eve', '', 'm4');
     expect(p.body).toContain('Mañana');
+  });
+});
+
+describe('buildBetSettledNotification', () => {
+  it('apuesta ganada: muestra premio neto y enlace al partido', () => {
+    const p = buildBetSettledNotification('won', 50, 115, 'Pepe/Juan vs Luis/Edu', 'm1');
+    expect(p.title).toContain('Acertaste');
+    expect(p.body).toContain('+115');
+    expect(p.body).toContain('Pepe/Juan vs Luis/Edu');
+    expect(p.url).toBe('/matches/m1');
+  });
+  it('apuesta perdida: muestra lo perdido', () => {
+    const p = buildBetSettledNotification('lost', 40, 0, 'A/B vs C/D', 'm2');
+    expect(p.title).toContain('Fallaste');
+    expect(p.body).toContain('-40');
+  });
+  it('apuesta devuelta', () => {
+    const p = buildBetSettledNotification('refunded', 40, 0, 'A/B vs C/D', 'm3');
+    expect(p.title).toContain('devuelta');
+    expect(p.body).toContain('+40');
   });
 });

@@ -42,3 +42,23 @@ export function buildReminderNotification(
     tag: `reminder-${matchId}-${kind}`,
   };
 }
+
+export function buildBetSettledNotification(
+  status: 'won' | 'lost' | 'refunded',
+  amount: number,
+  payout: number,
+  matchLabel: string,
+  matchId: string,
+): PushPayload {
+  const title =
+    status === 'won' ? '🎉 ¡Acertaste tu apuesta!'
+    : status === 'lost' ? '💸 Fallaste tu apuesta'
+    : '↩️ Apuesta devuelta';
+  const delta = status === 'won' ? `+${payout}` : status === 'lost' ? `-${amount}` : `+${amount}`;
+  return {
+    title,
+    body: `${matchLabel} · ${delta} tokens`,
+    url: `/matches/${matchId}`,
+    tag: `bet-${matchId}-${status}`,
+  };
+}
