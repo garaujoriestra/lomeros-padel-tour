@@ -12,6 +12,7 @@ export const players = sqliteTable('players', {
   wins: integer('wins').notNull().default(0),
   losses: integer('losses').notNull().default(0),
   isLeftHanded: integer('is_left_handed', { mode: 'boolean' }).notNull().default(false),
+  tokenBalance: integer('token_balance').notNull().default(500),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
@@ -28,6 +29,7 @@ export const users = sqliteTable('users', {
 export const matches = sqliteTable('matches', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   date: text('date').notNull(), // ISO date string YYYY-MM-DD
+  time: text('time'), // "HH:MM" hora local (Europe/Madrid), null en partidos antiguos
   location: text('location'),
   // Team 1
   team1Player1Id: text('team1_player1_id').notNull().references(() => players.id),
@@ -113,6 +115,69 @@ export const notificationLog = sqliteTable('notification_log', {
   unique().on(t.matchId, t.kind),
 ]));
 
+// ─── BETS (apuestas «La Timba») ──────────────────────────────────────────────
+export const bets = sqliteTable('bets', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  matchId: text('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  market: text('market').notNull(),            // 'winner' | 'exact_score'
+  predictedTeam: integer('predicted_team').notNull(), // 1 | 2
+  predictedScore: text('predicted_score'),     // '2-0' | '2-1' | null (solo exact_score)
+  amount: integer('amount').notNull(),
+  odds: real('odds').notNull(),                // cuota congelada al apostar (incluye ×2 si exact_score)
+  status: text('status').notNull().default('open'), // 'open' | 'won' | 'lost' | 'refunded'
+  payout: integer('payout').notNull().default(0),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  settledAt: text('settled_at'),
+}, (t) => ([
+  unique().on(t.matchId, t.playerId, t.market),
+]));
+
+// ─── TOKEN LEDGER (libro contable de tokens) ─────────────────────────────────
+export const tokenLedger = sqliteTable('token_ledger', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(), // con signo
+  reason: text('reason').notNull(),
+  // 'initial' | 'bet_placed' | 'bet_cancelled' | 'bet_won' | 'bet_refunded' |
+  // 'recharge' | 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment'
+  refId: text('ref_id'), // id de bet/redemption/penalty según reason
+  balanceAfter: integer('balance_after').notNull(),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
+// ─── REWARDS (catálogo de premios) ───────────────────────────────────────────
+export const rewards = sqliteTable('rewards', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text('title').notNull(),
+  description: text('description'),
+  cost: integer('cost').notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
+// ─── REDEMPTIONS (canjes) ────────────────────────────────────────────────────
+export const redemptions = sqliteTable('redemptions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  rewardId: text('reward_id').notNull().references(() => rewards.id),
+  cost: integer('cost').notNull(), // precio congelado al canjear
+  status: text('status').notNull().default('pending'), // 'pending' | 'fulfilled' | 'cancelled'
+  requestedAt: text('requested_at').notNull().default(sql`(datetime('now'))`),
+  resolvedAt: text('resolved_at'),
+});
+
+// ─── PENALTIES (bancarrotas) ─────────────────────────────────────────────────
+export const penalties = sqliteTable('penalties', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  description: text('description'), // null hasta que el admin la asigne
+  status: text('status').notNull().default('pending'), // 'pending' | 'fulfilled'
+  rechargeAmount: integer('recharge_amount').notNull().default(250),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  fulfilledAt: text('fulfilled_at'),
+});
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -129,3 +194,9 @@ export type NewUser = typeof users.$inferInsert;
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type NotificationLogRow = typeof notificationLog.$inferSelect;
+export type Bet = typeof bets.$inferSelect;
+export type NewBet = typeof bets.$inferInsert;
+export type TokenLedgerRow = typeof tokenLedger.$inferSelect;
+export type Reward = typeof rewards.$inferSelect;
+export type Redemption = typeof redemptions.$inferSelect;
+export type Penalty = typeof penalties.$inferSelect;

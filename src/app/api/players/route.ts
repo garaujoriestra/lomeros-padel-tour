@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
+import { players, tokenLedger } from '@/lib/db/schema';
 import { upsertPlayerUser } from '@/lib/auth/users';
 import { requireAdmin } from '@/lib/auth/guard';
+import { BETTING } from '@/lib/betting/config';
 
 // GET /api/players - listar todos los jugadores
 export async function GET() {
@@ -36,6 +37,14 @@ export async function POST(request: NextRequest) {
       avatarUrl: avatarUrl?.trim() || null,
       isLeftHanded: !!isLeftHanded,
     }).returning();
+
+    // Saldo inicial de «La Timba» (el default de la columna ya pone 500)
+    await db.insert(tokenLedger).values({
+      playerId: player.id,
+      amount: BETTING.initialBalance,
+      reason: 'initial',
+      balanceAfter: player.tokenBalance,
+    });
 
     const result = await upsertPlayerUser(player.id, email);
     if (!result.ok) {
