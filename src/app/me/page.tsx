@@ -33,6 +33,10 @@ export default async function MePage() {
   return (
     <div className="space-y-6">
       <PlayerProfileView data={data} editable />
+      <Link href="/me/tokens" className="lpt-card flex items-center justify-between" style={{ padding: 14 }}>
+        <span>🪙 Mi cartera de La Timba</span>
+        <span className="font-semibold">{session.player.tokenBalance} tk →</span>
+      </Link>
       <PushNotificationsToggle />
     </div>
   );
