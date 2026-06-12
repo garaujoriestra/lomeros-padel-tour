@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,10 +35,10 @@ export function DeletePlayerButton({ id, name }: { id: string; name: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15">
-          Eliminar
-        </Button>
+      <DialogTrigger
+        render={<Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15" aria-label={`Eliminar a ${name}`} />}
+      >
+        <Trash2 size={16} />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

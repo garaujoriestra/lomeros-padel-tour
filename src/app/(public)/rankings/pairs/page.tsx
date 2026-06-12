@@ -44,7 +44,7 @@ export default async function PairsRankingPage() {
                   <span className={`rank-pos ${i < 3 ? 'top' : ''}`} style={{ width: 28 }}>{i + 1}</span>
                   <AvatarStack players={[a, b]} size={34} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, lineHeight: 1.25, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       <Link href={`/players/${pair.player1Id}`} style={{ cursor: 'pointer' }}>{a ? a.nickname || a.name : '?'}</Link>
                       <span className="muted"> & </span>
                       <Link href={`/players/${pair.player2Id}`} style={{ cursor: 'pointer' }}>{b ? b.nickname || b.name : '?'}</Link>
@@ -58,11 +58,13 @@ export default async function PairsRankingPage() {
                       </span>
                     </div>
                   </div>
-                  <span className={`synergy ${pos ? 'pos' : 'neg'}`} title="Sinergia">
-                    {pos ? <Zap size={13} strokeWidth={2.4} /> : <ZapOff size={13} strokeWidth={2.4} />}
-                    {pos ? '+' : ''}{synergyPct}%
-                  </span>
-                  <span className="elo-num num" style={{ width: 54, textAlign: 'right' }}>{Math.round(pair.pairElo)}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+                    <span className="elo-num num">{Math.round(pair.pairElo)}</span>
+                    <span className={`synergy ${pos ? 'pos' : 'neg'}`} title="Sinergia">
+                      {pos ? <Zap size={13} strokeWidth={2.4} /> : <ZapOff size={13} strokeWidth={2.4} />}
+                      {pos ? '+' : ''}{synergyPct}%
+                    </span>
+                  </div>
                 </div>
               );
             })}

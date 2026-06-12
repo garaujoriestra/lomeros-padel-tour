@@ -41,7 +41,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
   }
 
   return (
-    <header className="topbar" aria-label="Barra superior">
+    <header className={`topbar ${session ? 'with-session' : ''}`} aria-label="Barra superior">
       <div className="topbar-inner">
         <Link href="/" className="brand" aria-label="Inicio">
           <span className="brand-mark">LPT</span>

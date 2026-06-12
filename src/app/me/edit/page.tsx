@@ -12,7 +12,7 @@ export default async function MeEditPage() {
   const { name, nickname, avatarUrl, isLeftHanded } = session.player;
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Mi perfil</h1>
+      <h1 className="sec-title">Mi perfil</h1>
       <MeProfileForm initial={{ name, nickname, avatarUrl, isLeftHanded }} />
     </div>
   );

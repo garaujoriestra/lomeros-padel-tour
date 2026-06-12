@@ -31,7 +31,11 @@ export function EloChart({ data, milestones = [], height = 200 }: { data: number
   const Y = (v: number) => pad.t + (1 - (v - min) / (max - min)) * (height - pad.t - pad.b);
   const line = data.map((v, i) => `${X(i)},${Y(v)}`).join(' ');
   const area = `${pad.l},${Y(data[0])} ${line} ${X(data.length - 1)},${height - pad.b} ${pad.l},${height - pad.b}`;
-  const gridVals = [min + 10, 1500, max - 10].filter((v, i, a) => a.indexOf(v) === i);
+  // Descarta líneas de grid cuya etiqueta quedaría pegada a otra (p. ej. 1498 vs 1500).
+  const gridVals = [1500, max - 10, min + 10].reduce<number[]>((acc, v) => {
+    if (acc.every((u) => Math.abs(Y(u) - Y(v)) > 14)) acc.push(v);
+    return acc;
+  }, []);
   const pathLen = 1600;
   const hoverMilestone = hover != null ? milestones.find((m) => m.index === hover) : undefined;
 

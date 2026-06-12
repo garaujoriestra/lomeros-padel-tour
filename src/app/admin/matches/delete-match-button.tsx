@@ -34,10 +34,10 @@ export function DeleteMatchButton({ id }: { id: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15">
-          🗑️
-        </Button>
+      <DialogTrigger
+        render={<Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15" aria-label="Eliminar partido" />}
+      >
+        🗑️
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

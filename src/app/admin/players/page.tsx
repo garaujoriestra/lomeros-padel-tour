@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -76,9 +77,9 @@ export default async function PlayersAdminPage() {
                     <TableCell className="text-center text-sm text-loss font-medium hidden sm:table-cell">{player.losses}</TableCell>
                     <TableCell className="text-center text-sm hidden sm:table-cell">{winRate}%</TableCell>
                     <TableCell>
-                      <div className="flex gap-2 justify-end">
-                        <Link href={`/admin/players/${player.id}/edit`}>
-                          <Button variant="ghost" size="sm">Editar</Button>
+                      <div className="flex gap-1 justify-end">
+                        <Link href={`/admin/players/${player.id}/edit`} aria-label={`Editar a ${player.name}`}>
+                          <Button variant="ghost" size="sm"><Pencil size={16} /></Button>
                         </Link>
                         <DeletePlayerButton id={player.id} name={player.name} />
                       </div>

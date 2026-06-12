@@ -176,8 +176,8 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
                   <span className="elo-num num" style={{ color: winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>{winRate}%</span>
                 </div>
                 <div className="small muted" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <span>{player.wins} victorias</span>
-                  <span>{player.losses} derrotas</span>
+                  <span>{player.wins} victoria{player.wins !== 1 ? 's' : ''}</span>
+                  <span>{player.losses} derrota{player.losses !== 1 ? 's' : ''}</span>
                 </div>
               </div>
             </div>
