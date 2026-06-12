@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       date,
+      time,
       location,
       team1Player1Id,
       team1Player2Id,
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
       .insert(matches)
       .values({
         date,
+        time: typeof time === 'string' && /^\d{2}:\d{2}$/.test(time) ? time : null,
         location: location?.trim() || null,
         team1Player1Id,
         team1Player2Id,

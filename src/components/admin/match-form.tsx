@@ -25,6 +25,7 @@ export function MatchForm({ players }: MatchFormProps) {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('completed');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
 
   const [team1, setTeam1] = useState<[string, string]>(['', '']);
@@ -96,6 +97,7 @@ export function MatchForm({ players }: MatchFormProps) {
 
     const payload = {
       date,
+      time: time || null,
       location: location.trim() || null,
       team1Player1Id: team1[0],
       team1Player2Id: team1[1],
@@ -230,6 +232,11 @@ export function MatchForm({ players }: MatchFormProps) {
             <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="time">Hora</Label>
+            <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <p className="muted text-xs mt-1">Las apuestas cierran a esta hora</p>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="location">Pista / Club</Label>
             <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ej: Padel Indoor" />
           </div>
