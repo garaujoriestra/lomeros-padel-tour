@@ -34,8 +34,8 @@ export function BroadcastForm() {
   }
 
   return (
-    <form onSubmit={send} className="space-y-3 rounded-xl border border-line bg-card p-4">
-      <h2 className="font-semibold text-foreground">📢 Enviar aviso a todos</h2>
+    <form onSubmit={send} className="lpt-card card-pad space-y-3">
+      <h2 className="kicker">Enviar aviso a todos</h2>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -53,11 +53,7 @@ export function BroadcastForm() {
         rows={3}
         required
       />
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-      >
+      <button type="submit" disabled={busy} className="lpt-btn primary disabled:opacity-50">
         {busy ? 'Enviando…' : 'Enviar'}
       </button>
     </form>

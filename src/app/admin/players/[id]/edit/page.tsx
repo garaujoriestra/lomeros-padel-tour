@@ -16,8 +16,8 @@ export default async function EditPlayerPage({ params }: { params: Promise<{ id:
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Editar jugador</h1>
-        <p className="text-ink-3 text-sm">{player.name}</p>
+        <h1 className="sec-title">Editar jugador</h1>
+        <p className="muted text-sm mt-1.5">{player.name}</p>
       </div>
       <PlayerForm initialData={{ ...player, email: linkedUser?.email ?? '' }} />
     </div>

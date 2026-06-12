@@ -10,8 +10,8 @@ export default async function NewMatchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Registrar partido</h1>
-        <p className="text-ink-3 text-sm">Selecciona los jugadores, asigna equipos e introduce el resultado set a set</p>
+        <h1 className="sec-title">Registrar partido</h1>
+        <p className="muted text-sm mt-1.5">Selecciona los jugadores, asigna equipos e introduce el resultado set a set</p>
       </div>
       {allPlayers.length < 4 ? (
         <div className="text-center py-12 text-ink-3">

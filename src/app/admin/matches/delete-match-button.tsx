@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,7 +38,7 @@ export function DeleteMatchButton({ id }: { id: string }) {
       <DialogTrigger
         render={<Button variant="ghost" size="sm" className="text-loss hover:text-loss hover:bg-loss/15" aria-label="Eliminar partido" />}
       >
-        🗑️
+        <Trash2 size={16} />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

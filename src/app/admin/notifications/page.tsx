@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { db } from '@/lib/db';
 import { users, players, pushSubscriptions } from '@/lib/db/schema';
+import { Bell, BellOff } from 'lucide-react';
 import { BroadcastForm } from '@/components/admin/broadcast-form';
 
 export const dynamic = 'force-dynamic';
@@ -22,29 +23,29 @@ export default async function AdminNotificationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-foreground">Notificaciones</h1>
+    <div className="max-w-2xl space-y-6">
+      <h1 className="sec-title">Notificaciones</h1>
 
       <BroadcastForm />
 
-      <div className="rounded-xl border border-line bg-card p-4">
-        <h2 className="mb-3 font-semibold text-foreground">Estado por usuario</h2>
+      <div className="lpt-card card-pad">
+        <h2 className="kicker mb-3">Estado por usuario</h2>
         <ul className="divide-y divide-line">
           {allUsers.map((u) => {
             const count = subCount.get(u.id) ?? 0;
             const name = u.playerId ? playerName.get(u.playerId) : null;
             return (
-              <li key={u.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-ink-2">
-                  {name ?? u.email}
-                  {name && <span className="ml-2 text-ink-3">{u.email}</span>}
+              <li key={u.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <span className="min-w-0">
+                  <span className="block font-medium text-ink-2 truncate">{name ?? u.email}</span>
+                  {name && <span className="block text-xs text-ink-3 truncate">{u.email}</span>}
                 </span>
                 {count > 0 ? (
-                  <span className="font-medium text-win">
-                    🔔 Activadas{count > 1 ? ` · ${count} disp.` : ''}
+                  <span className="lpt-badge win shrink-0">
+                    <Bell size={11} /> Activadas{count > 1 ? ` · ${count}` : ''}
                   </span>
                 ) : (
-                  <span className="text-ink-3">🔕 Desactivadas</span>
+                  <span className="lpt-badge shrink-0"><BellOff size={11} /> No</span>
                 )}
               </li>
             );

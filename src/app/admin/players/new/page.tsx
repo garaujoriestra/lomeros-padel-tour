@@ -4,8 +4,8 @@ export default function NewPlayerPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Nuevo jugador</h1>
-        <p className="text-ink-3 text-sm">Añade un nuevo jugador al grupo</p>
+        <h1 className="sec-title">Nuevo jugador</h1>
+        <p className="muted text-sm mt-1.5">Añade un nuevo jugador al grupo</p>
       </div>
       <PlayerForm />
     </div>

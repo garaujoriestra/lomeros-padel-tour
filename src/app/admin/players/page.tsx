@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
-import { Pencil } from 'lucide-react';
+import { Pencil, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -22,13 +22,13 @@ export default async function PlayersAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Jugadores</h1>
-          <p className="text-ink-3 text-sm">{allPlayers.length} jugador{allPlayers.length !== 1 ? 'es' : ''} registrado{allPlayers.length !== 1 ? 's' : ''}</p>
+          <h1 className="sec-title">Jugadores</h1>
+          <p className="muted text-sm mt-1.5">{allPlayers.length} jugador{allPlayers.length !== 1 ? 'es' : ''} registrado{allPlayers.length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/admin/players/new">
-          <Button>+ Nuevo jugador</Button>
+        <Link href="/admin/players/new" className="lpt-btn primary shrink-0" style={{ minHeight: 38, padding: '7px 13px', fontSize: 12.5 }}>
+          <UserPlus size={15} /> Nuevo
         </Link>
       </div>
 

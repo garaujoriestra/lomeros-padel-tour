@@ -2,11 +2,13 @@ import { db } from '@/lib/db';
 import { matches, matchSets, players } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Plus, RectangleVertical, ClipboardPen } from 'lucide-react';
+import { ScoreGrid, StatusPill, formatMatchDate } from '@/components/lpt/ui';
 import { DeleteMatchButton } from './delete-match-button';
 
 export const dynamic = 'force-dynamic';
+
+const smallBtn = { minHeight: 38, padding: '7px 13px', fontSize: 12.5 } as const;
 
 export default async function MatchesAdminPage() {
   const allMatches = await db
@@ -28,66 +30,58 @@ export default async function MatchesAdminPage() {
   const scheduled = allMatches.filter((m) => m.status === 'scheduled');
   const completed = allMatches.filter((m) => m.status === 'completed' || m.status === 'injury_aborted');
 
+  const meta = (match: (typeof allMatches)[number]) => (
+    <div className="flex items-center gap-3 flex-wrap small muted" style={{ fontWeight: 600 }}>
+      <span className="inline-flex items-center gap-1.5"><Calendar size={12} /> {formatMatchDate(match.date)}</span>
+      {match.location && <span className="inline-flex items-center gap-1.5"><MapPin size={12} /> {match.location}</span>}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Partidos</h1>
-          <p className="text-ink-3 text-sm">
-            {scheduled.length > 0 && <span className="text-acc-text font-medium">{scheduled.length} pendiente{scheduled.length !== 1 ? 's' : ''} · </span>}
+          <h1 className="sec-title">Partidos</h1>
+          <p className="muted text-sm mt-1.5">
+            {scheduled.length > 0 && <span style={{ color: 'var(--acc-text)', fontWeight: 600 }}>{scheduled.length} pendiente{scheduled.length !== 1 ? 's' : ''} · </span>}
             {completed.length} completado{completed.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link href="/admin/matches/new">
-          <Button>+ Partido</Button>
+        <Link href="/admin/matches/new" className="lpt-btn primary shrink-0" style={smallBtn}>
+          <Plus size={15} /> Partido
         </Link>
       </div>
 
       {allMatches.length === 0 ? (
-        <div className="text-center py-12 text-ink-3">
+        <div className="text-center py-12 muted">
           <p className="text-4xl mb-2">🎾</p>
           <p>No hay partidos todavía.</p>
-          <Link href="/admin/matches/new">
-            <Button className="mt-4">Registrar el primero</Button>
-          </Link>
+          <Link href="/admin/matches/new" className="lpt-btn primary mt-4 inline-flex">Registrar el primero</Link>
         </div>
       ) : (
-        <div className="space-y-6 overflow-x-auto">
-          {/* Scheduled */}
+        <div className="space-y-6">
+          {/* Programados */}
           {scheduled.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs font-black text-ink-3 uppercase tracking-widest">📅 Próximos partidos</p>
+              <p className="kicker">Próximos partidos</p>
               {scheduled.map((match) => {
-                const t1p1 = playerMap[match.team1Player1Id];
-                const t1p2 = playerMap[match.team1Player2Id];
-                const t2p1 = playerMap[match.team2Player1Id];
-                const t2p2 = playerMap[match.team2Player2Id];
+                const t1 = [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
+                const t2 = [playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]];
                 return (
-                  <div key={match.id} className="bg-acc/10 border border-acc/30 rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-acc-text border-acc/30 bg-card text-xs">📅 Programado</Badge>
-                          <span className="text-xs text-ink-3">{match.date}</span>
-                          {match.location && <span className="text-xs text-ink-3">· {match.location}</span>}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm">
-                          <span className="text-acc-text font-semibold">🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
-                          <span className="text-ink-3 font-black">vs</span>
-                          <span className="text-loss font-semibold">🔴 {t2p1?.name ?? '?'} / {t2p2?.name ?? '?'}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Link href={`/admin/matches/${match.id}/result`}>
-                          <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs">
-                            + Resultado
-                          </Button>
-                        </Link>
-                        <Link href={`/admin/matches/${match.id}/sides`}>
-                          <Button variant="outline" className="min-h-[40px] px-3 text-xs">🎾 Lados</Button>
-                        </Link>
-                        <DeleteMatchButton id={match.id} />
-                      </div>
+                  <div key={match.id} className="lpt-card card-pad" style={{ borderColor: 'color-mix(in oklab, var(--acc) 35%, var(--line))' }}>
+                    <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                      {meta(match)}
+                      <StatusPill status="scheduled" />
+                    </div>
+                    <ScoreGrid team1={t1} team2={t2} sets={[]} compact />
+                    <div className="flex items-center justify-end gap-2 flex-wrap mt-3 pt-3" style={{ borderTop: '1px solid var(--line)' }}>
+                      <Link href={`/admin/matches/${match.id}/result`} className="lpt-btn primary" style={smallBtn}>
+                        <ClipboardPen size={14} /> Resultado
+                      </Link>
+                      <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
+                        <RectangleVertical size={14} /> Lados
+                      </Link>
+                      <DeleteMatchButton id={match.id} />
                     </div>
                   </div>
                 );
@@ -95,67 +89,35 @@ export default async function MatchesAdminPage() {
             </div>
           )}
 
-          {/* Completed */}
+          {/* Completados */}
           {completed.length > 0 && (
             <div className="space-y-3">
-              {scheduled.length > 0 && (
-                <p className="text-xs font-black text-ink-3 uppercase tracking-widest">✅ Partidos completados</p>
-              )}
+              {scheduled.length > 0 && <p className="kicker">Partidos completados</p>}
               {completed.map((match) => {
-                const sets = setsMap[match.id] || [];
-                const t1p1 = playerMap[match.team1Player1Id];
-                const t1p2 = playerMap[match.team1Player2Id];
-                const t2p1 = playerMap[match.team2Player1Id];
-                const t2p2 = playerMap[match.team2Player2Id];
+                const sets = (setsMap[match.id] || []).map((s) => ({ team1Games: s.team1Games, team2Games: s.team2Games }));
+                const t1 = [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
+                const t2 = [playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]];
                 const isInjury = match.status === 'injury_aborted';
-                const injured = match.injuredPlayerId ? playerMap[match.injuredPlayerId] : null;
-
                 return (
-                  <div key={match.id} className={`border rounded-lg p-4 ${isInjury ? 'bg-loss/10 border-loss/30' : 'bg-card'}`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs text-ink-3">{match.date}</span>
-                          {match.location && (
-                            <span className="text-xs text-ink-3">· {match.location}</span>
-                          )}
-                          {isInjury && (
-                            <Badge variant="outline" className="text-loss border-loss/30 bg-card text-xs">
-                              🤕 Lesión {injured ? `· ${injured.name}` : ''}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className={`flex-1 ${!isInjury && match.winnerTeam === 1 ? 'font-bold text-win' : 'text-ink-2'}`}>
-                            <span>🔵 {t1p1?.name ?? '?'} / {t1p2?.name ?? '?'}</span>
-                            {!isInjury && match.winnerTeam === 1 && <Badge className="ml-2 text-xs" variant="default">Ganador</Badge>}
-                          </div>
-                          <div className="flex gap-1 items-center">
-                            {isInjury ? (
-                              <span className="text-xs font-bold text-loss">No terminado</span>
-                            ) : (
-                              sets.map((set) => (
-                                <div key={set.setNumber} className="text-center">
-                                  <span className={`font-mono text-sm ${set.team1Games > set.team2Games ? 'font-bold' : ''}`}>{set.team1Games}</span>
-                                  <span className="text-ink-3 mx-0.5">-</span>
-                                  <span className={`font-mono text-sm ${set.team2Games > set.team1Games ? 'font-bold' : ''}`}>{set.team2Games}</span>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                          <div className={`flex-1 text-right ${!isInjury && match.winnerTeam === 2 ? 'font-bold text-win' : 'text-ink-2'}`}>
-                            {!isInjury && match.winnerTeam === 2 && <Badge className="mr-2 text-xs" variant="default">Ganador</Badge>}
-                            <span>{t2p1?.name ?? '?'} / {t2p2?.name ?? '?'} 🔴</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Link href={`/admin/matches/${match.id}/sides`}>
-                          <Button variant="outline" className="min-h-[40px] px-3 text-xs">🎾 Lados</Button>
+                  <div key={match.id} className="lpt-card card-pad" style={isInjury ? { borderColor: 'color-mix(in oklab, var(--loss) 35%, var(--line))' } : undefined}>
+                    <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                      {meta(match)}
+                      <div className="flex items-center gap-2">
+                        {isInjury && <StatusPill status="injury_aborted" />}
+                        <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
+                          <RectangleVertical size={14} /> Lados
                         </Link>
                         <DeleteMatchButton id={match.id} />
                       </div>
                     </div>
+                    <ScoreGrid
+                      team1={t1}
+                      team2={t2}
+                      sets={sets}
+                      winnerTeam={isInjury ? null : match.winnerTeam}
+                      injuredPlayerId={match.injuredPlayerId}
+                      compact
+                    />
                   </div>
                 );
               })}

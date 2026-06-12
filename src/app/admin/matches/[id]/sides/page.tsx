@@ -22,8 +22,8 @@ export default async function MatchSidesPage({ params }: { params: Promise<{ id:
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Editar lados de pista</h1>
-        <p className="text-ink-3 text-sm">{match.date}{match.location ? ` · ${match.location}` : ''}</p>
+        <h1 className="sec-title">Lados de pista</h1>
+        <p className="muted text-sm mt-1.5">{match.date}{match.location ? ` · ${match.location}` : ''}</p>
       </div>
       <MatchSidesForm
         matchId={match.id}
