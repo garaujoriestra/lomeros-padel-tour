@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { matches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/guard';
+import { refundOpenBets } from '@/lib/betting/settle';
+import { notifyBetSettlements } from '@/lib/push/bet-events';
 
 // POST /api/matches/[id]/abandon
 // Marks a scheduled match as not finished due to injury. The match keeps its
@@ -48,6 +50,10 @@ export async function POST(
       .set({ status: 'injury_aborted', injuredPlayerId, winnerTeam: null })
       .where(eq(matches.id, id))
       .returning();
+
+    // «La Timba»: partido anulado → devolución íntegra
+    const refunded = await refundOpenBets(id);
+    await notifyBetSettlements(id, refunded);
 
     return NextResponse.json(updated);
   } catch (error) {

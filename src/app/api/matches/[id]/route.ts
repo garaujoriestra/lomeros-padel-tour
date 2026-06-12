@@ -6,6 +6,8 @@ import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
 import { notifyMatchResult } from '@/lib/push/match-events';
+import { settleMatchBets, refundOpenBets, reverseSettlement } from '@/lib/betting/settle';
+import { notifyBetSettlements } from '@/lib/push/bet-events';
 
 // GET /api/matches/[id]
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +34,17 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    if (match) {
+      if (match.status === 'completed') {
+        // Deshacer la liquidación: los ganadores devuelven el premio,
+        // los perdedores recuperan lo apostado.
+        await reverseSettlement(id);
+      }
+      // Devolver las apuestas que queden abiertas y avisar
+      const refunded = await refundOpenBets(id);
+      await notifyBetSettlements(id, refunded);
+    }
     // Los sets se borran en cascada (ON DELETE CASCADE)
     await db.delete(matches).where(eq(matches.id, id));
     return NextResponse.json({ success: true });
@@ -91,6 +104,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // ¿Cambió la composición de los equipos respecto a lo programado?
+    const sameTeam = (a: [string, string], b: [string, string]) =>
+      [...a].sort().join() === [...b].sort().join();
+    const pairingChanged = pairingProvided && !(
+      sameTeam([match.team1Player1Id, match.team1Player2Id], [team1Player1Id, team1Player2Id]) &&
+      sameTeam([match.team2Player1Id, match.team2Player2Id], [team2Player1Id, team2Player2Id])
+    );
+
     // Calculate winner
     let team1SetsWon = 0;
     let team2SetsWon = 0;
@@ -135,6 +156,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Push best-effort (no debe romper el guardado del resultado)
     await notifyMatchResult({ ...updated, winnerTeam }, ratingResult);
+
+    // «La Timba»: liquidar apuestas (o devolverlas si el cartel cambió)
+    const betOutcomes = pairingChanged
+      ? await refundOpenBets(id)
+      : await settleMatchBets(id, winnerTeam, sets);
+    await notifyBetSettlements(id, betOutcomes);
 
     return NextResponse.json(updated);
   } catch (error) {
