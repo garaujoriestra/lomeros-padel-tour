@@ -9,8 +9,10 @@ export type LedgerReason =
   | 'recharge' | 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment';
 
 // Aplica un movimiento. El UPDATE condicional evita que dos peticiones
-// concurrentes dejen el saldo en negativo (no hay transacciones multi-statement
-// en este codebase; la condición en el WHERE hace de guarda atómica).
+// concurrentes dejen el saldo en negativo (la condición en el WHERE hace de
+// guarda atómica). El UPDATE y el INSERT en tokenLedger van en una transacción
+// para que nunca quede un movimiento sin asiento contable: si el proceso muere
+// entre ambas sentencias, el rollback deshace el cambio de saldo.
 // `allowNegative` solo lo usa la reversión de liquidaciones.
 export async function applyTokenMovement(
   playerId: string,
@@ -23,20 +25,22 @@ export async function applyTokenMovement(
     ? and(eq(players.id, playerId), sql`${players.tokenBalance} + ${amount} >= 0`)
     : eq(players.id, playerId);
 
-  const updated = await db
-    .update(players)
-    .set({ tokenBalance: sql`${players.tokenBalance} + ${amount}` })
-    .where(guard)
-    .returning({ balance: players.tokenBalance });
+  return db.transaction(async (tx) => {
+    const updated = await tx
+      .update(players)
+      .set({ tokenBalance: sql`${players.tokenBalance} + ${amount}` })
+      .where(guard)
+      .returning({ balance: players.tokenBalance });
 
-  if (!updated[0]) throw new Error('SALDO_INSUFICIENTE');
+    if (!updated[0]) throw new Error('SALDO_INSUFICIENTE');
 
-  await db.insert(tokenLedger).values({
-    playerId,
-    amount,
-    reason,
-    refId: refId ?? null,
-    balanceAfter: updated[0].balance,
+    await tx.insert(tokenLedger).values({
+      playerId,
+      amount,
+      reason,
+      refId: refId ?? null,
+      balanceAfter: updated[0].balance,
+    });
+    return updated[0].balance;
   });
-  return updated[0].balance;
 }
