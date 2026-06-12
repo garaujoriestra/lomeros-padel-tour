@@ -126,6 +126,10 @@ export default async function RankingsPage() {
           </div>
         </section>
       )}
+
+      <section className="section">
+        <Link href="/rankings/tokens" className="sec-link">🪙 Clasificación de La Timba →</Link>
+      </section>
     </>
   );
 }

@@ -10,8 +10,8 @@ export const navLinks: NavLink[] = [
   { href: '/', label: 'Inicio', icon: House },
   { href: '/rankings', label: 'Ranking', icon: Trophy },
   { href: '/rankings/pairs', label: 'Parejas', icon: Users },
-  { href: '/rankings/tokens', label: '🪙 La Timba', icon: Coins },
   { href: '/matches', label: 'Partidos', icon: Swords },
+  { href: '/rankings/tokens', label: 'La Timba', icon: Coins },
   { href: '/info', label: 'Info', icon: Info },
 ];
 
