@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Swords, Bell, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Swords, Bell, Gift, Ticket, Skull, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
@@ -10,6 +10,9 @@ const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin/players', label: 'Jugadores', icon: Users },
   { href: '/admin/matches', label: 'Partidos', icon: Swords },
   { href: '/admin/notifications', label: 'Avisos', icon: Bell },
+  { href: '/admin/rewards', label: 'Premios', icon: Gift },
+  { href: '/admin/redemptions', label: 'Canjes', icon: Ticket },
+  { href: '/admin/penalties', label: 'Sanciones', icon: Skull },
 ];
 
 function isActive(href: string, pathname: string) {
