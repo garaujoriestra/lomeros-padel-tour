@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { bets, players, penalties } from '@/lib/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { matchSetsScore, settleBet, isBankrupt } from './settle-logic';
-import { applyTokenMovement } from './bank';
+import { applyTokenMovement, hasLedgerEntry } from './bank';
 import { BETTING, type SetsScore } from './config';
 import type { SettledBetForPush } from '@/lib/push/bet-events';
 
@@ -35,12 +35,15 @@ export async function settleMatchBets(
       },
       winnerTeam, score,
     );
+    // Dinero antes de marcar: si el proceso muere a medias, la apuesta sigue
+    // 'open' y la reliquidación retoma donde se quedó. El asiento (reason,
+    // refId) hace de guarda para no pagar dos veces.
+    if (o.status === 'won' && !(await hasLedgerEntry('bet_won', bet.id))) {
+      await applyTokenMovement(bet.playerId, o.payout, 'bet_won', bet.id);
+    }
     await db.update(bets)
       .set({ status: o.status, payout: o.payout, settledAt: now() })
       .where(eq(bets.id, bet.id));
-    if (o.status === 'won') {
-      await applyTokenMovement(bet.playerId, o.payout, 'bet_won', bet.id);
-    }
     results.push({ playerId: bet.playerId, status: o.status, amount: bet.amount, payout: o.payout });
   }
 
@@ -54,10 +57,13 @@ export async function refundOpenBets(matchId: string): Promise<SettledBetForPush
     .where(and(eq(bets.matchId, matchId), eq(bets.status, 'open')));
   const results: SettledBetForPush[] = [];
   for (const bet of open) {
+    // Dinero antes de marcar (misma estrategia que settleMatchBets).
+    if (!(await hasLedgerEntry('bet_refunded', bet.id))) {
+      await applyTokenMovement(bet.playerId, bet.amount, 'bet_refunded', bet.id);
+    }
     await db.update(bets)
       .set({ status: 'refunded', settledAt: now() })
       .where(eq(bets.id, bet.id));
-    await applyTokenMovement(bet.playerId, bet.amount, 'bet_refunded', bet.id);
     results.push({ playerId: bet.playerId, status: 'refunded', amount: bet.amount, payout: 0 });
   }
   return results;
@@ -71,10 +77,15 @@ export async function reverseSettlement(matchId: string): Promise<void> {
   const settled = await db.select().from(bets)
     .where(and(eq(bets.matchId, matchId), inArray(bets.status, ['won', 'lost'])));
   for (const bet of settled) {
-    if (bet.status === 'won') {
-      await applyTokenMovement(bet.playerId, -bet.payout, 'settlement_reversal', bet.id, { allowNegative: true });
-    } else {
-      await applyTokenMovement(bet.playerId, bet.amount, 'settlement_reversal', bet.id);
+    // Dinero antes de resetear, con guarda de idempotencia. Nota: la guarda
+    // asume una única reversión por apuesta (hoy solo se revierte justo antes
+    // de borrar el partido, así que se cumple).
+    if (!(await hasLedgerEntry('settlement_reversal', bet.id))) {
+      if (bet.status === 'won') {
+        await applyTokenMovement(bet.playerId, -bet.payout, 'settlement_reversal', bet.id, { allowNegative: true });
+      } else {
+        await applyTokenMovement(bet.playerId, bet.amount, 'settlement_reversal', bet.id);
+      }
     }
     await db.update(bets)
       .set({ status: 'open', payout: 0, settledAt: null })

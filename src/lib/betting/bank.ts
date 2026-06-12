@@ -44,3 +44,14 @@ export async function applyTokenMovement(
     return updated[0].balance;
   });
 }
+
+// ¿Existe ya un asiento (reason, refId)? Guarda de idempotencia para poder
+// reanudar liquidaciones interrumpidas sin duplicar movimientos.
+export async function hasLedgerEntry(reason: LedgerReason, refId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: tokenLedger.id })
+    .from(tokenLedger)
+    .where(and(eq(tokenLedger.reason, reason), eq(tokenLedger.refId, refId)))
+    .limit(1);
+  return rows.length > 0;
+}
