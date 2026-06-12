@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
   if (!player) {
     return NextResponse.json({ error: 'Tu cuenta no está vinculada a un jugador' }, { status: 403 });
   }
+  let chargedAmount: number | null = null;
   try {
     const body = await request.json();
     const { matchId, market, predictedTeam, predictedScore, amount } = body;
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'No tienes saldo suficiente' }, { status: 400 });
     }
+    chargedAmount = amount;
 
     const [bet] = await db.insert(bets).values({
       matchId,
@@ -136,6 +138,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ bet, balance: newBalance }, { status: 201 });
   } catch (error) {
+    // Choque con el UNIQUE de bets = POST duplicado simultáneo. El cobro ya
+    // está asentado, así que se reembolsa antes de responder.
+    const msg = error instanceof Error ? error.message : String(error);
+    if (chargedAmount !== null && msg.includes('UNIQUE')) {
+      await applyTokenMovement(player.id, chargedAmount, 'bet_cancelled');
+      return NextResponse.json({ error: 'Apuesta duplicada; inténtalo de nuevo' }, { status: 409 });
+    }
     console.error(error);
     return NextResponse.json({ error: 'Error al apostar' }, { status: 500 });
   }
@@ -150,8 +159,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const matchId = request.nextUrl.searchParams.get('matchId');
     const market = request.nextUrl.searchParams.get('market');
-    if (!matchId || !market) {
-      return NextResponse.json({ error: 'Faltan matchId y market' }, { status: 400 });
+    if (!matchId || (market !== 'winner' && market !== 'exact_score')) {
+      return NextResponse.json({ error: 'Falta matchId o market válido' }, { status: 400 });
     }
 
     const [match] = await db.select().from(matches).where(eq(matches.id, matchId));
