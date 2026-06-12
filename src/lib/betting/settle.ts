@@ -41,6 +41,7 @@ export async function settleMatchBets(
     if (o.status === 'won' && !(await hasLedgerEntry('bet_won', bet.id))) {
       await applyTokenMovement(bet.playerId, o.payout, 'bet_won', bet.id);
     }
+    // Las perdidas no mueven dinero: marcarlas es seguro sin guarda.
     await db.update(bets)
       .set({ status: o.status, payout: o.payout, settledAt: now() })
       .where(eq(bets.id, bet.id));

@@ -144,7 +144,11 @@ export const tokenLedger = sqliteTable('token_ledger', {
   refId: text('ref_id'), // id de bet/redemption/penalty según reason
   balanceAfter: integer('balance_after').notNull(),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
-});
+}, (t) => ([
+  // Un único asiento por (reason, refId): guarda estructural contra dobles
+  // pagos. Los refId NULL (initial, bet_placed, adjustment) no chocan.
+  unique().on(t.reason, t.refId),
+]));
 
 // ─── REWARDS (catálogo de premios) ───────────────────────────────────────────
 export const rewards = sqliteTable('rewards', {

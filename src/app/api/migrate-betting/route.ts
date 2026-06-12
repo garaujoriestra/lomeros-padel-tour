@@ -42,8 +42,13 @@ export async function POST() {
         reason TEXT NOT NULL,
         ref_id TEXT,
         balance_after INTEGER NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE (reason, ref_id)
       )
+    `);
+    await db.run(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS token_ledger_reason_ref_idx
+      ON token_ledger(reason, ref_id)
     `);
     await db.run(sql`
       CREATE TABLE IF NOT EXISTS rewards (
