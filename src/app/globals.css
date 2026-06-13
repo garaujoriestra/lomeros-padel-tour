@@ -453,38 +453,20 @@
   inset: 0;
   z-index: 90;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
   background: linear-gradient(160deg, #1d2f2c 0%, #0c1715 60%);
   opacity: 0;
   pointer-events: none;
   animation: screenLoaderReveal 0.25s ease 0.1s forwards;
 }
-.screen-loader__logo {
-  font-family: var(--font-barlow), system-ui, sans-serif;
-  font-size: 64px;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: -0.02em;
-  color: #c8f03c;
-  line-height: 1;
-  animation: lpt-splash-pulse 1.4s ease-in-out infinite;
-}
-.screen-loader__ring {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  border: 3px solid rgba(200, 240, 60, 0.2);
-  border-top-color: #c8f03c;
-  animation: lpt-splash-spin 0.8s linear infinite;
+.screen-loader__crest {
+  animation: lpt-splash-pulse 1.6s ease-in-out infinite;
 }
 @keyframes screenLoaderReveal { from { opacity: 0; } to { opacity: 1; } }
-@keyframes lpt-splash-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-@keyframes lpt-splash-spin { to { transform: rotate(360deg); } }
+@keyframes lpt-splash-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .screen-loader__logo, .screen-loader__ring { animation: none; }
+  .screen-loader__crest { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
