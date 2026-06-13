@@ -58,6 +58,23 @@ export function nextPozoRound(current: PozoRound, results: CourtResult[]): PozoR
   return { courts, resting: [...current.resting] };
 }
 
+// Aplica el movimiento y rota los descansos: los que descansaban entran por la pista fondo
+// y los últimos 'resting.length' de la pista fondo pasan a descansar la siguiente ronda.
+export function nextPozoRoundWithRest(current: PozoRound, results: CourtResult[]): PozoRound {
+  const moved = nextPozoRound(current, results);
+  const restCount = current.resting.length;
+  if (restCount === 0 || moved.courts.length === 0) return moved;
+
+  const bottomIdx = moved.courts.length - 1;
+  const bottom = moved.courts[bottomIdx];
+  // Salen a descansar los 'restCount' del final del fondo; entran los que descansaban.
+  const goRest = bottom.slice(bottom.length - restCount);
+  const staying = bottom.slice(0, bottom.length - restCount);
+  moved.courts[bottomIdx] = [...staying, ...current.resting];
+  moved.resting = goRest;
+  return moved;
+}
+
 // Siembra inicial: llena pistas de 4 en orden; sobrantes a resting; no crea pistas vacías.
 export function seedPozoCourts(participantIds: string[], numCourts: number): PozoRound {
   const fillable = Math.min(numCourts, Math.floor(participantIds.length / 4));

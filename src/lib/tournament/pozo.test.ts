@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { seedPozoCourts, courtPairing, nextPozoRound } from './pozo';
+import { seedPozoCourts, courtPairing, nextPozoRound, nextPozoRoundWithRest } from './pozo';
 import type { CourtResult } from './pozo';
 
 describe('seedPozoCourts', () => {
@@ -72,5 +72,38 @@ describe('nextPozoRound (movimiento)', () => {
     const results: CourtResult[] = [{ winners: ['a', 'b'], losers: ['c', 'd'] }];
     const next = nextPozoRound(current, results);
     expect(next.courts[0]).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('nextPozoRoundWithRest (rotación de descansos)', () => {
+  it('mete a los que descansaban por el fondo y manda a descansar a los perdedores del fondo', () => {
+    const current = {
+      courts: [
+        ['a', 'b', 'c', 'd'], // top
+        ['e', 'f', 'g', 'h'], // fondo
+      ],
+      resting: ['x', 'y'],
+    };
+    const results: CourtResult[] = [
+      { winners: ['a', 'b'], losers: ['c', 'd'] },
+      { winners: ['e', 'f'], losers: ['g', 'h'] }, // g,h son perdedores del fondo
+    ];
+    const next = nextPozoRoundWithRest(current, results);
+    // Tras el movimiento puro, el fondo sería [g,h, <stayers fondo>]; aquí los stayers del
+    // fondo (perdedores) son g,h. Entran x,y y descansan g,h.
+    expect(next.resting).toEqual(['g', 'h']);
+    // El fondo ya no contiene a g,h; contiene a x,y en su lugar.
+    expect(next.courts[next.courts.length - 1]).not.toContain('g');
+    expect(next.courts[next.courts.length - 1]).not.toContain('h');
+    expect(next.courts[next.courts.length - 1]).toContain('x');
+    expect(next.courts[next.courts.length - 1]).toContain('y');
+    // Cada pista mantiene 4.
+    next.courts.forEach((c) => expect(c).toHaveLength(4));
+  });
+
+  it('sin descansos, se comporta como nextPozoRound', () => {
+    const current = { courts: [['a', 'b', 'c', 'd']], resting: [] as string[] };
+    const results: CourtResult[] = [{ winners: ['a', 'b'], losers: ['c', 'd'] }];
+    expect(nextPozoRoundWithRest(current, results)).toEqual({ courts: [['a', 'b', 'c', 'd']], resting: [] });
   });
 });
