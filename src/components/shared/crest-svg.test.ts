@@ -3,6 +3,7 @@ import {
   SHIELD_PATH,
   LIME,
   crestInnerMarkup,
+  crestInnerMarkupNoWordmark,
   crestInkMarkup,
   crestSvgMarkup,
   crestDataUri,
@@ -21,6 +22,13 @@ describe('crest-svg', () => {
     expect(inner).toContain(SHIELD_PATH);
     expect(inner).toContain(LIME);
     expect(inner).toContain('LPT');
+  });
+
+  it('crestInnerMarkupNoWordmark incluye el escudo y las palas pero NO el wordmark', () => {
+    const inner = crestInnerMarkupNoWordmark();
+    expect(inner).toContain(SHIELD_PATH);
+    expect(inner).toContain('<ellipse'); // cabeza de la pala
+    expect(inner).not.toContain('LPT');
   });
 
   it('crestSvgMarkup envuelve en <svg> con viewBox y tamaño', () => {

@@ -17,8 +17,9 @@ export const SHIELD_PATH =
   'M64 4 L118 25 V66 C118 104 93 124 64 134 C35 124 10 104 10 66 V25 Z';
 
 // Una pala de pádel como silueta en negativo (oscura) con agujeros en lima.
-function racket(rotateDeg: number): string {
-  return `<g transform="translate(64,52) rotate(${rotateDeg})">
+// Centro (cx,cy) y escala parametrizables para reubicarla según la variante.
+function racket(rotateDeg: number, cx = 64, cy = 52, scale = 1): string {
+  return `<g transform="translate(${cx},${cy}) rotate(${rotateDeg}) scale(${scale})">
     <ellipse cx="0" cy="-13" rx="14" ry="18" fill="${DARK}"/>
     <g fill="${LIME}">
       <circle cx="-5" cy="-19" r="2"/><circle cx="3" cy="-21" r="2"/><circle cx="9" cy="-16" r="2"/>
@@ -29,15 +30,26 @@ function racket(rotateDeg: number): string {
   </g>`;
 }
 
+// Las dos palas cruzadas (sin texto), reubicables.
+export function crestRacketsMarkup(cy = 52, scale = 1): string {
+  return `${racket(38, 64, cy, scale)}${racket(-38, 64, cy, scale)}`;
+}
+
 // "Tinta" del escudo: lo que va en negativo sobre el relleno lima
 // (palas cruzadas + wordmark). Sin el path del escudo.
 export function crestInkMarkup(): string {
-  return `${racket(38)}${racket(-38)}<text x="64" y="120" text-anchor="middle" font-family="Barlow, system-ui, sans-serif" font-size="20" font-weight="800" fill="${DARK}">LPT</text>`;
+  return `${crestRacketsMarkup()}<text x="64" y="120" text-anchor="middle" font-family="Barlow, system-ui, sans-serif" font-size="20" font-weight="800" fill="${DARK}">LPT</text>`;
 }
 
 // Contenido completo del escudo (relleno lima + tinta), sin el wrapper <svg>.
 export function crestInnerMarkup(): string {
   return `<path d="${SHIELD_PATH}" fill="${LIME}"/>${crestInkMarkup()}`;
+}
+
+// Variante sin wordmark: escudo + solo las palas, centradas y algo más grandes
+// (a tamaños pequeños, p. ej. la cabecera, el texto "LPT" no se aprecia).
+export function crestInnerMarkupNoWordmark(): string {
+  return `<path d="${SHIELD_PATH}" fill="${LIME}"/>${crestRacketsMarkup(64, 1.25)}`;
 }
 
 // SVG completo como string a un ancho dado (alto proporcional).

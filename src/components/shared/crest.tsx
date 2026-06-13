@@ -1,19 +1,24 @@
-import { VIEWBOX_W, VIEWBOX_H, crestInnerMarkup } from './crest-svg';
+import { VIEWBOX_W, VIEWBOX_H, crestInnerMarkup, crestInnerMarkupNoWordmark } from './crest-svg';
 
 /**
  * Escudo de marca LPT como componente React (estático, sin animación).
  * Reutiliza el inner markup de crest-svg.ts para no duplicar la geometría.
+ * Con `wordmark={false}` muestra solo el escudo + las palas (sin el texto
+ * "LPT"), pensado para tamaños pequeños donde el texto no se aprecia.
  */
 export default function Crest({
   size = 96,
   className,
   title = 'Lomeros Padel Tour',
+  wordmark = true,
 }: {
   size?: number;
   className?: string;
   title?: string;
+  wordmark?: boolean;
 }) {
   const height = Math.round((size * VIEWBOX_H) / VIEWBOX_W);
+  const inner = wordmark ? crestInnerMarkup() : crestInnerMarkupNoWordmark();
   return (
     <svg
       width={size}
@@ -22,7 +27,7 @@ export default function Crest({
       className={className}
       role="img"
       aria-label={title}
-      dangerouslySetInnerHTML={{ __html: crestInnerMarkup() }}
+      dangerouslySetInnerHTML={{ __html: inner }}
     />
   );
 }

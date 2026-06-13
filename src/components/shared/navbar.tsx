@@ -45,7 +45,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
     <header className={`topbar ${session ? 'with-session' : ''}`} aria-label="Barra superior">
       <div className="topbar-inner">
         <Link href="/" className="brand" aria-label="Inicio">
-          <Crest size={32} className="brand-crest" title="Lomeros Padel Tour" />
+          <Crest size={34} className="brand-crest" title="Lomeros Padel Tour" wordmark={false} />
           <span className="brand-name">Lomeros Padel Tour</span>
         </Link>
 
