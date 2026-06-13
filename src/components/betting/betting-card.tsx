@@ -170,6 +170,32 @@ export function BettingCard(props: BettingCardProps) {
           </div>
         )}
 
+        {props.balance !== null && props.myBets.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="small muted" style={{ fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10.5 }}>Tus apuestas</div>
+            {props.myBets.map((b) => (
+              <div key={b.market} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="small" style={{ fontWeight: 700 }}>
+                  {b.market === 'winner' ? 'Ganador' : 'Marcador'}: {teamLabel(b.predictedTeam)}
+                  {b.market === 'exact_score' ? ` ${b.predictedScore}` : ''} · {b.amount} fichas
+                </span>
+                <button
+                  type="button"
+                  onClick={() => cancelBet(b.market as 'winner' | 'exact_score')}
+                  disabled={loading}
+                  style={{
+                    marginLeft: 'auto', padding: '4px 10px', borderRadius: 8, fontWeight: 700, fontSize: 11.5,
+                    border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--loss)',
+                    cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {props.allBets.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="small muted" style={{ fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10.5 }}>Apuestas de la peña</div>
