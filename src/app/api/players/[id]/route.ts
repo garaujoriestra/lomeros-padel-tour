@@ -37,7 +37,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         nickname: nickname?.trim() || null,
         avatarUrl: avatarUrl?.trim() || null,
         isLeftHanded: !!isLeftHanded,
-        juegaPadel: juegaPadel === false ? false : true,
+        // Solo se toca si viene en el body; una edición parcial no debe
+        // resetear a un apostante (juegaPadel=false) de vuelta a jugador.
+        ...(typeof juegaPadel === 'boolean' ? { juegaPadel } : {}),
       })
       .where(eq(players.id, id))
       .returning();
