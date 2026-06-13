@@ -164,3 +164,53 @@ export function generateBracket(seededPairIds: string[]): BracketMatch[] {
 
   return matches;
 }
+
+export interface ResolvedBracketMatch {
+  matchId: string;
+  round: number;
+  slotA: SlotRef;
+  slotB: SlotRef;
+  winnerPairId?: string;
+}
+
+export function resolveBracket(
+  bracket: BracketMatch[],
+  results: Map<string, 'A' | 'B'>,
+): ResolvedBracketMatch[] {
+  const winnerByMatch = new Map<string, string>();
+
+  const resolveSlot = (slot: SlotRef): SlotRef => {
+    if (slot.type === 'matchWinner') {
+      const w = winnerByMatch.get(slot.matchId);
+      return w ? { type: 'pair', pairId: w } : slot;
+    }
+    return slot;
+  };
+
+  const sorted = [...bracket].sort((a, b) => a.round - b.round);
+  const out: ResolvedBracketMatch[] = [];
+
+  for (const m of sorted) {
+    const slotA = resolveSlot(m.slotA);
+    const slotB = resolveSlot(m.slotB);
+    const aPair = slotA.type === 'pair' ? slotA.pairId : undefined;
+    const bPair = slotB.type === 'pair' ? slotB.pairId : undefined;
+    const aBye = slotA.type === 'bye';
+    const bBye = slotB.type === 'bye';
+
+    let winnerPairId: string | undefined;
+    if (aPair && bBye) winnerPairId = aPair;
+    else if (bPair && aBye) winnerPairId = bPair;
+    else if (aPair && bPair) {
+      const res = results.get(m.matchId);
+      if (res === 'A') winnerPairId = aPair;
+      else if (res === 'B') winnerPairId = bPair;
+    }
+
+    if (winnerPairId) winnerByMatch.set(m.matchId, winnerPairId);
+    out.push({ matchId: m.matchId, round: m.round, slotA, slotB, winnerPairId });
+  }
+
+  return out;
+}
+

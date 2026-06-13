@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { roundRobinSchedule, groupStandings, seedOrder, generateBracket } from './fixed-pairs';
-import type { PairMatchResult, BracketMatch } from './fixed-pairs';
+import { roundRobinSchedule, groupStandings, seedOrder, generateBracket, resolveBracket } from './fixed-pairs';
+import type { PairMatchResult, BracketMatch, ResolvedBracketMatch } from './fixed-pairs';
 
 describe('roundRobinSchedule', () => {
   it('4 parejas: 3 rondas, 6 partidos, todos contra todos', () => {
@@ -90,5 +90,43 @@ describe('generateBracket', () => {
   it('menos de 2 parejas: cuadro vacío', () => {
     expect(generateBracket(['A'])).toEqual([]);
     expect(generateBracket([])).toEqual([]);
+  });
+});
+
+describe('resolveBracket', () => {
+  it('un bye avanza solo; un ganador propaga a la siguiente ronda', () => {
+    const bracket = generateBracket(['A', 'B', 'C']); // A tiene bye en r0m0
+    // B gana a C en r0m1 (B es slotA -> 'A')
+    const results = new Map<string, 'A' | 'B'>([['r0m1', 'A']]);
+    const resolved = resolveBracket(bracket, results);
+    const byId = new Map(resolved.map((m) => [m.matchId, m]));
+
+    // r0m0: A vs bye -> A gana automáticamente
+    expect(byId.get('r0m0')!.winnerPairId).toBe('A');
+    // r0m1: B gana a C
+    expect(byId.get('r0m1')!.winnerPairId).toBe('B');
+    // final r1m0: huecos resueltos a A y B, sin ganador aún
+    expect(byId.get('r1m0')!.slotA).toEqual({ type: 'pair', pairId: 'A' });
+    expect(byId.get('r1m0')!.slotB).toEqual({ type: 'pair', pairId: 'B' });
+    expect(byId.get('r1m0')!.winnerPairId).toBeUndefined();
+  });
+
+  it('al cerrar la final, devuelve el campeón', () => {
+    const bracket = generateBracket(['A', 'B', 'C']);
+    const results = new Map<string, 'A' | 'B'>([
+      ['r0m1', 'A'], // B gana a C
+      ['r1m0', 'B'], // en la final, slotB (B) gana a slotA (A)
+    ]);
+    const resolved = resolveBracket(bracket, results);
+    const final = resolved.find((m) => m.matchId === 'r1m0')!;
+    expect(final.winnerPairId).toBe('B');
+  });
+
+  it('hueco no resuelto se queda como matchWinner', () => {
+    const bracket = generateBracket(['A', 'B', 'C', 'D']);
+    const resolved = resolveBracket(bracket, new Map());
+    const final = resolved.find((m) => m.matchId === 'r1m0')!;
+    expect(final.slotA).toEqual({ type: 'matchWinner', matchId: 'r0m0' });
+    expect(final.winnerPairId).toBeUndefined();
   });
 });
