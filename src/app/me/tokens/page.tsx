@@ -9,12 +9,12 @@ import { RedeemButton } from '@/components/betting/redeem-button';
 export const dynamic = 'force-dynamic';
 
 const REASON_LABEL: Record<string, string> = {
-  initial: 'Bote inicial',
+  buyin: 'Entrada (5 €)',
+  rebuy: 'Recompra (5 €)',
   bet_placed: 'Apuesta',
   bet_cancelled: 'Apuesta cancelada',
   bet_won: 'Apuesta ganada',
   bet_refunded: 'Apuesta devuelta',
-  recharge: 'Recarga (penalización cumplida)',
   redemption: 'Canje de premio',
   redemption_refunded: 'Canje cancelado',
   settlement_reversal: 'Corrección de resultado',
@@ -142,7 +142,7 @@ export default async function TokensPage() {
                     {b.predictedScore ? ` (${b.predictedScore})` : ''} · x{b.odds}
                   </span>
                   <span className="small num" style={{ whiteSpace: 'nowrap', fontWeight: 700, color: 'var(--acc-text)' }}>
-                    {b.amount} tk → {Math.round(b.amount * b.odds)} tk
+                    {b.amount} tk → {b.odds != null ? `${Math.round(b.amount * b.odds)} tk` : '?'}
                   </span>
                 </Link>
               ))}

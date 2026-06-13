@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { players, tokenLedger } from '@/lib/db/schema';
+import { players } from '@/lib/db/schema';
 import { upsertPlayerUser } from '@/lib/auth/users';
 import { requireAdmin } from '@/lib/auth/guard';
-import { BETTING } from '@/lib/betting/config';
 
 // GET /api/players - listar todos los jugadores
 export async function GET() {
@@ -25,7 +24,7 @@ export async function POST(request: NextRequest) {
   if ('response' in auth) return auth.response;
   try {
     const body = await request.json();
-    const { name, nickname, avatarUrl, isLeftHanded, email } = body;
+    const { name, nickname, avatarUrl, isLeftHanded, email, juegaPadel } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -36,16 +35,8 @@ export async function POST(request: NextRequest) {
       nickname: nickname?.trim() || null,
       avatarUrl: avatarUrl?.trim() || null,
       isLeftHanded: !!isLeftHanded,
+      juegaPadel: juegaPadel === false ? false : true,
     }).returning();
-
-    // Saldo inicial de «La Timba» (el default de la columna ya pone 500).
-    // Requiere haber ejecutado POST /api/migrate-betting antes de crear jugadores.
-    await db.insert(tokenLedger).values({
-      playerId: player.id,
-      amount: BETTING.initialBalance,
-      reason: 'initial',
-      balanceAfter: player.tokenBalance,
-    });
 
     const result = await upsertPlayerUser(player.id, email);
     if (!result.ok) {
