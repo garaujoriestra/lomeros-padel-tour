@@ -22,7 +22,11 @@ function round1(n: number): number {
 }
 
 export function winnerOdds(team: TeamRatingInput, rival: TeamRatingInput): number {
-  const p = expectedScore(teamRating(team), teamRating(rival));
+  // Amplificamos la diferencia de Elo por oddsSensitivity para que, en grupos
+  // con Elos parecidos, apostar por la pareja peor pague de forma perceptible.
+  // expectedScore(diff, 0) = 1 / (1 + 10^(-diff/400)).
+  const diff = (teamRating(team) - teamRating(rival)) * BETTING.oddsSensitivity;
+  const p = expectedScore(diff, 0);
   const clamped = Math.min(BETTING.oddsMax, Math.max(BETTING.oddsMin, 1 / p));
   return round1(clamped);
 }

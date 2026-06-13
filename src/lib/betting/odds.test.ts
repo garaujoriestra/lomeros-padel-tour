@@ -31,6 +31,14 @@ describe('winnerOdds', () => {
     const o = winnerOdds(slight, even);
     expect(o * 10).toBe(Math.round(o * 10));
   });
+  it('amplifica diferencias pequeñas de Elo (sensibilidad)', () => {
+    // ~40 pts de media de diferencia entre parejas (típico del grupo):
+    // con sensibilidad debe notarse claramente, no quedarse pegado a x2.0.
+    const fav = { player1Elo: 1500, player2Elo: 1500, pairElo: null };
+    const dog = { player1Elo: 1460, player2Elo: 1460, pairElo: null };
+    expect(winnerOdds(fav, dog)).toBeLessThanOrEqual(1.8);
+    expect(winnerOdds(dog, fav)).toBeGreaterThanOrEqual(2.3);
+  });
 });
 
 describe('matchOddsFromRatings', () => {
