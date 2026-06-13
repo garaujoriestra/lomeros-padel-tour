@@ -443,11 +443,11 @@
 
 /* ════════════ Loader de marca entre pantallas ════════════ */
 
-/* Mismo aspecto que el splash de arranque (logo LPT + ring sobre el verde
-   oscuro), pero como fallback de cada loading.tsx durante la navegación. Cubre
-   toda la pantalla (fixed) igual que el splash. Arranca invisible y solo se
-   revela tras ~100 ms, así las navegaciones instantáneas no lo hacen parpadear;
-   en cualquier carga real (la DB tarda) aparece el loader. */
+/* El escudo de marca LPT (ya dibujado) con un pulso suave, como fallback de
+   cada loading.tsx durante la navegación. Cubre toda la pantalla (fixed) igual
+   que el splash. Arranca invisible y solo se revela tras ~100 ms, así las
+   navegaciones instantáneas no lo hacen parpadear; en cualquier carga real (la
+   DB tarda) aparece el loader. No re-traza el escudo (eso es solo del splash). */
 .screen-loader {
   position: fixed;
   inset: 0;
