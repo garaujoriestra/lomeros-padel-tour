@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { crestDataUri } from '@/components/shared/crest-svg';
 
 export const size = { width: 180, height: 180 };
 export const contentType = 'image/png';
@@ -14,13 +15,9 @@ export default function AppleIcon() {
           alignItems: 'center',
           justifyContent: 'center',
           background: 'linear-gradient(160deg, #1d2f2c 0%, #0c1715 60%)',
-          fontSize: 62,
-          color: '#c8f03c',
-          fontWeight: 800,
-          fontStyle: 'italic',
         }}
       >
-        LPT
+        <img src={crestDataUri(124)} width={124} height={134} alt="LPT" />
       </div>
     ),
     { ...size },
