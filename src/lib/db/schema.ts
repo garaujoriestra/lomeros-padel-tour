@@ -13,6 +13,7 @@ export const players = sqliteTable('players', {
   losses: integer('losses').notNull().default(0),
   isLeftHanded: integer('is_left_handed', { mode: 'boolean' }).notNull().default(false),
   tokenBalance: integer('token_balance').notNull().default(500),
+  juegaPadel: integer('juega_padel', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
@@ -124,7 +125,7 @@ export const bets = sqliteTable('bets', {
   predictedTeam: integer('predicted_team').notNull(), // 1 | 2
   predictedScore: text('predicted_score'),     // '2-0' | '2-1' | null (solo exact_score)
   amount: integer('amount').notNull(),
-  odds: real('odds').notNull(),                // cuota congelada al apostar (incluye ×2 si exact_score)
+  odds: real('odds'), // obsoleta en v2 (pari-mutuel); nullable, no se escribe
   status: text('status').notNull().default('open'), // 'open' | 'won' | 'lost' | 'refunded'
   payout: integer('payout').notNull().default(0),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
