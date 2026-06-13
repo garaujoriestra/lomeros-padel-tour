@@ -140,8 +140,8 @@ export const tokenLedger = sqliteTable('token_ledger', {
   playerId: text('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
   amount: integer('amount').notNull(), // con signo
   reason: text('reason').notNull(),
-  // 'initial' | 'bet_placed' | 'bet_cancelled' | 'bet_won' | 'bet_refunded' |
-  // 'recharge' | 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment'
+  // 'buyin' | 'rebuy' | 'bet_placed' | 'bet_cancelled' | 'bet_won' | 'bet_refunded' |
+  // 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment'
   refId: text('ref_id'), // id de bet/redemption/penalty según reason
   balanceAfter: integer('balance_after').notNull(),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
