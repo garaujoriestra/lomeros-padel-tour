@@ -24,6 +24,17 @@ El bote está respaldado al céntimo por construcción y **nunca puede quedarse 
 - **Bote visible:** `bote € = Σ(saldos de todos los jugadores) × 0,01`. Se muestra en la app (público: «💰 Bote actual: X €»; detalle en admin).
 - **Constantes** en `src/lib/betting/config.ts`: `buyIn = 500` fichas / `5 €`, `centsPerToken = 1`, `minBet = 10`, `maxBet = 100`. (Desaparecen `oddsMin/oddsMax/oddsSensitivity/exactScoreMultiplier`: ya no hay cuotas fijas.)
 
+## Roles: jugadores y apostantes
+
+La Timba admite participantes que **no juegan al pádel** pero quieren apostar (amigos espectadores). Mejora la liquidez de los pools (sobre todo el de marcador exacto) y engorda el bote.
+
+- Se añade el flag **`players.juegaPadel`** (boolean, default `true`). Un apostante puro es un registro con `juegaPadel = false`.
+- **Reutiliza toda la fontanería de La Timba** (saldo, apuestas, ledger, canjes, ranking de fichas) porque ya cuelga de `players`. Tiene nombre/apodo/avatar para mostrarse.
+- **Excluido de lo de pádel:** no aparece en el selector de jugadores al crear/editar partidos, ni en el ranking de Elo (ya filtrado por `matchesPlayed > 0`), ni en `pair_stats`.
+- **Incluido en La Timba:** ranking de fichas y bote.
+- **Alta (admin):** autorizar su email (como cualquier usuario) + crear su perfil de apostante (nombre/avatar) con `juegaPadel = false`, sin asignarle plaza en el tour. Buy-in igual que un jugador.
+- En la UI conviene distinguir «no ha entrado» (nunca compró buy-in) de saldo 0 por quiebra.
+
 ## Motor pari-mutuel
 
 Dos **mercados independientes** por partido, cada uno con su propio bote (pool):
@@ -34,7 +45,8 @@ Dos **mercados independientes** por partido, cada uno con su propio bote (pool):
 ### Apostar
 - Al apostar, la **fichas salen del saldo** y entran en el pool del mercado (modelo depósito, como en v1).
 - Límites por mercado: [10, 100]. Una apuesta por mercado y persona; editable/cancelable hasta el cierre (cancelar devuelve las fichas y las saca del pool).
-- Los 4 jugadores del partido no pueden apostar en él. En bancarrota no se puede apostar.
+- **Auto-apuesta (anti-amaño):** los 4 jugadores del partido **sí pueden apostar en él, pero solo a que gana su propia pareja, y solo en el mercado «ganador»**. No pueden apostar al rival ni en el mercado de marcador exacto (donde «gano 2-1» incentivaría dejarse un set). Así la única forma de cobrar la auto-apuesta es ganar el partido de verdad → refuerza el esfuerzo y cierra el vector de amaño (apostar contra uno mismo y dejarse perder). Validado en servidor a partir de en qué equipo está el jugador.
+- En bancarrota no se puede apostar.
 - **No se congela ninguna cuota.** Lo único que se guarda es `(mercado, selección, cantidad)`.
 
 ### Liquidación (al registrar el resultado)
@@ -60,7 +72,8 @@ Para cada mercado:
 | `src/lib/betting/settle-logic.ts` | Reescribir: reparto pari-mutuel por pool con método del resto mayor; sin pagos por cuota fija. |
 | `src/lib/betting/settle.ts` | Adaptar a liquidación por pools; devoluciones; sin `reverseSettlement` por cuota (la reversión sigue para borrado de partido). |
 | `src/lib/betting/bank.ts` | Igual (movimientos atómicos + ledger). Reusar. |
-| `src/app/api/bets/route.ts` | Quitar congelado de cuota; registrar `(mercado, selección, cantidad)`; validar pool. |
+| `src/app/api/bets/route.ts` | Quitar congelado de cuota; registrar `(mercado, selección, cantidad)`; validar pool; **regla de auto-apuesta** (jugador del partido → solo «ganador» a su propia pareja). |
+| `players` (flag + admin) | Añadir `juegaPadel`; alta de «apostante» en admin; excluir a `juegaPadel=false` del selector de partidos y rankings de pádel. |
 | `src/lib/db/schema.ts` | `bets`: `odds` deja de usarse (se puede dejar nullable u omitir); selección de marcador exacto ya cubierta por `predictedTeam`+`predictedScore`. Nuevos `reason` de ledger: `buyin`, `rebuy` (sustituye semántica de `initial`/`recharge`). |
 | **Buy-in / pot (nuevo)** | Acción admin «registrar entrada/recompra (5 € → 500 fichas)»; bote derivado de `Σ saldos × 0,01`. |
 | **Premios** | Mantener catálogo; añadir en admin la **guía de precio a 1 céntimo/ficha**. |
@@ -71,6 +84,7 @@ Para cada mercado:
 ## Modelo de datos
 
 - `players.tokenBalance`: ahora arranca en **0** (no 500). El buy-in lo sube a 500.
+- `players.juegaPadel`: boolean, default `true`. `false` = apostante puro (no juega pádel).
 - `bets`: `market`, `predictedTeam`, `predictedScore` (para exacto), `amount`, `status` (`open|won|lost|refunded`), `payout` (calculado en liquidación). `odds` queda obsoleta (mantener nullable para no romper, dejar de escribir).
 - `token_ledger`: añadir reasons `buyin` (+500, 5 € a bote) y `rebuy` (+500, 5 € a bote). `bet_placed` (−stake), `bet_won` (+reparto), `bet_refunded` (+stake), `redemption` (−coste), `redemption_refunded`, `settlement_reversal`, `adjustment`. El `UNIQUE(reason, ref_id)` se mantiene como guarda de idempotencia.
 - Bote: **derivado**, no se almacena. `bote € = Σ(players.tokenBalance) × 0,01`.
@@ -81,6 +95,7 @@ La Timba se lanzó hoy pero **aún no se ha jugado con dinero real**, así que s
 - Poner `tokenBalance = 0` a todos.
 - Borrar todas las `bets` y los asientos de `token_ledger` (arranque desde cero).
 - Cancelar penalizaciones pendientes.
+- Añadir columna `juegaPadel` (default `true`) → los jugadores actuales quedan como jugadores de pádel.
 - Mantener el catálogo de `rewards` (repreciar a 1 céntimo/ficha).
 - Endpoint `POST /api/migrate-timba-v2` idempotente, patrón de los `migrate-*` existentes.
 Tras la migración, los jugadores entran pagando su buy-in real.
@@ -100,6 +115,7 @@ Tras la migración, los jugadores entran pagando su buy-in real.
 - **Nadie acierta un mercado:** devolución íntegra de ese mercado.
 - **Un solo apostante en un mercado:** si acierta, recupera su apuesta (×1); si falla, su apuesta se reparte… pero si es el único, no hay acertantes → devolución. En la práctica un apostante solo siempre recupera su dinero.
 - **Redondeo:** método del resto mayor garantiza `Σ pagos == pool`.
+- **Auto-apuesta:** jugador del partido apostando «ganador» a su pareja → permitido; al rival, o en marcador exacto → rechazado. Un apostante puro (`juegaPadel=false`) nunca está en un partido, así que puede apostar a todo.
 - **Sin `player` vinculado:** no puede entrar ni apostar (solo lectura).
 - **Idempotencia de liquidación:** solo se liquidan apuestas `open`; guarda `hasLedgerEntry(reason, refId)` evita pagos dobles si se reintenta.
 
@@ -113,5 +129,5 @@ Tras la migración, los jugadores entran pagando su buy-in real.
 
 - Reparto pari-mutuel: pool con varios acertantes (proporcional), un acertante (se lleva todo), cero acertantes (devolución), todos al ganador (×1), método del resto mayor (Σ pagos == pool, sin perder ni crear fichas).
 - Cuota provisional de pool (poolActual/poolSelección; pool vacío → sin cuota).
-- Bancarrota y validaciones de apuesta (igual que v1, adaptadas).
+- Bancarrota y validaciones de apuesta (igual que v1, adaptadas), incluida la **regla de auto-apuesta** (jugador del partido: «ganador» a su pareja sí; rival/marcador exacto no).
 - Invariante del bote: `Σ saldos × 0,01` tras secuencias de buy-in/apuesta/liquidación/canje permanece coherente (conservación).
