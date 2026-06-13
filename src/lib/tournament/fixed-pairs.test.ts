@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { roundRobinSchedule, groupStandings, seedOrder, generateBracket, resolveBracket } from './fixed-pairs';
+import { roundRobinSchedule, groupStandings, seedOrder, generateBracket, resolveBracket, buildBracket } from './fixed-pairs';
 import type { PairMatchResult, BracketMatch, ResolvedBracketMatch } from './fixed-pairs';
 
 describe('roundRobinSchedule', () => {
@@ -136,5 +136,25 @@ describe('resolveBracket', () => {
     const final = resolved.find((m) => m.matchId === 'r1m0')!;
     expect(final.slotA).toEqual({ type: 'matchWinner', matchId: 'r0m0' });
     expect(final.winnerPairId).toBeUndefined();
+  });
+});
+
+describe('buildBracket', () => {
+  it('acepta hojas placeholder y rellena con bye al mejor sembrado', () => {
+    const leaves = [
+      { type: 'placeholder', desc: '1º A' } as const,
+      { type: 'placeholder', desc: '1º B' } as const,
+      { type: 'placeholder', desc: '2º A' } as const,
+    ];
+    const bracket = buildBracket(leaves); // tamaño 4, orden [0,3,1,2]
+    expect(bracket).toEqual<BracketMatch[]>([
+      { matchId: 'r0m0', round: 0, slotA: { type: 'placeholder', desc: '1º A' }, slotB: { type: 'bye' } },
+      { matchId: 'r0m1', round: 0, slotA: { type: 'placeholder', desc: '1º B' }, slotB: { type: 'placeholder', desc: '2º A' } },
+      { matchId: 'r1m0', round: 1, slotA: { type: 'matchWinner', matchId: 'r0m0' }, slotB: { type: 'matchWinner', matchId: 'r0m1' } },
+    ]);
+  });
+
+  it('menos de 2 hojas: cuadro vacío', () => {
+    expect(buildBracket([{ type: 'pair', pairId: 'A' }])).toEqual([]);
   });
 });

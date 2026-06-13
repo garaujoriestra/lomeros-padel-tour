@@ -121,40 +121,37 @@ export interface BracketMatch {
   slotB: SlotRef;
 }
 
-// Genera el cuadro completo a partir de parejas ya sembradas (en orden de siembra).
-// Tamaño = potencia de 2 superior; los byes recaen en los mejores sembrados.
-export function generateBracket(seededPairIds: string[]): BracketMatch[] {
-  const numPairs = seededPairIds.length;
-  if (numPairs < 2) return [];
+// Construye el cuadro a partir de hojas ya ordenadas por siembra (hoja i = sembrado i).
+// Rellena con byes hasta la potencia de 2. Las hojas pueden ser parejas concretas o placeholders.
+export function buildBracket(rankedLeaves: SlotRef[]): BracketMatch[] {
+  const count = rankedLeaves.length;
+  if (count < 2) return [];
 
   let size = 1;
-  while (size < numPairs) size *= 2;
+  while (size < count) size *= 2;
 
   const order = seedOrder(size);
   const matches: BracketMatch[] = [];
 
-  // Los byes recaen en los peores sembrados (índices >= numPairs). Como `size` es la menor
-  // potencia de 2 >= numPairs, hay menos de size/2 byes, y en el orden de siembra cada par de
+  // Los byes recaen en los peores sembrados (índices >= count). Como `size` es la menor
+  // potencia de 2 >= count, hay menos de size/2 byes, y en el orden de siembra cada par de
   // posiciones suma size-1, por lo que nunca se emparejan dos byes en el mismo partido.
-  // Ronda 0: size/2 partidos con huecos pair/bye según la siembra.
-  const seedToSlot = (seedIdx: number): SlotRef =>
-    seedIdx < numPairs ? { type: 'pair', pairId: seededPairIds[seedIdx] } : { type: 'bye' };
+  const leafForSeed = (s: number): SlotRef => (s < count ? rankedLeaves[s] : { type: 'bye' });
 
   for (let i = 0; i < size / 2; i++) {
     matches.push({
       matchId: `r0m${i}`,
       round: 0,
-      slotA: seedToSlot(order[2 * i]),
-      slotB: seedToSlot(order[2 * i + 1]),
+      slotA: leafForSeed(order[2 * i]),
+      slotB: leafForSeed(order[2 * i + 1]),
     });
   }
 
-  // Rondas siguientes: cada partido lo alimentan dos partidos de la ronda anterior.
   let round = 1;
   let prevCount = size / 2;
   while (prevCount > 1) {
-    const count = prevCount / 2;
-    for (let i = 0; i < count; i++) {
+    const c = prevCount / 2;
+    for (let i = 0; i < c; i++) {
       matches.push({
         matchId: `r${round}m${i}`,
         round,
@@ -162,11 +159,16 @@ export function generateBracket(seededPairIds: string[]): BracketMatch[] {
         slotB: { type: 'matchWinner', matchId: `r${round - 1}m${2 * i + 1}` },
       });
     }
-    prevCount = count;
+    prevCount = c;
     round += 1;
   }
 
   return matches;
+}
+
+// Genera el cuadro a partir de parejas ya sembradas (en orden de siembra).
+export function generateBracket(seededPairIds: string[]): BracketMatch[] {
+  return buildBracket(seededPairIds.map((pairId) => ({ type: 'pair', pairId })));
 }
 
 export interface ResolvedBracketMatch {
