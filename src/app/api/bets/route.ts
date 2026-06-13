@@ -6,7 +6,6 @@ import { and, eq, desc } from 'drizzle-orm';
 import { requireSession } from '@/lib/auth/guard';
 import { BETTING } from '@/lib/betting/config';
 import { isBettingOpen } from '@/lib/betting/close-time';
-import { currentMatchOdds } from '@/lib/betting/match-odds';
 import { applyTokenMovement } from '@/lib/betting/bank';
 import { hasPendingPenalty } from '@/lib/betting/settle';
 
@@ -53,8 +52,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/bets
 // Body: { matchId, market: 'winner'|'exact_score', predictedTeam: 1|2,
-//         predictedScore?: '2-0'|'2-1', amount: number }
-// Si ya hay apuesta abierta en ese mercado, se sustituye.
+//         predictedScore?: '2-0'|'2-1', amount }
+// Pari-mutuel: solo se registra la selección + cantidad (sin cuota congelada).
 export async function POST(request: NextRequest) {
   const auth = await requireSession();
   if ('response' in auth) return auth.response;
@@ -85,15 +84,23 @@ export async function POST(request: NextRequest) {
 
     const [match] = await db.select().from(matches).where(eq(matches.id, matchId));
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
-
     if (!isBettingOpen(match)) {
       return NextResponse.json({ error: 'Las apuestas de este partido están cerradas' }, { status: 400 });
     }
-    const inMatch = [match.team1Player1Id, match.team1Player2Id, match.team2Player1Id, match.team2Player2Id]
-      .includes(player.id);
-    if (inMatch) {
-      return NextResponse.json({ error: 'No puedes apostar en un partido que juegas' }, { status: 403 });
+
+    // Auto-apuesta: si el jugador juega el partido, solo «ganador» a su pareja.
+    const inTeam1 = [match.team1Player1Id, match.team1Player2Id].includes(player.id);
+    const inTeam2 = [match.team2Player1Id, match.team2Player2Id].includes(player.id);
+    if (inTeam1 || inTeam2) {
+      const ownTeam = inTeam1 ? 1 : 2;
+      if (market !== 'winner' || predictedTeam !== ownTeam) {
+        return NextResponse.json(
+          { error: 'Si juegas el partido solo puedes apostar a tu propia victoria (mercado ganador)' },
+          { status: 403 },
+        );
+      }
     }
+
     if (await hasPendingPenalty(player.id)) {
       return NextResponse.json(
         { error: 'Estás en bancarrota: cumple tu penalización para volver a apostar' },
@@ -101,12 +108,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cuota recalculada en servidor (la del cliente es informativa)
-    const odds = await currentMatchOdds(match);
-    const teamOdds = predictedTeam === 1 ? odds.team1 : odds.team2;
-    const frozenOdds = market === 'winner' ? teamOdds.winner : teamOdds.exactScore;
-
-    // Sustituir apuesta previa abierta en este mercado, si la hay
+    // Sustituir apuesta previa abierta en este mercado, si la hay.
     const [previous] = await db.select().from(bets).where(and(
       eq(bets.matchId, matchId), eq(bets.playerId, player.id), eq(bets.market, market),
     ));
@@ -133,13 +135,10 @@ export async function POST(request: NextRequest) {
       predictedTeam,
       predictedScore: market === 'exact_score' ? predictedScore : null,
       amount,
-      odds: frozenOdds,
     }).returning();
 
     return NextResponse.json({ bet, balance: newBalance }, { status: 201 });
   } catch (error) {
-    // Choque con el UNIQUE de bets = POST duplicado simultáneo. El cobro ya
-    // está asentado, así que se reembolsa antes de responder.
     const msg = error instanceof Error ? error.message : String(error);
     if (chargedAmount !== null && msg.includes('UNIQUE')) {
       await applyTokenMovement(player.id, chargedAmount, 'bet_cancelled');
