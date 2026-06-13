@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { estimatedMatchMinutes, scheduleMatches } from './scheduler';
-import type { MatchFormat, } from './types';
+import type { MatchFormat } from './types';
 import type { CourtWindow, ScheduleItem } from './scheduler';
 
 describe('estimatedMatchMinutes', () => {
@@ -67,5 +67,17 @@ describe('scheduleMatches', () => {
     const res = scheduleMatches(items, shortCourt, 30);
     expect(res.scheduled.map((s) => s.matchId)).toEqual(['m1']);
     expect(res.unscheduled).toEqual(['m2']);
+  });
+
+  it('prefiere la pista que abre antes cuando los inicios están escalonados', () => {
+    const staggered: CourtWindow[] = [
+      { courtId: 'late', order: 1, fromMin: 18 * 60, toMin: 20 * 60 },  // abre a las 18:00 (mejor order)
+      { courtId: 'early', order: 2, fromMin: 17 * 60, toMin: 20 * 60 }, // abre a las 17:00
+    ];
+    const items: ScheduleItem[] = [{ matchId: 'm1', players: ['p1', 'p2', 'p3', 'p4'] }];
+    const res = scheduleMatches(items, staggered, 30);
+    const m1 = res.scheduled.find((s) => s.matchId === 'm1')!;
+    expect(m1.courtId).toBe('early'); // 17:00 es antes que 18:00, gana el inicio más temprano aunque su order sea peor
+    expect(m1.startMin).toBe(17 * 60);
   });
 });

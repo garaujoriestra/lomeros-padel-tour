@@ -54,23 +54,23 @@ export function scheduleMatches(
   courts.forEach((c) => courtBusy.set(c.courtId, []));
   // Ocupación por participante: lista de [start, end).
   const playerBusy = new Map<string, Array<[number, number]>>();
+  items.forEach((item) => item.players.forEach((p) => { if (!playerBusy.has(p)) playerBusy.set(p, []); }));
 
-  const overlaps = (intervals: Array<[number, number]> | undefined, start: number, end: number) =>
-    !!intervals && intervals.some(([s, e]) => start < e && s < end);
+  const overlaps = (intervals: Array<[number, number]>, start: number, end: number) =>
+    intervals.some(([s, e]) => start < e && s < end);
 
   // Ordena pistas por inicio y luego por 'order' para preferir las mejores antes.
   const sortedCourts = [...courts].sort((a, b) => a.fromMin - b.fromMin || a.order - b.order);
 
   for (const item of items) {
-    let placed: ScheduledMatch | null = null;
     // Candidatos de inicio: para cada pista, prueba instantes desde su inicio hasta que cabe.
     // Recoge todos los candidatos válidos y elige el de inicio más temprano (desempate: order).
     let best: { court: CourtWindow; start: number } | null = null;
     for (const court of sortedCourts) {
       for (let start = court.fromMin; start + slotMinutes <= court.toMin; start += slotMinutes) {
         const end = start + slotMinutes;
-        if (overlaps(courtBusy.get(court.courtId), start, end)) continue;
-        if (item.players.some((p) => overlaps(playerBusy.get(p), start, end))) continue;
+        if (overlaps(courtBusy.get(court.courtId)!, start, end)) continue;
+        if (item.players.some((p) => overlaps(playerBusy.get(p)!, start, end))) continue;
         if (!best || start < best.start || (start === best.start && court.order < best.court.order)) {
           best = { court, start };
         }
@@ -79,16 +79,12 @@ export function scheduleMatches(
     }
     if (best) {
       const end = best.start + slotMinutes;
-      placed = { matchId: item.matchId, courtId: best.court.courtId, startMin: best.start, endMin: end };
+      scheduled.push({ matchId: item.matchId, courtId: best.court.courtId, startMin: best.start, endMin: end });
       courtBusy.get(best.court.courtId)!.push([best.start, end]);
-      item.players.forEach((p) => {
-        const arr = playerBusy.get(p) ?? [];
-        arr.push([best!.start, end]);
-        playerBusy.set(p, arr);
-      });
+      item.players.forEach((p) => playerBusy.get(p)!.push([best!.start, end]));
+    } else {
+      unscheduled.push(item.matchId);
     }
-    if (placed) scheduled.push(placed);
-    else unscheduled.push(item.matchId);
   }
 
   return { scheduled, unscheduled };
