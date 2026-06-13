@@ -98,7 +98,7 @@ describe('resolveBracket', () => {
     const bracket = generateBracket(['A', 'B', 'C']); // A tiene bye en r0m0
     // B gana a C en r0m1 (B es slotA -> 'A')
     const results = new Map<string, 'A' | 'B'>([['r0m1', 'A']]);
-    const resolved = resolveBracket(bracket, results);
+    const resolved: ResolvedBracketMatch[] = resolveBracket(bracket, results);
     const byId = new Map(resolved.map((m) => [m.matchId, m]));
 
     // r0m0: A vs bye -> A gana automáticamente

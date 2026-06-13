@@ -2,6 +2,7 @@ import type { SlotRef } from './types';
 
 // Orden estándar de siembra de un bracket de tamaño potencia de 2 (base 0).
 // Empareja cabezas de serie altas con bajas en cada ronda. Ej. tamaño 4 -> [0,3,1,2].
+// Precondición: size es potencia de 2.
 export function seedOrder(size: number): number[] {
   let seeds = [0, 1];
   while (seeds.length < size) {
@@ -114,7 +115,7 @@ export function roundRobinSchedule(pairIds: string[]): RoundRobinMatch[] {
 }
 
 export interface BracketMatch {
-  matchId: string;
+  matchId: string; // clave posicional del motor (p.ej. 'r0m0'), NO un id de DB
   round: number;
   slotA: SlotRef;
   slotB: SlotRef;
@@ -173,6 +174,8 @@ export interface ResolvedBracketMatch {
   winnerPairId?: string;
 }
 
+// Resuelve los huecos matchWinner a la pareja concreta cuando se conoce, y calcula el
+// ganador de cada partido. Los byes avanzan sin resultado. Procesa por rondas crecientes.
 export function resolveBracket(
   bracket: BracketMatch[],
   results: Map<string, 'A' | 'B'>,
