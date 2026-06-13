@@ -28,6 +28,36 @@ export function courtPairing(
   };
 }
 
+// Aplica el movimiento clásico del pozo. results[i] corresponde a current.courts[i].
+// No modifica resting (la rotación de descansos se aplica aparte).
+export function nextPozoRound(current: PozoRound, results: CourtResult[]): PozoRound {
+  const n = current.courts.length;
+  // fromAbove[k] = perdedores que bajan desde la pista k-1.
+  // fromBelow[k] = ganadores que suben desde la pista k+1.
+  const fromAbove: string[][] = Array.from({ length: n }, () => []);
+  const fromBelow: string[][] = Array.from({ length: n }, () => []);
+  const stayers: string[][] = Array.from({ length: n }, () => []);
+
+  results.forEach((res, k) => {
+    const isTop = k === 0;
+    const isBottom = k === n - 1;
+    // Ganadores: suben (k-1) salvo en el top, donde se quedan.
+    if (isTop) stayers[k].push(...res.winners);
+    else fromBelow[k - 1].push(...res.winners);
+    // Perdedores: bajan (k+1) salvo en el fondo, donde se quedan.
+    if (isBottom) stayers[k].push(...res.losers);
+    else fromAbove[k + 1].push(...res.losers);
+  });
+
+  const courts: string[][] = [];
+  for (let k = 0; k < n; k++) {
+    // Orden dentro de la pista: stayers-top, perdedores que bajan, ganadores que suben, stayers-fondo.
+    // En top: stayers (ganadores) + fromBelow. En fondo: fromAbove + stayers (perdedores).
+    courts.push([...stayers[k].slice(0, k === 0 ? 2 : 0), ...fromAbove[k], ...fromBelow[k], ...stayers[k].slice(k === 0 ? 2 : 0)]);
+  }
+  return { courts, resting: [...current.resting] };
+}
+
 // Siembra inicial: llena pistas de 4 en orden; sobrantes a resting; no crea pistas vacías.
 export function seedPozoCourts(participantIds: string[], numCourts: number): PozoRound {
   const fillable = Math.min(numCourts, Math.floor(participantIds.length / 4));
