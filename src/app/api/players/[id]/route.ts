@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, nickname, avatarUrl, isLeftHanded, email } = body;
+    const { name, nickname, avatarUrl, isLeftHanded, juegaPadel, email } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
@@ -37,6 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         nickname: nickname?.trim() || null,
         avatarUrl: avatarUrl?.trim() || null,
         isLeftHanded: !!isLeftHanded,
+        juegaPadel: juegaPadel === false ? false : true,
       })
       .where(eq(players.id, id))
       .returning();

@@ -1,11 +1,12 @@
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { MatchForm } from '@/components/admin/match-form';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewMatchPage() {
-  const allPlayers = await db.select().from(players).orderBy(players.name);
+  const allPlayers = await db.select().from(players).where(eq(players.juegaPadel, true)).orderBy(players.name);
 
   return (
     <div className="space-y-6">

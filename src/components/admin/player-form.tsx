@@ -16,6 +16,7 @@ interface PlayerFormProps {
     nickname: string | null;
     avatarUrl: string | null;
     isLeftHanded: boolean | null;
+    juegaPadel?: boolean | null;
     email?: string | null;
   };
 }
@@ -30,6 +31,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     nickname: initialData?.nickname ?? '',
     avatarUrl: initialData?.avatarUrl ?? '',
     isLeftHanded: initialData?.isLeftHanded ?? false,
+    juegaPadel: initialData?.juegaPadel ?? true,
     email: initialData?.email ?? '',
   });
   const [preview, setPreview] = useState<string>(initialData?.avatarUrl ?? '');
@@ -192,6 +194,17 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               className="h-4 w-4 rounded border-line"
             />
             <Label htmlFor="isLeftHanded" className="cursor-pointer">🤚 Zurdo</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="juegaPadel"
+              type="checkbox"
+              checked={form.juegaPadel}
+              onChange={(e) => setForm({ ...form, juegaPadel: e.target.checked })}
+              className="h-4 w-4 rounded border-line"
+            />
+            <Label htmlFor="juegaPadel" className="cursor-pointer">Juega al pádel (desmarca para un apostante de La Timba que no juega)</Label>
           </div>
 
           <div className="flex gap-2 pt-2">
