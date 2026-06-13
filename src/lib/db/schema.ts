@@ -12,7 +12,7 @@ export const players = sqliteTable('players', {
   wins: integer('wins').notNull().default(0),
   losses: integer('losses').notNull().default(0),
   isLeftHanded: integer('is_left_handed', { mode: 'boolean' }).notNull().default(false),
-  tokenBalance: integer('token_balance').notNull().default(500),
+  tokenBalance: integer('token_balance').notNull().default(0),
   juegaPadel: integer('juega_padel', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });

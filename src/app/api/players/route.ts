@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
       avatarUrl: avatarUrl?.trim() || null,
       isLeftHanded: !!isLeftHanded,
       juegaPadel: juegaPadel === false ? false : true,
+      // La Timba v2: se arranca a 0; las fichas solo entran pagando el buy-in.
+      tokenBalance: 0,
     }).returning();
 
     const result = await upsertPlayerUser(player.id, email);

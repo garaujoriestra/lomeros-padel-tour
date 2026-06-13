@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Reward } from '@/lib/db/schema';
+import { BETTING } from '@/lib/betting/config';
 
 export function RewardsManager({ rewards }: { rewards: Reward[] }) {
   const router = useRouter();
@@ -78,7 +79,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
             onChange={(e) => setCost(Number(e.target.value))}
           />
           <p className="muted text-xs">
-            Valor recomendado del premio: <b>{(cost * 1) / 100} €</b> (1 ficha = 1 céntimo).
+            Valor recomendado del premio: <b>{(cost * BETTING.centsPerToken) / 100} €</b> (1 ficha = 1 céntimo).
             Mantén esta relación para que el bote cuadre.
           </p>
         </div>

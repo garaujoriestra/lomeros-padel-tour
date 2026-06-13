@@ -6,6 +6,7 @@ import { bets, tokenLedger, rewards, redemptions, penalties } from '@/lib/db/sch
 import { getSession } from '@/lib/auth/session';
 import { RedeemButton } from '@/components/betting/redeem-button';
 import { potEuros } from '@/lib/betting/pot';
+import { BETTING } from '@/lib/betting/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,17 +102,10 @@ export default async function TokensPage() {
               <p style={{ margin: 0, fontWeight: 800, color: 'var(--loss)', fontSize: 14 }}>
                 💀 Estás en bancarrota.
               </p>
-              {pendingPenalty.description ? (
-                <p className="small muted" style={{ margin: '6px 0 0', lineHeight: 1.5 }}>
-                  Tu penalización: &ldquo;{pendingPenalty.description}&rdquo;. Cúmplela y el admin te recargará{' '}
-                  <b className="num">{pendingPenalty.rechargeAmount} tokens</b>.
-                </p>
-              ) : (
-                <p className="small muted" style={{ margin: '6px 0 0', lineHeight: 1.5 }}>
-                  El admin te asignará una penalización; al cumplirla recibirás{' '}
-                  <b className="num">{pendingPenalty.rechargeAmount} tokens</b>.
-                </p>
-              )}
+              <p className="small muted" style={{ margin: '6px 0 0', lineHeight: 1.5 }}>
+                Paga la recompra ({BETTING.buyInEuros} €) al organizador y recibirás{' '}
+                <b className="num">{BETTING.buyInTokens} fichas</b> para volver a jugar.
+              </p>
             </div>
           )}
         </div>
