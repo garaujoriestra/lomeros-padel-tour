@@ -17,6 +17,7 @@ const PAIRING_PATTERNS: Array<[[number, number], [number, number]]> = [
 ];
 
 // Emparejamiento 2v2 de una pista según el número de ronda (rota cada ronda).
+// Precondición: courtPlayers debe tener exactamente 4 jugadores (posiciones 0-3); con menos, las entradas undefined rompen el resultado.
 export function courtPairing(
   courtPlayers: string[],
   roundNumber: number,
@@ -51,9 +52,13 @@ export function nextPozoRound(current: PozoRound, results: CourtResult[]): PozoR
 
   const courts: string[][] = [];
   for (let k = 0; k < n; k++) {
-    // Orden dentro de la pista: stayers-top, perdedores que bajan, ganadores que suben, stayers-fondo.
-    // En top: stayers (ganadores) + fromBelow. En fondo: fromAbove + stayers (perdedores).
-    courts.push([...stayers[k].slice(0, k === 0 ? 2 : 0), ...fromAbove[k], ...fromBelow[k], ...stayers[k].slice(k === 0 ? 2 : 0)]);
+    // stayers[k] contiene: ganadores del top (índices 0-1) O perdedores del fondo (índices 0-1).
+    // Top: los stayers (ganadores) van primero, luego los que suben desde abajo.
+    // Fondo: primero los que bajan desde arriba, y los stayers (perdedores) van al final.
+    // Pistas intermedias: sin stayers; primero fromAbove, luego fromBelow.
+    const stayersHead = stayers[k].slice(0, k === 0 ? 2 : 0); // solo se llena en la pista top
+    const stayersTail = stayers[k].slice(k === 0 ? 2 : 0);    // solo se llena en la pista fondo
+    courts.push([...stayersHead, ...fromAbove[k], ...fromBelow[k], ...stayersTail]);
   }
   return { courts, resting: [...current.resting] };
 }
@@ -65,6 +70,7 @@ export function nextPozoRoundWithRest(current: PozoRound, results: CourtResult[]
   const restCount = current.resting.length;
   if (restCount === 0 || moved.courts.length === 0) return moved;
 
+  // `moved` es un objeto nuevo devuelto por nextPozoRound, por lo que mutarlo aquí es seguro.
   const bottomIdx = moved.courts.length - 1;
   const bottom = moved.courts[bottomIdx];
   // Salen a descansar los 'restCount' del final del fondo; entran los que descansaban.
