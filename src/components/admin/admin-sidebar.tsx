@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Swords, Bell, Gift, Ticket, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Swords, Bell, Gift, Ticket, Coins, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
@@ -12,6 +12,7 @@ const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin/notifications', label: 'Avisos', icon: Bell },
   { href: '/admin/rewards', label: 'Premios', icon: Gift },
   { href: '/admin/redemptions', label: 'Canjes', icon: Ticket },
+  { href: '/admin/timba', label: 'La Timba', icon: Coins },
 ];
 
 function isActive(href: string, pathname: string) {
