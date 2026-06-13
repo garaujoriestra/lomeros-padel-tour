@@ -5,7 +5,6 @@ import { BETTING } from './config';
 export interface TeamRatingInput {
   player1Elo: number;
   player2Elo: number;
-  pairElo: number | null; // null si la pareja no figura en pair_stats
 }
 
 export interface MatchOdds {
@@ -13,8 +12,13 @@ export interface MatchOdds {
   team2: { winner: number; exactScore: number };
 }
 
+// Rating de la pareja = media del Elo individual de sus dos jugadores.
+// NOTA: deliberadamente NO usamos el Elo de pareja (pairElo). En este grupo las
+// parejas apenas repiten, así que sus pairElo se quedan pegados a ~1500 y las
+// cuotas salían planas (x2 para ambos). El Elo individual es la señal densa que
+// de verdad distingue a la pareja mejor de la peor.
 export function teamRating(t: TeamRatingInput): number {
-  return t.pairElo ?? (t.player1Elo + t.player2Elo) / 2;
+  return (t.player1Elo + t.player2Elo) / 2;
 }
 
 function round1(n: number): number {
