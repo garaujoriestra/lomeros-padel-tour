@@ -77,6 +77,10 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
             value={cost}
             onChange={(e) => setCost(Number(e.target.value))}
           />
+          <p className="muted text-xs">
+            Valor recomendado del premio: <b>{(cost * 1) / 100} €</b> (1 ficha = 1 céntimo).
+            Mantén esta relación para que el bote cuadre.
+          </p>
         </div>
         <Button
           disabled={loading || !title.trim() || cost <= 0}

@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { bets, tokenLedger, rewards, redemptions, penalties } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { RedeemButton } from '@/components/betting/redeem-button';
+import { potEuros } from '@/lib/betting/pot';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export default async function TokensPage() {
   const player = session.player;
   if (!player) redirect('/me');
 
-  const [openBets, ledger, catalog, myRedemptions, myPenalties] = await Promise.all([
+  const [openBets, ledger, catalog, myRedemptions, myPenalties, pot] = await Promise.all([
     db
       .select()
       .from(bets)
@@ -62,6 +63,7 @@ export default async function TokensPage() {
       .select()
       .from(penalties)
       .where(and(eq(penalties.playerId, player.id), eq(penalties.status, 'pending'))),
+    potEuros(),
   ]);
 
   const pendingPenalty = myPenalties[0] ?? null;
@@ -84,6 +86,7 @@ export default async function TokensPage() {
             </span>
             <span className="muted" style={{ fontWeight: 700, fontSize: 16 }}>tokens</span>
           </div>
+          <div className="small muted" style={{ textAlign: 'center', marginTop: 6 }}>💰 Bote de La Timba: {pot.toFixed(2)} €</div>
 
           {pendingPenalty && (
             <div

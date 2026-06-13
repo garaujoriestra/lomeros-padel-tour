@@ -14,7 +14,6 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
       predictedTeam: bets.predictedTeam,
       predictedScore: bets.predictedScore,
       amount: bets.amount,
-      odds: bets.odds,
       status: bets.status,
       payout: bets.payout,
       playerId: players.id,
@@ -43,8 +42,8 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
               delta = `💸 -${r.amount} tk`;
               color = 'var(--loss)';
             } else {
-              // refunded (o cualquier otro estado residual): tokens devueltos
-              delta = '↩️ ±0 tk (devuelta)';
+              // refunded: tokens devueltos
+              delta = `↩️ +${r.amount} tk`;
               color = 'var(--ink-3)';
             }
             return (
@@ -58,7 +57,7 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
                 </span>
                 <span className="small muted num" style={{ whiteSpace: 'nowrap' }}>
                   {TEAM_LABEL[r.predictedTeam] ?? `Equipo ${r.predictedTeam}`}
-                  {r.predictedScore ? ` (${r.predictedScore})` : ''} · x{r.odds}
+                  {r.predictedScore ? ` (${r.predictedScore})` : ''}
                 </span>
                 <span className="small num" style={{ marginLeft: 'auto', fontWeight: 800, color, whiteSpace: 'nowrap' }}>
                   {delta}
