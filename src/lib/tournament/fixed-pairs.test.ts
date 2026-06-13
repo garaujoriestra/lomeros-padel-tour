@@ -53,6 +53,14 @@ describe('groupStandings', () => {
     expect(table[0]).toMatchObject({ played: 1, wins: 0, draws: 1, losses: 0, points: 1 });
     expect(table[1]).toMatchObject({ played: 1, draws: 1, points: 1 });
   });
+
+  it('desempata por pairId asc cuando puntos, gameDiff y gamesFor son iguales', () => {
+    const results: PairMatchResult[] = [
+      { pairA: 'z', pairB: 'a', gamesA: 5, gamesB: 5, winner: 'draw' },
+    ];
+    const table = groupStandings(['z', 'a'], results);
+    expect(table[0].pairId).toBe('a'); // 'a' < 'z'
+  });
 });
 
 describe('seedOrder', () => {

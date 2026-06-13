@@ -133,6 +133,9 @@ export function generateBracket(seededPairIds: string[]): BracketMatch[] {
   const order = seedOrder(size);
   const matches: BracketMatch[] = [];
 
+  // Los byes recaen en los peores sembrados (índices >= numPairs). Como `size` es la menor
+  // potencia de 2 >= numPairs, hay menos de size/2 byes, y en el orden de siembra cada par de
+  // posiciones suma size-1, por lo que nunca se emparejan dos byes en el mismo partido.
   // Ronda 0: size/2 partidos con huecos pair/bye según la siembra.
   const seedToSlot = (seedIdx: number): SlotRef =>
     seedIdx < numPairs ? { type: 'pair', pairId: seededPairIds[seedIdx] } : { type: 'bye' };
