@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { roundRobinSchedule, groupStandings } from './fixed-pairs';
+import { roundRobinSchedule, groupStandings, seedOrder } from './fixed-pairs';
 import type { PairMatchResult } from './fixed-pairs';
 
 describe('roundRobinSchedule', () => {
@@ -52,5 +52,17 @@ describe('groupStandings', () => {
     const table = groupStandings(['a', 'b'], results);
     expect(table[0]).toMatchObject({ played: 1, wins: 0, draws: 1, losses: 0, points: 1 });
     expect(table[1]).toMatchObject({ played: 1, draws: 1, points: 1 });
+  });
+});
+
+describe('seedOrder', () => {
+  it('tamaño 2: [0,1]', () => {
+    expect(seedOrder(2)).toEqual([0, 1]);
+  });
+  it('tamaño 4: [0,3,1,2]', () => {
+    expect(seedOrder(4)).toEqual([0, 3, 1, 2]);
+  });
+  it('tamaño 8: orden estándar de 8', () => {
+    expect(seedOrder(8)).toEqual([0, 7, 3, 4, 1, 6, 2, 5]);
   });
 });

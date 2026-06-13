@@ -11,4 +11,5 @@ export type SlotRef =
   | { type: 'pair'; pairId: string }
   | { type: 'placeholder'; desc: string }
   | { type: 'matchWinner'; matchId: string }
-  | { type: 'matchLoser'; matchId: string };
+  | { type: 'matchLoser'; matchId: string }
+  | { type: 'bye' };

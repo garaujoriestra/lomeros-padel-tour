@@ -1,3 +1,19 @@
+// Orden estándar de siembra de un bracket de tamaño potencia de 2 (base 0).
+// Empareja cabezas de serie altas con bajas en cada ronda. Ej. tamaño 4 -> [0,3,1,2].
+export function seedOrder(size: number): number[] {
+  let seeds = [0, 1];
+  while (seeds.length < size) {
+    const sum = seeds.length * 2 - 1; // suma de cada par de sembrados (base 0)
+    const next: number[] = [];
+    for (const s of seeds) {
+      next.push(s);
+      next.push(sum - s);
+    }
+    seeds = next;
+  }
+  return seeds;
+}
+
 export interface PairMatchResult {
   pairA: string;
   pairB: string;
