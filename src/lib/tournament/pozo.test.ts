@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { seedPozoCourts, courtPairing, nextPozoRound, nextPozoRoundWithRest } from './pozo';
-import type { CourtResult } from './pozo';
+import { seedPozoCourts, courtPairing, nextPozoRound, nextPozoRoundWithRest, pozoStandings } from './pozo';
+import type { CourtResult, PozoMatchResult } from './pozo';
 
 describe('seedPozoCourts', () => {
   it('reparte en pistas de 4 en orden, sin sobrantes', () => {
@@ -105,5 +105,22 @@ describe('nextPozoRoundWithRest (rotación de descansos)', () => {
     const current = { courts: [['a', 'b', 'c', 'd']], resting: [] as string[] };
     const results: CourtResult[] = [{ winners: ['a', 'b'], losers: ['c', 'd'] }];
     expect(nextPozoRoundWithRest(current, results)).toEqual({ courts: [['a', 'b', 'c', 'd']], resting: [] });
+  });
+});
+
+describe('pozoStandings', () => {
+  it('ordena por juegos ganados, desempata por victorias', () => {
+    const results: PozoMatchResult[] = [
+      // ronda 1, pista 1: (a,b) 6 - 2 (c,d) → ganan a,b
+      { teamA: ['a', 'b'], teamB: ['c', 'd'], gamesA: 6, gamesB: 2, winner: 'A' },
+      // ronda 2, pista 1: (a,c) 4 - 6 (b,d) → ganan b,d
+      { teamA: ['a', 'c'], teamB: ['b', 'd'], gamesA: 4, gamesB: 6, winner: 'B' },
+    ];
+    const table = pozoStandings(['a', 'b', 'c', 'd'], results);
+    // juegos: a=6+4=10, b=6+6=12, c=2+4=6, d=2+6=8
+    // victorias: a=1, b=2, c=0, d=1
+    expect(table.map((r) => r.participantId)).toEqual(['b', 'a', 'd', 'c']);
+    expect(table[0]).toMatchObject({ participantId: 'b', games: 12, wins: 2, rank: 1 });
+    expect(table[3]).toMatchObject({ participantId: 'c', games: 6, wins: 0, rank: 4 });
   });
 });

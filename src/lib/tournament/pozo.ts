@@ -85,3 +85,42 @@ export function seedPozoCourts(participantIds: string[], numCourts: number): Poz
   const resting = participantIds.slice(fillable * 4);
   return { courts, resting };
 }
+
+export interface PozoMatchResult {
+  teamA: [string, string];
+  teamB: [string, string];
+  gamesA: number;
+  gamesB: number;
+  winner: 'A' | 'B';
+}
+
+export interface PozoStanding {
+  participantId: string;
+  games: number;
+  wins: number;
+  rank: number;
+}
+
+// Clasificación del pozo: por juegos ganados (desc), desempate por victorias (desc).
+export function pozoStandings(participantIds: string[], results: PozoMatchResult[]): PozoStanding[] {
+  const games = new Map<string, number>();
+  const wins = new Map<string, number>();
+  participantIds.forEach((p) => { games.set(p, 0); wins.set(p, 0); });
+
+  for (const r of results) {
+    const winners = r.winner === 'A' ? r.teamA : r.teamB;
+    for (const p of r.teamA) games.set(p, (games.get(p) ?? 0) + r.gamesA);
+    for (const p of r.teamB) games.set(p, (games.get(p) ?? 0) + r.gamesB);
+    for (const p of winners) wins.set(p, (wins.get(p) ?? 0) + 1);
+  }
+
+  const table = participantIds.map((participantId) => ({
+    participantId,
+    games: games.get(participantId) ?? 0,
+    wins: wins.get(participantId) ?? 0,
+    rank: 0,
+  }));
+  table.sort((a, b) => b.games - a.games || b.wins - a.wins);
+  table.forEach((row, i) => { row.rank = i + 1; });
+  return table;
+}
