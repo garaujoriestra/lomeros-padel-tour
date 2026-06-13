@@ -5,8 +5,8 @@ import { players, tokenLedger } from '@/lib/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 
 export type LedgerReason =
-  | 'initial' | 'bet_placed' | 'bet_cancelled' | 'bet_won' | 'bet_refunded'
-  | 'recharge' | 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment';
+  | 'buyin' | 'rebuy' | 'bet_placed' | 'bet_cancelled' | 'bet_won' | 'bet_refunded'
+  | 'redemption' | 'redemption_refunded' | 'settlement_reversal' | 'adjustment';
 
 // Aplica un movimiento. El UPDATE condicional evita que dos peticiones
 // concurrentes dejen el saldo en negativo (la condición en el WHERE hace de
