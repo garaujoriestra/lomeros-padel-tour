@@ -245,6 +245,24 @@
   width: 22px; height: 3px; border-radius: 0 0 3px 3px; background: var(--acc);
 }
 
+/* La Timba: ficha de casino elevada en el centro de la barra */
+.bn-timba { color: var(--acc-text); overflow: visible; }
+.bn-timba .bn-spacer { height: 19px; }            /* reserva el hueco del icono → la etiqueta alinea con el resto */
+.bn-timba .bn-chip {
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--acc); color: var(--on-acc);
+  border: 3px solid color-mix(in oklab, var(--surface) 92%, transparent);
+  box-shadow: 0 5px 16px color-mix(in oklab, var(--acc) 42%, transparent);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.bn-timba:active .bn-chip { transform: translateX(-50%) scale(0.92); }
+.bn-timba.active .bn-chip {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 24%, transparent),
+              0 6px 18px color-mix(in oklab, var(--acc) 55%, transparent);
+}
+.bn-timba.active::before { display: none; }       /* la ficha ya marca el estado activo */
+
 /* ════════════════ COMPONENTES ════════════════ */
 .lpt-card {
   background: var(--surface);

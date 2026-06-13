@@ -127,7 +127,8 @@ export default async function RankingsPage() {
         </section>
       )}
 
-      <section className="section">
+      <section className="section" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        <Link href="/rankings/pairs" className="sec-link">👥 Ranking de parejas →</Link>
         <Link href="/rankings/tokens" className="sec-link">🪙 Clasificación de La Timba →</Link>
       </section>
     </>
