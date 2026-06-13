@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { roundRobinSchedule, groupStandings, seedOrder } from './fixed-pairs';
-import type { PairMatchResult } from './fixed-pairs';
+import { roundRobinSchedule, groupStandings, seedOrder, generateBracket } from './fixed-pairs';
+import type { PairMatchResult, BracketMatch } from './fixed-pairs';
 
 describe('roundRobinSchedule', () => {
   it('4 parejas: 3 rondas, 6 partidos, todos contra todos', () => {
@@ -64,5 +64,31 @@ describe('seedOrder', () => {
   });
   it('tamaño 8: orden estándar de 8', () => {
     expect(seedOrder(8)).toEqual([0, 7, 3, 4, 1, 6, 2, 5]);
+  });
+});
+
+describe('generateBracket', () => {
+  it('4 parejas, sin byes: 2 partidos de ronda 0 + final', () => {
+    const bracket = generateBracket(['A', 'B', 'C', 'D']);
+    expect(bracket).toEqual<BracketMatch[]>([
+      { matchId: 'r0m0', round: 0, slotA: { type: 'pair', pairId: 'A' }, slotB: { type: 'pair', pairId: 'D' } },
+      { matchId: 'r0m1', round: 0, slotA: { type: 'pair', pairId: 'B' }, slotB: { type: 'pair', pairId: 'C' } },
+      { matchId: 'r1m0', round: 1, slotA: { type: 'matchWinner', matchId: 'r0m0' }, slotB: { type: 'matchWinner', matchId: 'r0m1' } },
+    ]);
+  });
+
+  it('3 parejas: el mejor sembrado recibe bye en ronda 0', () => {
+    const bracket = generateBracket(['A', 'B', 'C']);
+    // tamaño 4, orden [0,3,1,2]: m0 = seed0(A) vs seed3(bye), m1 = seed1(B) vs seed2(C)
+    expect(bracket).toEqual<BracketMatch[]>([
+      { matchId: 'r0m0', round: 0, slotA: { type: 'pair', pairId: 'A' }, slotB: { type: 'bye' } },
+      { matchId: 'r0m1', round: 0, slotA: { type: 'pair', pairId: 'B' }, slotB: { type: 'pair', pairId: 'C' } },
+      { matchId: 'r1m0', round: 1, slotA: { type: 'matchWinner', matchId: 'r0m0' }, slotB: { type: 'matchWinner', matchId: 'r0m1' } },
+    ]);
+  });
+
+  it('menos de 2 parejas: cuadro vacío', () => {
+    expect(generateBracket(['A'])).toEqual([]);
+    expect(generateBracket([])).toEqual([]);
   });
 });

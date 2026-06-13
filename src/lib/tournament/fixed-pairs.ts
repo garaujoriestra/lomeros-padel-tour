@@ -1,3 +1,5 @@
+import type { SlotRef } from './types';
+
 // Orden estándar de siembra de un bracket de tamaño potencia de 2 (base 0).
 // Empareja cabezas de serie altas con bajas en cada ronda. Ej. tamaño 4 -> [0,3,1,2].
 export function seedOrder(size: number): number[] {
@@ -108,5 +110,57 @@ export function roundRobinSchedule(pairIds: string[]): RoundRobinMatch[] {
     // Rota dejando fijo el primer elemento.
     arr = [arr[0], arr[n - 1], ...arr.slice(1, n - 1)];
   }
+  return matches;
+}
+
+export interface BracketMatch {
+  matchId: string;
+  round: number;
+  slotA: SlotRef;
+  slotB: SlotRef;
+}
+
+// Genera el cuadro completo a partir de parejas ya sembradas (en orden de siembra).
+// Tamaño = potencia de 2 superior; los byes recaen en los mejores sembrados.
+export function generateBracket(seededPairIds: string[]): BracketMatch[] {
+  const numPairs = seededPairIds.length;
+  if (numPairs < 2) return [];
+
+  let size = 1;
+  while (size < numPairs) size *= 2;
+
+  const order = seedOrder(size);
+  const matches: BracketMatch[] = [];
+
+  // Ronda 0: size/2 partidos con huecos pair/bye según la siembra.
+  const seedToSlot = (seedIdx: number): SlotRef =>
+    seedIdx < numPairs ? { type: 'pair', pairId: seededPairIds[seedIdx] } : { type: 'bye' };
+
+  for (let i = 0; i < size / 2; i++) {
+    matches.push({
+      matchId: `r0m${i}`,
+      round: 0,
+      slotA: seedToSlot(order[2 * i]),
+      slotB: seedToSlot(order[2 * i + 1]),
+    });
+  }
+
+  // Rondas siguientes: cada partido lo alimentan dos partidos de la ronda anterior.
+  let round = 1;
+  let prevCount = size / 2;
+  while (prevCount > 1) {
+    const count = prevCount / 2;
+    for (let i = 0; i < count; i++) {
+      matches.push({
+        matchId: `r${round}m${i}`,
+        round,
+        slotA: { type: 'matchWinner', matchId: `r${round - 1}m${2 * i}` },
+        slotB: { type: 'matchWinner', matchId: `r${round - 1}m${2 * i + 1}` },
+      });
+    }
+    prevCount = count;
+    round += 1;
+  }
+
   return matches;
 }
