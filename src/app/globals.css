@@ -196,12 +196,7 @@
 }
 .topbar-inner { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; height: 58px; display: flex; align-items: center; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-.brand-mark {
-  width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
-  background: var(--acc); color: var(--on-acc);
-  font-family: var(--font-display); font-style: italic; font-size: 14px; font-weight: 800;
-  letter-spacing: 0; flex-shrink: 0;
-}
+.brand-crest { display: block; flex-shrink: 0; }
 .brand-name {
   font-family: var(--font-display); font-style: italic; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.03em; font-size: 19px; line-height: 1;

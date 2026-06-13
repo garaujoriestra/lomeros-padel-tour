@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Crest from '@/components/shared/crest';
 
 export default async function LoginPage({
   searchParams,
@@ -11,7 +12,9 @@ export default async function LoginPage({
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--hero-bg)' }}>
       <div className="lpt-card card-pad w-full max-w-sm" style={{ textAlign: 'center' }}>
-        <div className="brand-mark" style={{ width: 44, height: 44, fontSize: 18, margin: '6px auto 12px' }}>LPT</div>
+        <div style={{ width: 44, margin: '6px auto 12px' }}>
+          <Crest size={44} title="Lomeros Padel Tour" />
+        </div>
         <h1 className="display" style={{ fontSize: 26, margin: 0 }}>Lomeros Padel Tour</h1>
         <p className="small muted" style={{ margin: '6px 0 18px' }}>Inicia sesión para ver tu perfil</p>
         {error && (

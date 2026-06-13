@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
 import { navLinks, isNavActive } from './nav-links';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
+import Crest from './crest';
 
 export interface NavSession {
   role: 'admin' | 'player';
@@ -44,7 +45,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
     <header className={`topbar ${session ? 'with-session' : ''}`} aria-label="Barra superior">
       <div className="topbar-inner">
         <Link href="/" className="brand" aria-label="Inicio">
-          <span className="brand-mark">LPT</span>
+          <Crest size={32} className="brand-crest" title="Lomeros Padel Tour" />
           <span className="brand-name">Lomeros Padel Tour</span>
         </Link>
 
