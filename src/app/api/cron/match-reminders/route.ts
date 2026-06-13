@@ -40,8 +40,10 @@ export async function GET(request: NextRequest) {
     if (!m) continue;
     const playerIds = [m.team1Player1Id, m.team1Player2Id, m.team2Player1Id, m.team2Player2Id];
     const userIds = await userIdsForPlayers(playerIds);
-    const detail = m.location ?? '';
-    await sendToUsers(userIds, buildReminderNotification(r.kind, detail, r.matchId));
+    await sendToUsers(
+      userIds,
+      buildReminderNotification(r.kind, { time: m.time, location: m.location }, r.matchId),
+    );
     sent++;
   }
 

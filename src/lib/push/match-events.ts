@@ -1,5 +1,8 @@
+import { db } from '@/lib/db';
+import { players } from '@/lib/db/schema';
 import { sendToUsers, userIdsForPlayers } from './send';
 import { buildResultNotification, buildAchievementNotification } from './notifications';
+import { computeResultPositions } from '@/lib/rankings/match-positions';
 import type { MatchRatingResult } from '@/lib/rating/process-match';
 
 interface MatchTeams {
@@ -20,11 +23,21 @@ export async function notifyMatchResult(match: MatchTeams, result: MatchRatingRe
         ? [match.team1Player1Id, match.team1Player2Id]
         : [match.team2Player1Id, match.team2Player2Id];
 
+    // Posición en el ranking (antes → después) de cada participante, con el
+    // estado de ELO ya actualizado en la DB.
+    const allPlayers = await db
+      .select({ id: players.id, eloRating: players.eloRating, matchesPlayed: players.matchesPlayed })
+      .from(players);
+    const positions = computeResultPositions(allPlayers, result.eloChanges);
+
     for (const ec of result.eloChanges) {
       const userIds = await userIdsForPlayers([ec.playerId]);
       if (userIds.length === 0) continue;
       const didWin = winners.includes(ec.playerId);
-      await sendToUsers(userIds, buildResultNotification(didWin, ec.eloChange, match.id));
+      await sendToUsers(
+        userIds,
+        buildResultNotification(didWin, ec.eloChange, match.id, positions.get(ec.playerId)),
+      );
     }
 
     for (const ach of result.newAchievements) {

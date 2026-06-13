@@ -1,4 +1,5 @@
 import { ACHIEVEMENT_BY_ID } from '@/lib/achievements/catalog';
+import type { ResultPosition } from '@/lib/rankings/match-positions';
 import type { PushPayload } from './types';
 
 export type ReminderKind = 'reminder_day' | 'reminder_eve';
@@ -7,12 +8,22 @@ export function buildResultNotification(
   didWin: boolean,
   eloChange: number,
   matchId: string,
+  position?: ResultPosition,
 ): PushPayload {
   const rounded = Math.round(eloChange);
   const sign = rounded >= 0 ? '+' : '';
+  // Posición en el ranking: muestra el movimiento «#5 → #3» cuando cambia de
+  // puesto; si no se mueve (o no tenemos la posición), muestra solo «#3».
+  let posPart = '';
+  if (position) {
+    posPart =
+      position.before != null && position.before !== position.after
+        ? ` · #${position.before} → #${position.after}`
+        : ` · #${position.after}`;
+  }
   return {
     title: didWin ? '🏆 ¡Victoria registrada!' : '📋 Resultado registrado',
-    body: `${didWin ? 'Ganaste' : 'Perdiste'} · ELO ${sign}${rounded}`,
+    body: `${didWin ? 'Ganaste' : 'Perdiste'} · ELO ${sign}${rounded}${posPart}`,
     url: `/matches/${matchId}`,
     tag: `result-${matchId}`,
   };
@@ -31,13 +42,21 @@ export function buildAchievementNotification(achievementId: string): PushPayload
 
 export function buildReminderNotification(
   kind: ReminderKind,
-  detail: string,
+  opts: { time?: string | null; location?: string | null },
   matchId: string,
 ): PushPayload {
-  const when = kind === 'reminder_day' ? 'Hoy juegas un partido' : 'Mañana tienes partido';
+  const day = kind === 'reminder_day' ? 'Hoy' : 'Mañana';
+  // Con hora: «Hoy a las 19:00». Sin hora (partidos antiguos sin time):
+  // fallback al texto genérico anterior.
+  let body = opts.time
+    ? `${day} a las ${opts.time}`
+    : kind === 'reminder_day'
+      ? 'Hoy juegas un partido'
+      : 'Mañana tienes partido';
+  if (opts.location) body += ` · ${opts.location}`;
   return {
     title: '🎾 Recordatorio de partido',
-    body: detail ? `${when} · ${detail}` : when,
+    body,
     url: `/matches/${matchId}`,
     tag: `reminder-${matchId}-${kind}`,
   };

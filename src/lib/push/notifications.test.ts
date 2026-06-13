@@ -20,6 +20,21 @@ describe('buildResultNotification', () => {
     expect(p.body).toContain('Perdiste');
     expect(p.body).toContain('-9');
   });
+
+  it('muestra el movimiento de posición con flecha cuando cambia', () => {
+    const p = buildResultNotification(true, 12, 'm1', { before: 5, after: 3 });
+    expect(p.body).toBe('Ganaste · ELO +12 · #5 → #3');
+  });
+
+  it('muestra solo la posición cuando no cambia de puesto', () => {
+    const p = buildResultNotification(true, 12, 'm1', { before: 3, after: 3 });
+    expect(p.body).toBe('Ganaste · ELO +12 · #3');
+  });
+
+  it('muestra solo la posición nueva si era su primer partido', () => {
+    const p = buildResultNotification(true, 12, 'm1', { before: null, after: 7 });
+    expect(p.body).toBe('Ganaste · ELO +12 · #7');
+  });
 });
 
 describe('buildAchievementNotification', () => {
@@ -36,16 +51,22 @@ describe('buildAchievementNotification', () => {
 });
 
 describe('buildReminderNotification', () => {
-  it('dice "Hoy" para reminder_day', () => {
-    const p = buildReminderNotification('reminder_day', 'Club Padel', 'm3');
-    expect(p.body).toContain('Hoy');
-    expect(p.body).toContain('Club Padel');
+  it('incluye hora y lugar para reminder_day', () => {
+    const p = buildReminderNotification('reminder_day', { time: '19:00', location: 'Club Padel' }, 'm3');
+    expect(p.body).toBe('Hoy a las 19:00 · Club Padel');
     expect(p.url).toBe('/matches/m3');
   });
 
-  it('dice "Mañana" para reminder_eve sin detalle', () => {
-    const p = buildReminderNotification('reminder_eve', '', 'm4');
-    expect(p.body).toContain('Mañana');
+  it('incluye hora para reminder_eve', () => {
+    const p = buildReminderNotification('reminder_eve', { time: '19:00', location: null }, 'm4');
+    expect(p.body).toBe('Mañana a las 19:00');
+  });
+
+  it('sin hora: usa el texto genérico (partidos antiguos)', () => {
+    const day = buildReminderNotification('reminder_day', { time: null, location: 'Club' }, 'm5');
+    expect(day.body).toBe('Hoy juegas un partido · Club');
+    const eve = buildReminderNotification('reminder_eve', {}, 'm6');
+    expect(eve.body).toBe('Mañana tienes partido');
   });
 });
 
