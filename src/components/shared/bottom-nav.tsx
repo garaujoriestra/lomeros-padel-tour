@@ -2,26 +2,28 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { House, Trophy, Swords, Coins } from 'lucide-react';
+import { House, Trophy, Swords, Users, Coins } from 'lucide-react';
 import { isNavActive } from './nav-links';
-import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 
 // Barra inferior curada para móvil (≠ menú de escritorio). La Timba ocupa el
-// centro como acción destacada tipo «ficha de casino»; Parejas pasa a la página
-// de Rankings, donde encaja como sub-clasificación.
+// centro como acción destacada tipo «ficha de casino». El perfil NO está aquí:
+// vive arriba a la derecha (avatar / «Entrar»), lo que libera el hueco para que
+// quepan todas las secciones principales.
 const LEFT = [
   { href: '/', label: 'Inicio', icon: House },
   { href: '/rankings', label: 'Ranking', icon: Trophy },
 ];
-const RIGHT = [{ href: '/matches', label: 'Partidos', icon: Swords }];
+const RIGHT = [
+  { href: '/matches', label: 'Partidos', icon: Swords },
+  { href: '/rankings/pairs', label: 'Parejas', icon: Users },
+];
 
-export function BottomNav({ player = null }: { player?: LptPlayer | null }) {
+export function BottomNav() {
   const pathname = usePathname();
-  const meActive = pathname === '/me' || pathname.startsWith('/me/');
-  const timbaActive = pathname === '/rankings/tokens' && !meActive;
+  const timbaActive = pathname === '/rankings/tokens';
 
   const item = (href: string, label: string, Icon: typeof House) => {
-    const active = isNavActive(href, pathname) && !meActive;
+    const active = isNavActive(href, pathname);
     return (
       <Link
         key={href}
@@ -53,25 +55,6 @@ export function BottomNav({ player = null }: { player?: LptPlayer | null }) {
       </Link>
 
       {RIGHT.map((l) => item(l.href, l.label, l.icon))}
-
-      {/* Yo (perfil propio) */}
-      <Link
-        href={player ? '/me' : '/login'}
-        aria-current={meActive ? 'page' : undefined}
-        className={`bn-item ${meActive ? 'active' : ''}`}
-      >
-        {player ? (
-          <LptAvatar player={player} size={20} />
-        ) : (
-          <span
-            className="lpt-avatar"
-            style={{ width: 20, height: 20, fontSize: 10, background: 'var(--surface-2)', color: 'var(--ink-3)' }}
-          >
-            ?
-          </span>
-        )}
-        Yo
-      </Link>
     </nav>
   );
 }

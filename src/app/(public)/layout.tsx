@@ -19,7 +19,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <main className="screen">
         <div className="lpt-container">{children}</div>
       </main>
-      <BottomNav player={player} />
+      <BottomNav />
     </div>
   );
 }
