@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
 import { navLinks, isNavActive } from './nav-links';
+import { NavProgress } from './nav-progress';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 
 export interface NavSession {
@@ -57,6 +58,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
                 href={link.href}
                 className={`nav-tab ${isNavActive(link.href, pathname) ? 'active' : ''}`}
               >
+                <NavProgress />
                 <Icon size={15} strokeWidth={2.2} /> {link.label}
               </Link>
             );

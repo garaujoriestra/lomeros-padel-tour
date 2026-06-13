@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { House, Trophy, Swords, Users, Coins } from 'lucide-react';
 import { isNavActive } from './nav-links';
+import { NavProgress } from './nav-progress';
 
 // Barra inferior curada para móvil (≠ menú de escritorio). La Timba ocupa el
 // centro como acción destacada tipo «ficha de casino». El perfil NO está aquí:
@@ -31,6 +32,7 @@ export function BottomNav() {
         aria-current={active ? 'page' : undefined}
         className={`bn-item ${active ? 'active' : ''}`}
       >
+        <NavProgress />
         <Icon size={19} strokeWidth={active ? 2.5 : 2} />
         {label}
       </Link>
@@ -47,6 +49,7 @@ export function BottomNav() {
         aria-current={timbaActive ? 'page' : undefined}
         className={`bn-item bn-timba ${timbaActive ? 'active' : ''}`}
       >
+        <NavProgress />
         <span className="bn-chip">
           <Coins size={22} strokeWidth={2.4} />
         </span>

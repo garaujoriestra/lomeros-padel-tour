@@ -441,6 +441,50 @@
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes chartDraw { to { stroke-dashoffset: 0; } }
 
+/* ════════════ Navegación entre pantallas ════════════ */
+
+/* Barra de progreso superior. Se renderiza dentro de un <Link> (useLinkStatus)
+   pero se fija arriba a lo ancho. Solo se revela si la navegación tarda más de
+   ~120 ms (animation-delay), así los cambios rápidos no la hacen parpadear. */
+.route-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 9998;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.route-progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, transparent, var(--acc));
+  transform: translateX(-120%);
+}
+.route-progress--active {
+  animation: routeProgressReveal 0.2s ease 0.12s forwards;
+}
+.route-progress--active::before {
+  animation: routeProgressSlide 1.1s ease-in-out 0.12s infinite;
+}
+@keyframes routeProgressReveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes routeProgressSlide {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(400%); }
+}
+
+/* Skeletons (loading.tsx) con aparición retrasada: arrancan invisibles y solo
+   se muestran si la carga pasa de ~200 ms. En navegaciones rápidas el contenido
+   sustituye al esqueleto antes de que se llegue a ver → se elimina el flash.
+   En cargas lentas el esqueleto entra con un fundido suave. */
+.screen [role="status"][aria-busy="true"] {
+  animation: skeletonReveal 0.25s ease 0.2s both;
+}
+@keyframes skeletonReveal { from { opacity: 0; } to { opacity: 1; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
