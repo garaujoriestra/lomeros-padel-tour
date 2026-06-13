@@ -11,7 +11,7 @@ import { computeSideStats } from '@/lib/rating/side-stats';
 import { expectedScore } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
 import { getSession } from '@/lib/auth/session';
-import { currentMatchOdds } from '@/lib/betting/match-odds';
+import { currentMatchPools } from '@/lib/betting/match-odds';
 import { bettingClosesAt, isBettingOpen } from '@/lib/betting/close-time';
 import { hasPendingPenalty } from '@/lib/betting/settle';
 import { BETTING } from '@/lib/betting/config';
@@ -299,40 +299,32 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const bettingOpen = isBettingOpen(match);
   let timba: React.ReactNode = null;
   if (bettingOpen) {
-    const odds = await currentMatchOdds(match);
+    const pools = await currentMatchPools(match);
     const allBets = (await db
       .select({
-        id: bets.id,
-        playerId: bets.playerId,
-        market: bets.market,
-        predictedTeam: bets.predictedTeam,
-        predictedScore: bets.predictedScore,
-        amount: bets.amount,
-        odds: bets.odds,
-        playerName: players.name,
-        playerNickname: players.nickname,
-        playerAvatarUrl: players.avatarUrl,
+        id: bets.id, playerId: bets.playerId, market: bets.market,
+        predictedTeam: bets.predictedTeam, predictedScore: bets.predictedScore, amount: bets.amount,
+        playerName: players.name, playerNickname: players.nickname, playerAvatarUrl: players.avatarUrl,
       })
-      .from(bets)
-      .innerJoin(players, eq(players.id, bets.playerId))
+      .from(bets).innerJoin(players, eq(players.id, bets.playerId))
       .where(eq(bets.matchId, match.id))) as PublicBet[];
 
     const me = session?.player ?? null;
-    const matchPlayerIds = [match.team1Player1Id, match.team1Player2Id, match.team2Player1Id, match.team2Player2Id];
+    const team1Ids = [match.team1Player1Id, match.team1Player2Id];
+    const team2Ids = [match.team2Player1Id, match.team2Player2Id];
+    const ownTeam: 0 | 1 | 2 = me && team1Ids.includes(me.id) ? 1 : me && team2Ids.includes(me.id) ? 2 : 0;
     const myBets = me ? allBets.filter((b) => b.playerId === me.id) : [];
-    const team1Label = `${displayName(t1p1)}/${displayName(t1p2)}`;
-    const team2Label = `${displayName(t2p1)}/${displayName(t2p2)}`;
 
     timba = (
       <BettingCard
         matchId={match.id}
-        team1Label={team1Label}
-        team2Label={team2Label}
-        odds={odds}
+        team1Label={`${displayName(t1p1)}/${displayName(t1p2)}`}
+        team2Label={`${displayName(t2p1)}/${displayName(t2p2)}`}
+        pools={pools}
         closesAtIso={bettingClosesAt(match.date, match.time).toISOString()}
         balance={me ? me.tokenBalance : null}
         bankrupt={me ? await hasPendingPenalty(me.id) : false}
-        canBet={!!me && !matchPlayerIds.includes(me.id)}
+        ownTeam={ownTeam}
         myBets={myBets}
         allBets={allBets}
         minBet={BETTING.minBet}
