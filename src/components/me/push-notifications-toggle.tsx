@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { urlBase64ToUint8Array } from '@/lib/push/client';
+import { subscribeToPush, PushPermissionDeniedError } from '@/lib/push/client';
 
 type State = 'loading' | 'unsupported' | 'needs-install' | 'off' | 'on';
 
@@ -44,33 +44,15 @@ export function PushNotificationsToggle() {
   async function enable() {
     setBusy(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        toast.error('Permiso de notificaciones denegado');
-        return;
-      }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as Uint8Array<ArrayBuffer>,
-      });
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: JSON.parse(JSON.stringify(sub)) }),
-      });
-      if (!res.ok) throw new Error('subscribe failed');
+      await subscribeToPush();
       setState('on');
       toast.success('Notificaciones activadas');
-    } catch {
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        const existing = await reg.pushManager.getSubscription();
-        await existing?.unsubscribe();
-      } catch {
-        /* best-effort cleanup */
+    } catch (err) {
+      if (err instanceof PushPermissionDeniedError) {
+        toast.error('Permiso de notificaciones denegado');
+      } else {
+        toast.error('No se pudieron activar las notificaciones');
       }
-      toast.error('No se pudieron activar las notificaciones');
     } finally {
       setBusy(false);
     }

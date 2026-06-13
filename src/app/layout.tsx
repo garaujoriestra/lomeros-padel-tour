@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Archivo, Barlow_Condensed } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
+import { NotificationReminderGate } from "@/components/shared/notification-reminder-gate";
 import "./globals.css";
 
 // Splash de marca que se pinta al instante (estilos inline, sin esperar al CSS
@@ -64,6 +66,9 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Toaster richColors position="top-right" />
+          <Suspense fallback={null}>
+            <NotificationReminderGate />
+          </Suspense>
         </ThemeProvider>
         <ServiceWorkerRegister />
       </body>

@@ -329,6 +329,7 @@
 .bar-fill.win { background: var(--win); }
 .bar-fill.loss { background: var(--loss); }
 @keyframes barGrow { from { transform: scaleX(0); } }
+@keyframes fadeIn { from { opacity: 0; } }
 
 .form-dot {
   width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
