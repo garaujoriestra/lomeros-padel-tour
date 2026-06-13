@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import type { Player } from '@/lib/db/schema';
+import { PairingSuggestions } from '@/components/admin/pairing-suggestions';
 
 interface MatchFormProps {
   players: Player[];
@@ -73,6 +74,19 @@ export function MatchForm({ players }: MatchFormProps) {
 
   function getPlayerName(id: string) {
     return players.find((p) => p.id === id)?.name || '—';
+  }
+
+  function applyCombo(
+    t1: [string, string],
+    t2: [string, string],
+    t1Sides: [string, string],
+    t2Sides: [string, string],
+  ) {
+    setTeam1(t1);
+    setTeam2(t2);
+    setTeam1Sides(t1Sides);
+    setTeam2Sides(t2Sides);
+    toast.success('Combinación aplicada ✓');
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -251,6 +265,15 @@ export function MatchForm({ players }: MatchFormProps) {
           {playerSlot(team2, setTeam2, team2Sides, setTeam2Sides, '🔴 Equipo 2', 'text-loss')}
         </div>
       </div>
+
+      {/* Recomendador de parejas — solo al programar */}
+      {mode === 'scheduled' && (
+        <PairingSuggestions
+          selectedIds={[...team1, ...team2]}
+          players={players}
+          onApply={applyCombo}
+        />
+      )}
 
       {/* Sets — only shown in completed mode */}
       {mode === 'completed' && (
