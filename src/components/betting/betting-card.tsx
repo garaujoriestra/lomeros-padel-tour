@@ -51,7 +51,21 @@ export function BettingCard(props: BettingCardProps) {
 
   const selKey = market === 'winner' ? `team:${team}` : `exact:${team}:${score}`;
   const marketView = market === 'winner' ? props.pools.winner : props.pools.exact;
-  const provMult = marketView.selections[selKey]?.multiplier ?? null;
+
+  // Pago estimado si aciertas: pari-mutuel metiendo TU apuesta en el bote.
+  // Se excluye tu apuesta previa en este mercado, porque el POST la sustituye.
+  const myInMarket = props.myBets.find((b) => b.market === market);
+  const mySelKey = myInMarket
+    ? myInMarket.market === 'winner'
+      ? `team:${myInMarket.predictedTeam}`
+      : `exact:${myInMarket.predictedTeam}:${myInMarket.predictedScore}`
+    : null;
+  const baseTotal = marketView.total - (myInMarket?.amount ?? 0);
+  const baseSel = (marketView.selections[selKey]?.pool ?? 0) - (mySelKey === selKey ? (myInMarket?.amount ?? 0) : 0);
+  const validAmount = amount >= props.minBet && amount <= props.maxBet;
+  const estPayout = validAmount ? Math.round((amount * (baseTotal + amount)) / (baseSel + amount)) : null;
+  const estRatio = estPayout != null && amount > 0 ? Math.round((estPayout / amount) * 10) / 10 : null;
+  const noPoolYet = baseTotal <= 0; // serías el primero del mercado
 
   async function placeBet() {
     setLoading(true);
@@ -117,7 +131,7 @@ export function BettingCard(props: BettingCardProps) {
                   {teamLabel(t)} {fav && <span title="Favorito según Elo">⭐</span>}
                 </div>
                 <div className="small num muted" style={{ fontSize: 11.5, marginTop: 3 }}>
-                  Bote {v.pool} {v.multiplier != null ? `· x${v.multiplier}` : '· —'}
+                  Bote {v.pool} fichas{v.multiplier != null ? ` · x${v.multiplier}` : ''}
                 </div>
               </button>
             );
@@ -160,12 +174,16 @@ export function BettingCard(props: BettingCardProps) {
               }}>
               Apostar · {teamLabel(team)}{market === 'exact_score' ? ` ${score}` : ''}
             </button>
-            <div className="small muted" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+            <div className="small muted" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, gap: 8, flexWrap: 'wrap' }}>
               <span>Saldo: <b className="num" style={{ color: 'var(--ink)' }}>{props.balance} fichas</b></span>
-              <span>Cuota provisional: <b className="num" style={{ color: 'var(--acc-text)' }}>{provMult != null ? `x${provMult}` : '—'}</b></span>
+              {estPayout != null && (
+                <span>Si aciertas, cobras ≈ <b className="num" style={{ color: 'var(--acc-text)' }}>{estPayout} fichas</b>{estRatio != null ? ` (x${estRatio})` : ''}</span>
+              )}
             </div>
             <p className="small muted" style={{ margin: 0, fontSize: 11 }}>
-              La cuota es orientativa: el pago final depende de cómo quede el bote al cerrar.
+              {noPoolYet
+                ? 'Aún no hay bote: serías el primero. Tu cobro crecerá según cuánta gente apueste al otro lado.'
+                : 'Estimación orientativa: el cobro real depende de cómo quede el bote al cerrar.'}
             </p>
           </div>
         )}
