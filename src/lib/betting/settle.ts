@@ -67,7 +67,7 @@ export async function refundOpenBets(matchId: string): Promise<SettledBetForPush
       await applyTokenMovement(bet.playerId, bet.amount, 'bet_refunded', bet.id);
     }
     await db.update(bets).set({ status: 'refunded', settledAt: now() }).where(eq(bets.id, bet.id));
-    results.push({ playerId: bet.playerId, status: 'refunded', amount: bet.amount, payout: 0 });
+    results.push({ playerId: bet.playerId, status: 'refunded', amount: bet.amount, payout: bet.amount });
   }
   return results;
 }

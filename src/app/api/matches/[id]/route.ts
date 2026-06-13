@@ -37,11 +37,12 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     const [match] = await db.select().from(matches).where(eq(matches.id, id));
     if (match) {
       if (match.status === 'completed') {
-        // Deshacer la liquidación: los ganadores devuelven el premio,
-        // los perdedores recuperan lo apostado.
+        // Deshacer la liquidación: retira lo pagado a ganadores/devueltos y
+        // reabre todas las apuestas. Los perdedores (con su stake aún
+        // comprometido) recuperan su apuesta en el refundOpenBets siguiente.
         await reverseSettlement(id);
       }
-      // Devolver las apuestas que queden abiertas y avisar
+      // Devolver TODAS las apuestas reabiertas (incluidas las que perdieron).
       const refunded = await refundOpenBets(id);
       await notifyBetSettlements(id, refunded);
     }
