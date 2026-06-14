@@ -199,7 +199,7 @@ export const tournamentCourts = sqliteTable('tournament_courts', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
   label: text('label').notNull(),
-  order: integer('order').notNull(), // 1 = pista más alta (top del pozo)
+  order: integer('sort_order').notNull(), // 1 = pista más alta (top del pozo)
   availableFrom: text('available_from').notNull(), // "HH:MM"
   availableTo: text('available_to').notNull(),     // "HH:MM"
 });
@@ -215,7 +215,7 @@ export const tournamentParticipants = sqliteTable('tournament_participants', {
 export const tournamentBlocks = sqliteTable('tournament_blocks', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
-  order: integer('order').notNull(),
+  order: integer('sort_order').notNull(),
   type: text('type').notNull(), // 'pozo' | 'fixed_pairs'
   name: text('name').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
