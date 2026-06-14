@@ -132,6 +132,57 @@ modularizado (`lib/players`, `lib/betting`, `lib/rankings`…), lo que ayuda.
 
 ---
 
-## 4. Próximo paso
+## 4. Difusión / Go-To-Market
+
+**El marketing ES el crecimiento aquí**: el riesgo real del proyecto es que no lo
+adopte ningún grupo más allá del propio. Restricción rectora (del "side project
+low-maintenance"): **nada de canal de contenido a jornada**. Llevar un
+TikTok/Instagram con publicaciones regulares es un trabajo a tiempo parcial que
+suele morir; no es donde está el ROI.
+
+Consecuencia de no depender de salir en cámara: **todo el material visual lo
+genera el propio producto**, no edición manual de vídeos.
+
+### A. Viralidad en producto — el motor durable (mayor palanca)
+Por orden de impacto:
+1. **Recap de temporada compartible** 🏆 — *pieza estrella*. Al cerrar temporada,
+   la app genera automáticamente una imagen/vídeo (campeón, mejor pareja, datos
+   de la Timba, momentazos) con la marca y el ⭐ Tour Oficial. Lo que la gente
+   *quiere* postear; cero esfuerzo manual. Se apoya en la generación de OG images
+   que ya existe.
+2. **Share cards con marca en cada resultado** — extensión del share actual; cada
+   partido compartido enlaza de vuelta y muestra la marca.
+3. **Atribución sutil en grupos gratis** — los shares de grupos gratis llevan un
+   "hecho con [marca]" → **cada compartición es un anuncio**. Quitar ese sello es
+   parte de lo que se paga (enlaza con el paywall de Fase 3). Doble win.
+4. **Invitar/unirse sin fricción** (link/código) — ya es parte de la Fase 2.
+
+### B. Siembra manual — ráfagas, no canal diario
+- **Dónde:** grupos de Facebook de pádel, r/padel, Telegram/WhatsApp locales,
+  tablones de clubes, foros, red propia.
+- **Qué (clave anti-spam):** no "mira mi app", sino **el artefacto** — el recap
+  real del propio grupo: *"así llevo el ranking y las apuestas de mi grupo, lo
+  monté con…"*. El recap *es* el anuncio, y es auténtico.
+- **Cuándo:** lanzamiento + cada hito, en bursts. Respetar normas de cada
+  comunidad.
+
+### C. Ads — acelerador, no base
+Con un producto de ~20 €/año el LTV es bajo: **los ads no son el motor** y no hay
+que esperar ROI directo. Úsalos como dial:
+- Preferible a ads genéricos: **micro-colaboraciones** con clubes locales o
+  pequeños creadores de pádel (el club lo comparte con sus socios). Más auténtico
+  y barato.
+- Si se prueban ads: presupuestos pequeños (50-100 € de test), promocionar *el
+  mejor recap*, medir y matar rápido. Nunca convertirlo en gasto fijo.
+
+### Encaje en el roadmap
+La difusión no es una fase aparte. La **viralidad (A) es trabajo de producto** que
+vive en las Fases 3-4 (recap y share cards con marca y paywall). La **siembra (B)**
+y los **ads (C)** son actividades de lanzamiento que arrancan tras la Fase 2
+(onboarding listo).
+
+---
+
+## 5. Próximo paso
 Diseñar a fondo la **Fase 1 (multi-tenant core)** como primer spec de
 implementación.
