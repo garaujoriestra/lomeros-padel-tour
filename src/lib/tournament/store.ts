@@ -3,11 +3,12 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import {
   tournaments, tournamentCourts, tournamentParticipants,
-  tournamentBlocks, tournamentGroups, tournamentPairs,
+  tournamentBlocks, tournamentGroups, tournamentPairs, tournamentMatches,
 } from '@/lib/db/schema';
-import type { MatchFormat } from './types';
+import type { MatchFormat, SlotRef } from './types';
 import type { GenBlock, GenCourt } from './generate';
-import { hhmmToMin } from './time';
+import { generateTournament } from './generate';
+import { hhmmToMin, minToHHMM } from './time';
 
 type Db = LibSQLDatabase<typeof schema>;
 
@@ -154,4 +155,54 @@ export async function loadTournamentConfig(db: Db, tournamentId: string): Promis
   }
 
   return { blocks, courts };
+}
+
+export interface StoreResult {
+  matchCount: number;
+  warnings: string[];
+}
+
+// Genera la parrilla y la guarda. Pre-genera un UUID por partido, mapea engineMatchId->UUID
+// por bloque, y reescribe los slots matchWinner antes de insertar (una sola pasada).
+export async function generateAndStore(db: Db, tournamentId: string): Promise<StoreResult> {
+  const { blocks, courts } = await loadTournamentConfig(db, tournamentId);
+  const { matches, warnings } = generateTournament(blocks, courts);
+
+  const idByEngine = new Map<string, string>(); // `${blockId}:${engineMatchId}` -> uuid
+  const rows = matches.map((m) => {
+    const id = crypto.randomUUID();
+    if (m.engineMatchId) idByEngine.set(`${m.blockId}:${m.engineMatchId}`, id);
+    return { id, m };
+  });
+
+  const slotJson = (blockId: string, slot: SlotRef | null): string | null => {
+    if (!slot) return null;
+    if (slot.type === 'matchWinner') {
+      const mapped = idByEngine.get(`${blockId}:${slot.matchId}`);
+      return JSON.stringify(mapped ? { type: 'matchWinner', matchId: mapped } : slot);
+    }
+    return JSON.stringify(slot);
+  };
+
+  for (const { id, m } of rows) {
+    await db.insert(tournamentMatches).values({
+      id,
+      tournamentId,
+      blockId: m.blockId,
+      courtId: m.courtId ?? null,
+      round: m.round,
+      phaseTag: m.phaseTag,
+      scheduledStart: m.startMin !== null ? minToHHMM(m.startMin) : null,
+      scheduledEnd: m.endMin !== null ? minToHHMM(m.endMin) : null,
+      status: 'pending',
+      slotA1: slotJson(m.blockId, m.slotA1),
+      slotA2: slotJson(m.blockId, m.slotA2),
+      slotB1: slotJson(m.blockId, m.slotB1),
+      slotB2: slotJson(m.blockId, m.slotB2),
+    });
+  }
+
+  await db.update(tournaments).set({ status: 'scheduled' }).where(eq(tournaments.id, tournamentId));
+
+  return { matchCount: rows.length, warnings };
 }

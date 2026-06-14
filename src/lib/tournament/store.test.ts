@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
-import { createTournament, loadTournamentConfig } from './store';
+import { createTournament, loadTournamentConfig, generateAndStore } from './store';
 import type { CreateTournamentInput } from './store';
 import type { GenPozoBlock, GenFixedPairsBlock } from './generate';
-import { tournamentCourts, tournamentParticipants, tournamentBlocks, tournamentGroups, tournamentPairs } from '@/lib/db/schema';
+import { tournamentCourts, tournamentParticipants, tournamentBlocks, tournamentGroups, tournamentPairs, tournamentMatches, tournaments } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const sampleInput: CreateTournamentInput = {
@@ -101,5 +101,50 @@ describe('loadTournamentConfig', () => {
     expect(fixed.groups).toEqual([]);
     expect(fixed.knockoutSeeds).toHaveLength(2);
     expect(fixed.knockoutSeeds.length).toBe(2);
+  });
+});
+
+describe('generateAndStore', () => {
+  it('guarda la parrilla y remapea las refs del cuadro a UUIDs reales', async () => {
+    const db = await createTestDb();
+    const id = await createTournament(db, {
+      name: 'KO', date: '2026-06-13',
+      courts: [
+        { label: 'P1', order: 1, availableFrom: '10:00', availableTo: '13:00' },
+        { label: 'P2', order: 2, availableFrom: '10:00', availableTo: '13:00' },
+      ],
+      participantPlayerIds: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+      blocks: [{
+        order: 1, type: 'fixed_pairs', name: 'Cuadro', durationMinutes: 180,
+        config: { matchFormat: { kind: 'timed', minutes: 30, tieRule: 'golden_point' }, bufferMinutes: 0, knockout: true },
+        pairs: [
+          { player1Id: 'a', player2Id: 'b', seed: 1 },
+          { player1Id: 'c', player2Id: 'd', seed: 2 },
+          { player1Id: 'e', player2Id: 'f', seed: 3 },
+          { player1Id: 'g', player2Id: 'h', seed: 4 },
+        ],
+      }],
+    });
+
+    const res = await generateAndStore(db, id);
+    expect(res.matchCount).toBe(3); // 2 de ronda 0 + final
+    expect(res.warnings).toEqual([]);
+
+    const rows = await db.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+    expect(rows).toHaveLength(3);
+    expect(rows.every((r) => r.scheduledStart && /^\d{2}:\d{2}$/.test(r.scheduledStart))).toBe(true);
+
+    const r0Ids = new Set(rows.filter((r) => r.phaseTag === 'ko:r0').map((r) => r.id));
+    expect(r0Ids.size).toBe(2);
+    const final = rows.find((r) => r.phaseTag === 'ko:r1')!;
+    const slotA = JSON.parse(final.slotA1!);
+    const slotB = JSON.parse(final.slotB1!);
+    expect(slotA.type).toBe('matchWinner');
+    expect(r0Ids.has(slotA.matchId)).toBe(true);
+    expect(r0Ids.has(slotB.matchId)).toBe(true);
+    expect(slotA.matchId).not.toBe(slotB.matchId);
+
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id));
+    expect(t.status).toBe('scheduled');
   });
 });
