@@ -1,7 +1,7 @@
 import type { MatchFormat, SlotRef } from './types';
 import { seedPozoCourts, courtPairing } from './pozo';
 import { estimatedMatchMinutes, scheduleMatches, type CourtWindow, type ScheduleItem } from './scheduler';
-import { roundRobinSchedule } from './fixed-pairs';
+import { roundRobinSchedule, buildBracket } from './fixed-pairs';
 
 export interface GenCourt {
   courtId: string;
@@ -176,4 +176,62 @@ export function layoutGroups(block: GenFixedPairsBlock, courts: GenCourt[]): Gro
     : [];
 
   return { matches, endMin, warnings };
+}
+
+export interface BracketLayout {
+  matches: GenMatch[];
+  warnings: string[];
+}
+
+// Construye y reparte el cuadro por rondas. Cada ronda arranca tras la anterior; los partidos
+// de una ronda se distribuyen entre pistas (por order) en franjas de slotMinutes. Asume que las
+// pistas siguen disponibles; avisa si se sale del tiempo del bloque.
+export function layoutBracket(
+  leafSlots: SlotRef[],
+  block: GenFixedPairsBlock,
+  courts: GenCourt[],
+  startMin: number,
+): BracketLayout {
+  const bracket = buildBracket(leafSlots);
+  if (bracket.length === 0) return { matches: [], warnings: [] };
+
+  const slotMinutes = estimatedMatchMinutes(block.matchFormat) + block.bufferMinutes;
+  const sortedCourts = [...courts].sort((a, b) => a.order - b.order);
+  const numCourts = Math.max(1, sortedCourts.length);
+
+  const rounds = [...new Set(bracket.map((m) => m.round))].sort((a, b) => a - b);
+  const matches: GenMatch[] = [];
+  let cursor = startMin;
+
+  for (const round of rounds) {
+    const inRound = bracket.filter((m) => m.round === round);
+    let roundEnd = cursor;
+    inRound.forEach((bm, idx) => {
+      const courtIdx = idx % numCourts;
+      const slot = Math.floor(idx / numCourts);
+      const sMin = cursor + slot * slotMinutes;
+      const eMin = sMin + slotMinutes;
+      if (eMin > roundEnd) roundEnd = eMin;
+      matches.push({
+        blockId: block.blockId,
+        courtId: sortedCourts[courtIdx].courtId,
+        round,
+        phaseTag: `ko:r${round}`,
+        startMin: sMin,
+        endMin: eMin,
+        slotA1: bm.slotA,
+        slotA2: null,
+        slotB1: bm.slotB,
+        slotB2: null,
+      });
+    });
+    cursor = roundEnd;
+  }
+
+  const blockEnd = block.startMin + block.durationMinutes;
+  const warnings = cursor > blockEnd
+    ? [`Bloque ${block.blockId}: el cuadro no cabe en el tiempo del bloque (acaba a los ${cursor - block.startMin} min, disponible ${block.durationMinutes})`]
+    : [];
+
+  return { matches, warnings };
 }

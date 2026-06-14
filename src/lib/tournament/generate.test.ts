@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutPozo, qualifierSeeds, layoutGroups } from './generate';
+import { layoutPozo, qualifierSeeds, layoutGroups, layoutBracket } from './generate';
 import type { GenPozoBlock, GenCourt, GenFixedPairsBlock } from './generate';
 
 const courts: GenCourt[] = [
@@ -95,5 +95,41 @@ describe('layoutGroups', () => {
     const res = layoutGroups(block, courts);
     expect(res.matches).toEqual([]);
     expect(res.endMin).toBe(17 * 60);
+  });
+});
+
+describe('layoutBracket', () => {
+  const block: GenFixedPairsBlock = {
+    blockId: 'b5', type: 'fixed_pairs', startMin: 18 * 60, durationMinutes: 120,
+    matchFormat: { kind: 'timed', minutes: 30, tieRule: 'golden_point' }, bufferMinutes: 0,
+    groups: [], knockout: true, advancePerGroup: 0, knockoutSeeds: ['A', 'B', 'C', 'D'],
+  };
+
+  it('4 parejas: ronda 0 (2 partidos en paralelo) y luego la final, en franjas consecutivas', () => {
+    const leaves: import('./types').SlotRef[] = block.knockoutSeeds.map((pairId) => ({ type: 'pair', pairId }));
+    const res = layoutBracket(leaves, block, courts, block.startMin);
+    expect(res.warnings).toEqual([]);
+    expect(res.matches).toHaveLength(3); // 2 de ronda 0 + 1 final
+
+    const r0 = res.matches.filter((m) => m.round === 0);
+    expect(r0).toHaveLength(2);
+    // Ronda 0 en paralelo: ambos a las 18:00, en pistas distintas.
+    expect(r0.every((m) => m.startMin === 18 * 60)).toBe(true);
+    expect(new Set(r0.map((m) => m.courtId)).size).toBe(2);
+    expect(r0.every((m) => m.phaseTag === 'ko:r0')).toBe(true);
+
+    // La final empieza después de la ronda 0 (18:30).
+    const final = res.matches.find((m) => m.round === 1)!;
+    expect(final.startMin).toBe(18 * 60 + 30);
+    expect(final.phaseTag).toBe('ko:r1');
+    expect(final.slotA1).toEqual({ type: 'matchWinner', matchId: 'r0m0' });
+  });
+
+  it('avisa si el cuadro se sale del tiempo del bloque', () => {
+    const tight: GenFixedPairsBlock = { ...block, durationMinutes: 30 }; // solo cabe 1 franja
+    const leaves: import('./types').SlotRef[] = ['A', 'B', 'C', 'D'].map((pairId) => ({ type: 'pair', pairId }));
+    const res = layoutBracket(leaves, tight, courts, tight.startMin);
+    expect(res.warnings.length).toBeGreaterThan(0);
+    expect(res.warnings[0]).toContain('cuadro');
   });
 });
