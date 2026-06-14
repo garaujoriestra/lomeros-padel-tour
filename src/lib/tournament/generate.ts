@@ -235,3 +235,36 @@ export function layoutBracket(
 
   return { matches, warnings };
 }
+
+// Compone todos los bloques (en orden) en una sola parrilla con avisos de viabilidad.
+export function generateTournament(blocks: GenBlock[], courts: GenCourt[]): GenResult {
+  const matches: GenMatch[] = [];
+  const warnings: string[] = [];
+
+  const ordered = [...blocks].sort((a, b) => a.startMin - b.startMin);
+
+  for (const block of ordered) {
+    if (block.type === 'pozo') {
+      matches.push(...layoutPozo(block, courts));
+      continue;
+    }
+
+    // fixed_pairs
+    const groupLayout = layoutGroups(block, courts);
+    matches.push(...groupLayout.matches);
+    warnings.push(...groupLayout.warnings);
+
+    if (block.knockout) {
+      const fromGroups = block.groups.length > 0;
+      const leaves = fromGroups
+        ? qualifierSeeds(block.groups, block.advancePerGroup)
+        : block.knockoutSeeds.map((pairId): SlotRef => ({ type: 'pair', pairId }));
+      const startMin = fromGroups ? groupLayout.endMin : block.startMin;
+      const bracketLayout = layoutBracket(leaves, block, courts, startMin);
+      matches.push(...bracketLayout.matches);
+      warnings.push(...bracketLayout.warnings);
+    }
+  }
+
+  return { matches, warnings };
+}
