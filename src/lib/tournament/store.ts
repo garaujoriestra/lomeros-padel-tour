@@ -43,6 +43,12 @@ export interface CreateTournamentInput {
 }
 
 // Inserta toda la configuración del torneo. Devuelve el id del torneo.
+// NOTA: inserts secuenciales sin transacción. Envolver en db.transaction() sería
+// lo ideal para atomicidad, pero el driver `:memory:` de @libsql/client recrea una
+// DB vacía al commitear una transacción, lo que rompe el harness de test (única infra
+// con la que verificamos esta función). Como es un alta admin puntual (sin lectores
+// concurrentes; ante fallo el admin reintenta), se difiere hasta poder testear contra
+// una DB de fichero o en el Plan 6 (capa API).
 export async function createTournament(db: Db, input: CreateTournamentInput): Promise<string> {
   const [tournament] = await db.insert(tournaments).values({
     name: input.name,
@@ -115,6 +121,8 @@ export async function loadTournamentConfig(db: Db, tournamentId: string): Promis
   const blocks: GenBlock[] = [];
   let cursor = tournamentStart;
   for (const b of blockRows) {
+    // Cast seguro: createTournament es el único escritor de `config` (datos internos de confianza;
+    // la validación de entrada se delega a la capa API en el Plan 6).
     const config = JSON.parse(b.config) as BlockConfig;
     const startMin = cursor;
     cursor += b.durationMinutes;
