@@ -55,6 +55,9 @@ export interface GenResult {
 // juegan a la vez por ronda.
 export function layoutPozo(block: GenPozoBlock, courts: GenCourt[]): GenMatch[] {
   const sortedCourts = [...courts].sort((a, b) => a.order - b.order);
+  // v1: el pozo usa las pistas por `order` y asume que están libres durante todo el bloque
+  // (no comprueba fromMin/toMin de cada pista). Refinamiento futuro si hay pistas que cierran antes.
+  // nº de pistas activas = grupos completos de 4 (los sobrantes descansan, ver seedPozoCourts)
   const numCourts = Math.min(sortedCourts.length, Math.floor(block.participantIds.length / 4));
   const numRounds = Math.floor(block.durationMinutes / block.roundMinutes);
   if (numCourts < 1 || numRounds < 1) return [];
@@ -87,6 +90,8 @@ export function layoutPozo(block: GenPozoBlock, courts: GenCourt[]): GenMatch[] 
   return matches;
 }
 
+// Precondición: advancePerGroup <= nº de parejas del grupo más pequeño (si no, genera
+// placeholders "Nº Grupo" que nunca podrán rellenarse).
 // Hojas del cuadro (en orden de siembra) cuando los clasificados salen de grupos.
 // Intercala por posición: 1º de cada grupo, luego 2º de cada grupo, etc.
 export function qualifierSeeds(
