@@ -166,7 +166,8 @@ export interface StoreResult {
 // por bloque, y reescribe los slots matchWinner antes de insertar (una sola pasada).
 export async function generateAndStore(db: Db, tournamentId: string): Promise<StoreResult> {
   const { blocks, courts } = await loadTournamentConfig(db, tournamentId);
-  const { matches, warnings } = generateTournament(blocks, courts);
+  const { matches, warnings: genWarnings } = generateTournament(blocks, courts);
+  const warnings = [...genWarnings];
 
   const idByEngine = new Map<string, string>(); // `${blockId}:${engineMatchId}` -> uuid
   const rows = matches.map((m) => {
@@ -179,7 +180,14 @@ export async function generateAndStore(db: Db, tournamentId: string): Promise<St
     if (!slot) return null;
     if (slot.type === 'matchWinner') {
       const mapped = idByEngine.get(`${blockId}:${slot.matchId}`);
-      return JSON.stringify(mapped ? { type: 'matchWinner', matchId: mapped } : slot);
+      if (!mapped) {
+        // No debería ocurrir: todo matchWinner del motor referencia un partido del mismo
+        // bloque ya mapeado. Si pasa, avisamos en vez de persistir una clave irresoluble
+        // (el Plan 5 no podría propagar ese ganador).
+        warnings.push(`Ref de cuadro sin mapear: ${blockId}:${slot.matchId}`);
+        return JSON.stringify(slot);
+      }
+      return JSON.stringify({ type: 'matchWinner', matchId: mapped });
     }
     return JSON.stringify(slot);
   };
@@ -189,7 +197,7 @@ export async function generateAndStore(db: Db, tournamentId: string): Promise<St
       id,
       tournamentId,
       blockId: m.blockId,
-      courtId: m.courtId ?? null,
+      courtId: m.courtId,
       round: m.round,
       phaseTag: m.phaseTag,
       scheduledStart: m.startMin !== null ? minToHHMM(m.startMin) : null,
