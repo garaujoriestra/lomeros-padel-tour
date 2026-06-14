@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { layoutPozo, qualifierSeeds } from './generate';
-import type { GenPozoBlock, GenCourt } from './generate';
+import { layoutPozo, qualifierSeeds, layoutGroups } from './generate';
+import type { GenPozoBlock, GenCourt, GenFixedPairsBlock } from './generate';
 
 const courts: GenCourt[] = [
   { courtId: 'c1', order: 1, fromMin: 17 * 60, toMin: 20 * 60 },
@@ -47,5 +47,53 @@ describe('qualifierSeeds', () => {
       { type: 'placeholder', desc: '2º A' },
       { type: 'placeholder', desc: '2º B' },
     ]);
+  });
+});
+
+describe('layoutGroups', () => {
+  it('reparte la liguilla en pistas sin solapar parejas y reporta el fin de fase', () => {
+    const block: GenFixedPairsBlock = {
+      blockId: 'b2', type: 'fixed_pairs', startMin: 17 * 60, durationMinutes: 120,
+      matchFormat: { kind: 'timed', minutes: 20, tieRule: 'golden_point' }, bufferMinutes: 0,
+      groups: [{ groupId: 'g1', name: 'A', pairIds: ['pa', 'pb', 'pc', 'pd'] }],
+      knockout: false, advancePerGroup: 2, knockoutSeeds: [],
+    };
+    const res = layoutGroups(block, courts);
+    // Round-robin de 4 parejas = 6 partidos.
+    expect(res.matches).toHaveLength(6);
+    expect(res.matches.every((m) => m.phaseTag === 'group:A')).toBe(true);
+    expect(res.warnings).toEqual([]);
+    // Todos quedan planificados (con courtId y hora) en 120 min con 2 pistas y slots de 20.
+    expect(res.matches.every((m) => m.courtId !== null && m.startMin !== null)).toBe(true);
+    // endMin = mayor endMin de los partidos planificados.
+    const maxEnd = Math.max(...res.matches.map((m) => m.endMin!));
+    expect(res.endMin).toBe(maxEnd);
+    // Cada partido enfrenta dos parejas concretas (slotA1/slotB1 son pares; A2/B2 null).
+    const m0 = res.matches[0];
+    expect(m0.slotA1).toMatchObject({ type: 'pair' });
+    expect(m0.slotA2).toBeNull();
+  });
+
+  it('avisa de los partidos que no caben en la ventana', () => {
+    const block: GenFixedPairsBlock = {
+      blockId: 'b3', type: 'fixed_pairs', startMin: 17 * 60, durationMinutes: 20, // solo 1 slot por pista
+      matchFormat: { kind: 'timed', minutes: 20, tieRule: 'golden_point' }, bufferMinutes: 0,
+      groups: [{ groupId: 'g1', name: 'A', pairIds: ['pa', 'pb', 'pc', 'pd'] }],
+      knockout: false, advancePerGroup: 2, knockoutSeeds: [],
+    };
+    const res = layoutGroups(block, courts);
+    expect(res.warnings.length).toBeGreaterThan(0);
+    expect(res.warnings[0]).toContain('no caben');
+  });
+
+  it('sin grupos: vacío y endMin = inicio del bloque', () => {
+    const block: GenFixedPairsBlock = {
+      blockId: 'b4', type: 'fixed_pairs', startMin: 17 * 60, durationMinutes: 60,
+      matchFormat: { kind: 'best_of_3' }, bufferMinutes: 0,
+      groups: [], knockout: true, advancePerGroup: 0, knockoutSeeds: ['x', 'y'],
+    };
+    const res = layoutGroups(block, courts);
+    expect(res.matches).toEqual([]);
+    expect(res.endMin).toBe(17 * 60);
   });
 });
