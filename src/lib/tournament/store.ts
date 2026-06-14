@@ -1,3 +1,4 @@
+import { eq, asc } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import {
@@ -5,6 +6,8 @@ import {
   tournamentBlocks, tournamentGroups, tournamentPairs,
 } from '@/lib/db/schema';
 import type { MatchFormat } from './types';
+import type { GenBlock, GenCourt } from './generate';
+import { hhmmToMin } from './time';
 
 type Db = LibSQLDatabase<typeof schema>;
 
@@ -85,4 +88,62 @@ export async function createTournament(db: Db, input: CreateTournamentInput): Pr
   }
 
   return tournament.id;
+}
+
+export interface LoadedConfig {
+  blocks: GenBlock[];
+  courts: GenCourt[];
+}
+
+// Reconstruye la configuración en la forma que consume generateTournament.
+// Timing de bloques: secuenciales y consecutivos desde el availableFrom más temprano.
+export async function loadTournamentConfig(db: Db, tournamentId: string): Promise<LoadedConfig> {
+  const courtRows = await db.select().from(tournamentCourts)
+    .where(eq(tournamentCourts.tournamentId, tournamentId))
+    .orderBy(asc(tournamentCourts.order));
+  const courts: GenCourt[] = courtRows.map((c) => ({
+    courtId: c.id, order: c.order,
+    fromMin: hhmmToMin(c.availableFrom), toMin: hhmmToMin(c.availableTo),
+  }));
+
+  const tournamentStart = courts.length > 0 ? Math.min(...courts.map((c) => c.fromMin)) : 0;
+
+  const blockRows = await db.select().from(tournamentBlocks)
+    .where(eq(tournamentBlocks.tournamentId, tournamentId))
+    .orderBy(asc(tournamentBlocks.order));
+
+  const blocks: GenBlock[] = [];
+  let cursor = tournamentStart;
+  for (const b of blockRows) {
+    const config = JSON.parse(b.config) as BlockConfig;
+    const startMin = cursor;
+    cursor += b.durationMinutes;
+
+    if (b.type === 'pozo') {
+      blocks.push({
+        type: 'pozo', blockId: b.id, startMin, durationMinutes: b.durationMinutes,
+        matchFormat: config.matchFormat, bufferMinutes: config.bufferMinutes,
+        roundMinutes: config.roundMinutes ?? 0,
+        participantIds: config.participantOrder ?? [],
+      });
+    } else {
+      const groupRows = await db.select().from(tournamentGroups).where(eq(tournamentGroups.blockId, b.id));
+      const pairRows = await db.select().from(tournamentPairs).where(eq(tournamentPairs.blockId, b.id));
+      const groups = groupRows.map((g) => ({
+        groupId: g.id, name: g.name,
+        pairIds: pairRows.filter((p) => p.groupId === g.id).map((p) => p.id),
+      }));
+      const knockoutSeeds = groups.length === 0
+        ? [...pairRows].sort((a, b2) => (a.seed ?? 0) - (b2.seed ?? 0)).map((p) => p.id)
+        : [];
+      blocks.push({
+        type: 'fixed_pairs', blockId: b.id, startMin, durationMinutes: b.durationMinutes,
+        matchFormat: config.matchFormat, bufferMinutes: config.bufferMinutes,
+        groups, knockout: config.knockout ?? false,
+        advancePerGroup: config.advancePerGroup ?? 0, knockoutSeeds,
+      });
+    }
+  }
+
+  return { blocks, courts };
 }
