@@ -6,7 +6,7 @@ import { and, eq, desc } from 'drizzle-orm';
 import { requireSession } from '@/lib/auth/guard';
 import { BETTING } from '@/lib/betting/config';
 import { isBettingOpen } from '@/lib/betting/close-time';
-import { applyTokenMovement } from '@/lib/betting/bank';
+import { applyTokenMovement, applyTokenMovementTx } from '@/lib/betting/bank';
 import { hasPendingPenalty } from '@/lib/betting/settle';
 
 // GET /api/bets?matchId=… → apuestas (públicas) de un partido, con nombre del apostante
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
   if (!player) {
     return NextResponse.json({ error: 'Tu cuenta no está vinculada a un jugador' }, { status: 403 });
   }
-  let chargedAmount: number | null = null;
   try {
     const body = await request.json();
     const { matchId, market, predictedTeam, predictedScore, amount } = body;
@@ -108,40 +107,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sustituir apuesta previa abierta en este mercado, si la hay.
+    // Apuesta previa abierta en este mercado (si la hay): se sustituye.
     const [previous] = await db.select().from(bets).where(and(
       eq(bets.matchId, matchId), eq(bets.playerId, player.id), eq(bets.market, market),
     ));
-    if (previous) {
-      if (previous.status !== 'open') {
-        return NextResponse.json({ error: 'Esa apuesta ya está liquidada' }, { status: 400 });
+    if (previous && previous.status !== 'open') {
+      return NextResponse.json({ error: 'Esa apuesta ya está liquidada' }, { status: 400 });
+    }
+
+    // Sustituir-previa + cobro + alta de la apuesta van en UNA sola transacción.
+    // Si el insert falla por lo que sea, el rollback deshace el cobro: nunca se
+    // descuentan fichas sin que quede registrada la apuesta.
+    const { bet, balance } = await db.transaction(async (tx) => {
+      if (previous) {
+        await applyTokenMovementTx(tx, player.id, previous.amount, 'bet_cancelled', previous.id);
+        await tx.delete(bets).where(eq(bets.id, previous.id));
       }
-      await applyTokenMovement(player.id, previous.amount, 'bet_cancelled', previous.id);
-      await db.delete(bets).where(eq(bets.id, previous.id));
-    }
+      const balance = await applyTokenMovementTx(tx, player.id, -amount, 'bet_placed');
+      const [bet] = await tx.insert(bets).values({
+        matchId,
+        playerId: player.id,
+        market,
+        predictedTeam,
+        predictedScore: market === 'exact_score' ? predictedScore : null,
+        amount,
+      }).returning();
+      return { bet, balance };
+    });
 
-    let newBalance: number;
-    try {
-      newBalance = await applyTokenMovement(player.id, -amount, 'bet_placed');
-    } catch {
-      return NextResponse.json({ error: 'No tienes saldo suficiente' }, { status: 400 });
-    }
-    chargedAmount = amount;
-
-    const [bet] = await db.insert(bets).values({
-      matchId,
-      playerId: player.id,
-      market,
-      predictedTeam,
-      predictedScore: market === 'exact_score' ? predictedScore : null,
-      amount,
-    }).returning();
-
-    return NextResponse.json({ bet, balance: newBalance }, { status: 201 });
+    return NextResponse.json({ bet, balance }, { status: 201 });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (chargedAmount !== null && msg.includes('UNIQUE')) {
-      await applyTokenMovement(player.id, chargedAmount, 'bet_cancelled');
+    // El cobro y el alta van en la misma transacción, así que cualquier fallo
+    // deja el saldo intacto (rollback). Solo hay que mapear el error a respuesta.
+    if (msg.includes('SALDO_INSUFICIENTE')) {
+      return NextResponse.json({ error: 'No tienes saldo suficiente' }, { status: 400 });
+    }
+    if (msg.includes('UNIQUE')) {
       return NextResponse.json({ error: 'Apuesta duplicada; inténtalo de nuevo' }, { status: 409 });
     }
     console.error(error);
