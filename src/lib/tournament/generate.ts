@@ -45,6 +45,7 @@ export interface GenMatch {
   slotA2: SlotRef | null;
   slotB1: SlotRef | null;
   slotB2: SlotRef | null;
+  engineMatchId?: string; // matchId posicional del motor (solo partidos de cuadro), p.ej. 'r0m0'
 }
 
 export interface GenResult {
@@ -197,7 +198,10 @@ export function layoutBracket(
 
   const slotMinutes = estimatedMatchMinutes(block.matchFormat) + block.bufferMinutes;
   const sortedCourts = [...courts].sort((a, b) => a.order - b.order);
-  const numCourts = Math.max(1, sortedCourts.length);
+  if (sortedCourts.length === 0) {
+    return { matches: [], warnings: [`Bloque ${block.blockId}: no hay pistas disponibles para el cuadro`] };
+  }
+  const numCourts = sortedCourts.length;
 
   const rounds = [...new Set(bracket.map((m) => m.round))].sort((a, b) => a - b);
   const matches: GenMatch[] = [];
@@ -223,6 +227,7 @@ export function layoutBracket(
         slotA2: null,
         slotB1: bm.slotB,
         slotB2: null,
+        engineMatchId: bm.matchId,
       });
     });
     cursor = roundEnd;

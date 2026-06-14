@@ -123,6 +123,17 @@ describe('layoutBracket', () => {
     expect(final.startMin).toBe(18 * 60 + 30);
     expect(final.phaseTag).toBe('ko:r1');
     expect(final.slotA1).toEqual({ type: 'matchWinner', matchId: 'r0m0' });
+
+    // El primer partido de ronda 0 lleva su engineMatchId posicional.
+    expect(res.matches.find((m) => m.round === 0)!.engineMatchId).toBe('r0m0');
+  });
+
+  it('sin pistas: no peta y avisa', () => {
+    const leaves: import('./types').SlotRef[] = ['A', 'B', 'C', 'D'].map((pairId) => ({ type: 'pair', pairId }));
+    const res = layoutBracket(leaves, block, [], block.startMin);
+    expect(res.matches).toEqual([]);
+    expect(res.warnings.length).toBeGreaterThan(0);
+    expect(res.warnings[0]).toContain('pistas');
   });
 
   it('avisa si el cuadro se sale del tiempo del bloque', () => {
