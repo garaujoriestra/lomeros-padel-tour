@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateTournamentShell, validateResultInput } from './validation';
+import { validateTournamentShell, validateResultInput, validateBlocks } from './validation';
 
 const roster = new Set(['p1', 'p2', 'p3', 'p4']);
 
@@ -121,5 +121,111 @@ describe('validateResultInput', () => {
 
   it('rechaza cuerpo no objeto', () => {
     expect(validateResultInput(42)).toEqual({ ok: false, error: 'Cuerpo inválido' });
+  });
+});
+
+const parts = new Set(['a', 'b', 'c', 'd', 'e', 'f']);
+
+function pozoBlock() {
+  return {
+    type: 'pozo', name: 'Pozo', durationMinutes: 90,
+    matchFormat: { kind: 'timed', minutes: 15, tieRule: 'golden_point' },
+    bufferMinutes: 0, roundMinutes: 15, participantOrder: ['a', 'b', 'c', 'd'],
+  };
+}
+function fixedBlock() {
+  return {
+    type: 'fixed_pairs', name: 'Torneo', durationMinutes: 120,
+    matchFormat: { kind: 'best_of_3' }, bufferMinutes: 5,
+    knockout: true, advancePerGroup: 1, groupNames: ['A', 'B'],
+    pairs: [
+      { player1Id: 'a', player2Id: 'b', seed: 1, groupName: 'A' },
+      { player1Id: 'c', player2Id: 'd', seed: 2, groupName: 'A' },
+      { player1Id: 'e', player2Id: 'f', seed: 3, groupName: 'B' },
+    ],
+  };
+}
+
+describe('validateBlocks', () => {
+  it('acepta y normaliza pozo + fixed_pairs', () => {
+    const r = validateBlocks({ blocks: [pozoBlock(), fixedBlock()] }, parts);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.value).toHaveLength(2);
+    expect(r.value[0].order).toBe(1);
+    expect(r.value[1].order).toBe(2);
+    expect(r.value[0].config.roundMinutes).toBe(15);
+    expect(r.value[1].groupNames).toEqual(['A', 'B']);
+    expect(r.value[1].pairs).toHaveLength(3);
+  });
+
+  it('acepta lista vacía de bloques', () => {
+    const r = validateBlocks({ blocks: [] }, parts);
+    expect(r).toEqual({ ok: true, value: [] });
+  });
+
+  it('rechaza tipo inválido', () => {
+    const r = validateBlocks({ blocks: [{ ...pozoBlock(), type: 'mexicano' }] }, parts);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza duración <= 0', () => {
+    const r = validateBlocks({ blocks: [{ ...pozoBlock(), durationMinutes: 0 }] }, parts);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza ronda de pozo mayor que el bloque', () => {
+    const r = validateBlocks({ blocks: [{ ...pozoBlock(), roundMinutes: 120 }] }, parts);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/ronda/);
+  });
+
+  it('rechaza matchFormat inválido', () => {
+    const r = validateBlocks({ blocks: [{ ...pozoBlock(), matchFormat: { kind: 'timed' } }] }, parts);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza jugador de pareja fuera de los participantes', () => {
+    const fb = fixedBlock();
+    fb.pairs[0].player2Id = 'zzz';
+    const r = validateBlocks({ blocks: [fb] }, parts);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/fuera de los participantes/);
+  });
+
+  it('rechaza un jugador en dos parejas', () => {
+    const fb = fixedBlock();
+    fb.pairs[1].player1Id = 'a';
+    const r = validateBlocks({ blocks: [fb] }, parts);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/dos parejas/);
+  });
+
+  it('rechaza advancePerGroup mayor que el grupo más pequeño', () => {
+    const fb = fixedBlock();
+    fb.advancePerGroup = 2;
+    const r = validateBlocks({ blocks: [fb] }, parts);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/grupo más pequeño/);
+  });
+
+  it('rechaza cuadro sin grupos con menos de 2 parejas', () => {
+    const r = validateBlocks({ blocks: [{
+      type: 'fixed_pairs', name: 'Cuadro', durationMinutes: 60,
+      matchFormat: { kind: 'best_of_3' }, bufferMinutes: 0,
+      knockout: true, groupNames: [],
+      pairs: [{ player1Id: 'a', player2Id: 'b' }],
+    }] }, parts);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error).toMatch(/al menos 2 parejas/);
+  });
+
+  it('rechaza cuerpo sin blocks', () => {
+    expect(validateBlocks({}, parts)).toEqual({ ok: false, error: 'Faltan los bloques' });
   });
 });
