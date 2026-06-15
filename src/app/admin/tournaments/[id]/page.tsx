@@ -53,6 +53,11 @@ export default async function TournamentPanelPage({ params }: { params: Promise<
             <Pencil size={15} /> Editar bloques
           </Link>
           {blocks.length > 0 && <GenerateButton tournamentId={id} />}
+          {tournament.status !== 'draft' && (
+            <Link href={`/admin/tournaments/${id}/schedule`} className="lpt-btn primary" style={{ minHeight: 38, padding: '7px 13px', fontSize: 12.5 }}>
+              Ver parrilla
+            </Link>
+          )}
         </div>
       </div>
 
