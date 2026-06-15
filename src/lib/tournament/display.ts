@@ -41,3 +41,26 @@ export function isMatchPlayable(m: MatchSlots): boolean {
   if (m.slotB2 && !resolved(m.slotB2)) return false;
   return true;
 }
+
+export interface PlayerScheduleMatch extends MatchSlots {
+  scheduledStart: string | null;
+  status: string;
+}
+
+// ¿El jugador participa en este partido? (participante directo, o vía una de sus parejas)
+export function involvesPlayer(m: MatchSlots, playerId: string, myPairIds: Set<string>): boolean {
+  const slots = [m.slotA1, m.slotA2, m.slotB1, m.slotB2];
+  return slots.some((s) =>
+    (s?.type === 'participant' && s.participantId === playerId) ||
+    (s?.type === 'pair' && myPairIds.has(s.pairId)));
+}
+
+// Próximo partido pendiente del jugador, el más temprano por hora. null si no hay.
+export function nextMatchForPlayer<T extends PlayerScheduleMatch>(
+  matches: T[], playerId: string, myPairIds: Set<string>,
+): T | null {
+  const mine = matches.filter((m) => m.status !== 'completed' && involvesPlayer(m, playerId, myPairIds));
+  if (mine.length === 0) return null;
+  mine.sort((a, b) => (a.scheduledStart ?? '99:99').localeCompare(b.scheduledStart ?? '99:99'));
+  return mine[0];
+}
