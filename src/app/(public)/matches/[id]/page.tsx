@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { matches, matchSets, players, pairStats, ratingHistory, bets } from '@/lib/db/schema';
-import { eq, and, inArray, or } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Calendar, MapPin, Target, Users, Bandage, Star } from 'lucide-react';
-import { recommendPairings, type PairingOption } from '@/lib/rating/recommend-pairs';
-import { computeSideStats } from '@/lib/rating/side-stats';
+import { ArrowLeft, Calendar, MapPin, Users, Bandage } from 'lucide-react';
 import { expectedScore } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
 import { getSession } from '@/lib/auth/session';
@@ -29,19 +27,6 @@ import {
 } from '@/components/lpt/ui';
 
 export const dynamic = 'force-dynamic';
-
-function pairMatchesPlayed(
-  p1Id: string,
-  p2Id: string,
-  pairs: { player1Id: string; player2Id: string; matchesPlayed: number }[],
-): number {
-  const found = pairs.find(
-    (p) =>
-      (p.player1Id === p1Id && p.player2Id === p2Id) ||
-      (p.player1Id === p2Id && p.player2Id === p1Id),
-  );
-  return found?.matchesPlayed ?? 0;
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -145,86 +130,6 @@ function TeamBlock({
   );
 }
 
-function PairingOptionCard({
-  opt,
-  idx,
-  playerMap,
-  relevantPairs,
-}: {
-  opt: PairingOption;
-  idx: number;
-  playerMap: Record<string, { id: string; name: string; nickname: string | null; avatarUrl: string | null }>;
-  relevantPairs: { player1Id: string; player2Id: string; matchesPlayed: number }[];
-}) {
-  const best = idx === 0;
-  const t1Win = Math.round(opt.team1WinProb * 100);
-  const sideTag = (rec: PairingOption['team1SideRec'], pid: string) => {
-    if (!rec) return null;
-    if (rec.driveSidePlayerId === pid) return 'Drive';
-    if (rec.revesSidePlayerId === pid) return 'Revés';
-    return null;
-  };
-
-  const team = (ids: PairingOption['team1'], teamElo: number, rec: PairingOption['team1SideRec']) => {
-    const together = pairMatchesPlayed(ids[0].id, ids[1].id, relevantPairs);
-    return (
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {ids.map((p) => {
-          const tag = sideTag(rec, p.id);
-          return (
-            <Link key={p.id} href={`/players/${p.id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-              <LptAvatar player={playerMap[p.id]} size={26} />
-              <span style={{ fontWeight: 700, fontSize: 13.5 }}>{displayName(playerMap[p.id])}</span>
-              {tag && <span className="lpt-badge" style={{ fontSize: 9.5, padding: '2px 7px' }}>{tag}</span>}
-            </Link>
-          );
-        })}
-        <div className="small muted num" style={{ fontSize: 11.5, marginTop: 4 }}>
-          Elo {Math.round(teamElo)} ·{' '}
-          {together === 0 ? <b style={{ color: 'var(--acc-text)' }}>✦ pareja inédita</b> : `${together} juntos`}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div
-      className="lpt-card card-pad"
-      style={
-        best
-          ? { borderColor: 'var(--acc)', boxShadow: 'var(--card-shadow), 0 0 0 1px var(--acc)' }
-          : { opacity: idx === 2 ? 0.78 : 1 }
-      }
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <span className={`lpt-badge ${best ? 'accent' : ''}`}>
-          {best && <Star size={11} strokeWidth={2.6} />} {opt.label}
-        </span>
-        <span className="small num muted">
-          Δ Elo{' '}
-          <b style={{ color: opt.eloDiff < 30 ? 'var(--win)' : opt.eloDiff < 80 ? 'var(--warn)' : 'var(--loss)' }}>
-            ±{Math.round(opt.eloDiff)}
-          </b>
-        </span>
-      </div>
-      <div className="pairing-teams" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        {team(opt.team1, opt.team1Elo, opt.team1SideRec)}
-        <div className="pairing-vs">
-          <div className="display" style={{ fontSize: 17, color: 'var(--ink-3)' }}>VS</div>
-          <div className="small num" style={{ fontWeight: 800, color: 'var(--acc-text)', fontSize: 12 }}>
-            {t1Win}–{100 - t1Win}
-          </div>
-        </div>
-        {team(opt.team2, opt.team2Elo, opt.team2SideRec)}
-      </div>
-      <div style={{ display: 'flex', height: 5, borderRadius: 99, overflow: 'hidden', gap: 2, marginTop: 12 }}>
-        <div style={{ width: `${t1Win}%`, background: 'var(--acc)', animation: 'barGrow 0.8s both' }} />
-        <div style={{ flex: 1, background: 'var(--surface-2)' }} />
-      </div>
-    </div>
-  );
-}
-
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -256,27 +161,6 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const eloDeltas = match.status === 'completed'
     ? await db.select().from(ratingHistory).where(eq(ratingHistory.matchId, id))
     : [];
-
-  const playerCompletedMatches = match.status === 'scheduled' && fourPlayers.length === 4
-    ? await db.select().from(matches).where(
-        or(
-          inArray(matches.team1Player1Id, allPlayerIds),
-          inArray(matches.team1Player2Id, allPlayerIds),
-          inArray(matches.team2Player1Id, allPlayerIds),
-          inArray(matches.team2Player2Id, allPlayerIds),
-        ),
-      )
-    : [];
-  const completedOnly = playerCompletedMatches.filter((m) => m.status === 'completed');
-
-  const sideStatsByPlayer: Record<string, ReturnType<typeof computeSideStats>> = {};
-  for (const pid of allPlayerIds) {
-    sideStatsByPlayer[pid] = computeSideStats(pid, completedOnly);
-  }
-
-  const pairingOptions = match.status === 'scheduled' && fourPlayers.length === 4
-    ? recommendPairings([t1p1!, t1p2!, t2p1!, t2p2!], sideStatsByPlayer)
-    : null;
 
   const isUp = match.status === 'scheduled';
   const isInjury = match.status === 'injury_aborted';
@@ -438,21 +322,6 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
       {/* La Timba — apuestas */}
       {timba}
-
-      {/* Recomendador de parejas */}
-      {pairingOptions && (
-        <section className="section">
-          <SectionHead icon={Target} title="Parejas recomendadas" />
-          <p className="muted small" style={{ margin: '0 0 14px' }}>
-            Las 3 combinaciones posibles con estos 4 jugadores, ordenadas por equilibrio de Elo. Incluye lados sugeridos (drive / revés).
-          </p>
-          <div className="stagger" style={{ display: 'grid', gap: 'calc(12px * var(--sp))' }}>
-            {pairingOptions.map((opt, i) => (
-              <PairingOptionCard key={i} opt={opt} idx={i} playerMap={playerMap} relevantPairs={relevantPairs} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Historial de estas parejas */}
       {relevantPairs.filter((p) => p.matchesPlayed > 0).length > 0 && (
