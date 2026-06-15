@@ -57,7 +57,7 @@ export default async function TournamentsAdminPage() {
               {rows.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>
-                    <p className="font-medium">{t.name}</p>
+                    <Link href={`/admin/tournaments/${t.id}`} className="font-medium hover:underline">{t.name}</Link>
                     {t.location && <p className="text-xs text-ink-3">{t.location}</p>}
                   </TableCell>
                   <TableCell className="text-sm">{t.date}</TableCell>
