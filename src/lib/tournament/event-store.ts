@@ -99,10 +99,13 @@ export async function listEvents(db: Db, kind: EventKind): Promise<LoadedEvent[]
   const rows = await db.select().from(tournaments)
     .where(eq(tournaments.kind, kind)).orderBy(asc(tournaments.date));
   const out: LoadedEvent[] = [];
+  // N+1 aceptable: uso exclusivo admin, N = nº de eventos (decenas como mucho).
   for (const r of rows) out.push(await loadEvent(db, r.id));
   return out;
 }
 
+// Edita la meta + reemplaza pistas/participantes. NO toca kind/format (inmutables tras crear)
+// ni status (las transiciones de estado las gestionan operaciones de dominio aparte).
 export async function updateEvent(db: Db, id: string, input: UpdateEventInput): Promise<void> {
   await db.update(tournaments).set({
     name: input.name, date: input.date, location: input.location ?? null,
