@@ -265,6 +265,7 @@ export function validateEventInput(body: unknown, rosterIds: Set<string>): Valid
   if (!Array.isArray(b.courts) || b.courts.length === 0) return { ok: false, error: 'Añade al menos una pista' };
   const courts: EventInputValidated['courts'] = [];
   for (const [i, raw] of b.courts.entries()) {
+    if (typeof raw !== 'object' || raw === null) return { ok: false, error: `La pista ${i + 1} es inválida` };
     const c = raw as Record<string, unknown>;
     const label = typeof c.label === 'string' ? c.label.trim() : '';
     if (!label) return { ok: false, error: `La pista ${i + 1} necesita nombre` };
@@ -280,9 +281,11 @@ export function validateEventInput(body: unknown, rosterIds: Set<string>): Valid
     return { ok: false, error: 'Selecciona participantes' };
   }
   const participantPlayerIds: string[] = [];
+  const seenParticipants = new Set<string>();
   for (const pid of b.participantPlayerIds) {
     if (typeof pid !== 'string' || !rosterIds.has(pid)) return { ok: false, error: 'Participante no válido' };
-    if (participantPlayerIds.includes(pid)) return { ok: false, error: 'Participante repetido' };
+    if (seenParticipants.has(pid)) return { ok: false, error: 'Participante repetido' };
+    seenParticipants.add(pid);
     participantPlayerIds.push(pid);
   }
 
