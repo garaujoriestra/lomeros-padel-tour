@@ -1,6 +1,6 @@
 import type { CreateCourtInput, CreateBlockInput, CreatePairInput, BlockConfig } from './store';
 import type { MatchResultInput } from './results';
-import type { MatchFormat } from './types';
+import type { MatchFormat, EventKind, EventConfig } from './types';
 
 export type Validated<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -226,4 +226,88 @@ export function validateBlocks(body: unknown, participantIds: Set<string>): Vali
   }
 
   return { ok: true, value: blocks };
+}
+
+// --- Validación del evento (kind + format + config) ---
+
+export interface EventInputValidated {
+  name: string;
+  date: string;
+  location: string | null;
+  kind: EventKind;
+  format: string;
+  config: EventConfig;
+  courts: { label: string; order: number; availableFrom: string; availableTo: string }[];
+  participantPlayerIds: string[];
+}
+
+export function validateEventInput(body: unknown, rosterIds: Set<string>): Validated<EventInputValidated> {
+  if (typeof body !== 'object' || body === null) return { ok: false, error: 'Cuerpo inválido' };
+  const b = body as Record<string, unknown>;
+
+  const name = typeof b.name === 'string' ? b.name.trim() : '';
+  if (!name) return { ok: false, error: 'Falta el nombre' };
+
+  const date = typeof b.date === 'string' ? b.date.trim() : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Fecha inválida (YYYY-MM-DD)' };
+
+  const location = typeof b.location === 'string' && b.location.trim() ? b.location.trim() : null;
+
+  const kind = b.kind;
+  if (kind !== 'pozo' && kind !== 'torneo') return { ok: false, error: 'Tipo inválido' };
+
+  const format = b.format;
+  const validFormats = kind === 'pozo' ? ['fixed_pairs', 'americano'] : ['single_elim', 'groups_elim'];
+  if (typeof format !== 'string' || !validFormats.includes(format)) {
+    return { ok: false, error: 'Formato inválido para el tipo' };
+  }
+
+  if (!Array.isArray(b.courts) || b.courts.length === 0) return { ok: false, error: 'Añade al menos una pista' };
+  const courts: EventInputValidated['courts'] = [];
+  for (const [i, raw] of b.courts.entries()) {
+    const c = raw as Record<string, unknown>;
+    const label = typeof c.label === 'string' ? c.label.trim() : '';
+    if (!label) return { ok: false, error: `La pista ${i + 1} necesita nombre` };
+    const order = typeof c.order === 'number' ? c.order : i + 1;
+    const availableFrom = typeof c.availableFrom === 'string' ? c.availableFrom : '';
+    const availableTo = typeof c.availableTo === 'string' ? c.availableTo : '';
+    if (!HHMM.test(availableFrom) || !HHMM.test(availableTo)) return { ok: false, error: `Horario inválido en "${label}"` };
+    if (availableFrom >= availableTo) return { ok: false, error: `En "${label}", inicio debe ser antes que fin` };
+    courts.push({ label, order, availableFrom, availableTo });
+  }
+
+  if (!Array.isArray(b.participantPlayerIds) || b.participantPlayerIds.length === 0) {
+    return { ok: false, error: 'Selecciona participantes' };
+  }
+  const participantPlayerIds: string[] = [];
+  for (const pid of b.participantPlayerIds) {
+    if (typeof pid !== 'string' || !rosterIds.has(pid)) return { ok: false, error: 'Participante no válido' };
+    if (participantPlayerIds.includes(pid)) return { ok: false, error: 'Participante repetido' };
+    participantPlayerIds.push(pid);
+  }
+
+  const cfg = (typeof b.config === 'object' && b.config !== null ? b.config : {}) as Record<string, unknown>;
+  let config: EventConfig;
+  if (kind === 'pozo') {
+    const rounds = cfg.rounds;
+    if (!Number.isInteger(rounds) || (rounds as number) <= 0) return { ok: false, error: 'El nº de rondas debe ser > 0' };
+    const mf = validMatchFormat(cfg.matchFormat);
+    if (!mf) return { ok: false, error: 'Formato de partido inválido' };
+    config = { rounds: rounds as number, matchFormat: mf };
+  } else {
+    const mf = validMatchFormat(cfg.matchFormat);
+    if (!mf) return { ok: false, error: 'Formato de partido inválido' };
+    const thirdPlace = cfg.thirdPlace === true;
+    if (format === 'groups_elim') {
+      const numGroups = cfg.numGroups;
+      const advancePerGroup = cfg.advancePerGroup ?? 2;
+      if (!Number.isInteger(numGroups) || (numGroups as number) < 1) return { ok: false, error: 'nº de grupos inválido' };
+      if (!Number.isInteger(advancePerGroup) || (advancePerGroup as number) < 1) return { ok: false, error: 'pasan-por-grupo debe ser ≥ 1' };
+      config = { matchFormat: mf, thirdPlace, numGroups: numGroups as number, advancePerGroup: advancePerGroup as number };
+    } else {
+      config = { matchFormat: mf, thirdPlace };
+    }
+  }
+
+  return { ok: true, value: { name, date, location, kind, format, config, courts, participantPlayerIds } };
 }
