@@ -183,6 +183,82 @@ export const penalties = sqliteTable('penalties', {
   fulfilledAt: text('fulfilled_at'),
 });
 
+// ─── TOURNAMENTS (torneos puntuales, independientes del ranking) ─────────────
+export const tournaments = sqliteTable('tournaments', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  date: text('date').notNull(), // ISO date YYYY-MM-DD
+  location: text('location'),
+  notes: text('notes'),
+  status: text('status').notNull().default('draft'), // 'draft' | 'scheduled' | 'running' | 'completed'
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
+export const tournamentCourts = sqliteTable('tournament_courts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
+  label: text('label').notNull(),
+  order: integer('sort_order').notNull(), // 1 = pista más alta (top del pozo)
+  availableFrom: text('available_from').notNull(), // "HH:MM"
+  availableTo: text('available_to').notNull(),     // "HH:MM"
+});
+
+export const tournamentParticipants = sqliteTable('tournament_participants', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
+  playerId: text('player_id').notNull().references(() => players.id),
+}, (t) => ({
+  uniqParticipant: unique().on(t.tournamentId, t.playerId),
+}));
+
+export const tournamentBlocks = sqliteTable('tournament_blocks', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
+  order: integer('sort_order').notNull(),
+  type: text('type').notNull(), // 'pozo' | 'fixed_pairs'
+  name: text('name').notNull(),
+  durationMinutes: integer('duration_minutes').notNull(),
+  config: text('config').notNull().default('{}'), // JSON: matchFormat, bufferMinutes, etc.
+});
+
+export const tournamentGroups = sqliteTable('tournament_groups', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+});
+
+export const tournamentPairs = sqliteTable('tournament_pairs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
+  player1Id: text('player1_id').notNull().references(() => players.id),
+  player2Id: text('player2_id').notNull().references(() => players.id),
+  seed: integer('seed'),
+  label: text('label'),
+  groupId: text('group_id').references(() => tournamentGroups.id, { onDelete: 'set null' }),
+});
+
+export const tournamentMatches = sqliteTable('tournament_matches', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
+  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
+  courtId: text('court_id').references(() => tournamentCourts.id, { onDelete: 'set null' }),
+  round: integer('round').notNull().default(0),
+  phaseTag: text('phase_tag'), // 'pozo' | 'group:A' | 'ko:semi' | ...
+  scheduledStart: text('scheduled_start'), // "HH:MM" o null
+  scheduledEnd: text('scheduled_end'),
+  status: text('status').notNull().default('pending'), // 'pending' | 'in_progress' | 'completed'
+  // Cuatro huecos de participante (JSON de SlotRef): { type, ... }
+  slotA1: text('slot_a1'),
+  slotA2: text('slot_a2'),
+  slotB1: text('slot_b1'),
+  slotB2: text('slot_b2'),
+  teamAScore: integer('team_a_score'),
+  teamBScore: integer('team_b_score'),
+  setsJson: text('sets_json'),
+  winner: text('winner'), // 'A' | 'B' | null
+});
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -205,3 +281,17 @@ export type TokenLedgerRow = typeof tokenLedger.$inferSelect;
 export type Reward = typeof rewards.$inferSelect;
 export type Redemption = typeof redemptions.$inferSelect;
 export type Penalty = typeof penalties.$inferSelect;
+export type Tournament = typeof tournaments.$inferSelect;
+export type NewTournament = typeof tournaments.$inferInsert;
+export type TournamentCourt = typeof tournamentCourts.$inferSelect;
+export type NewTournamentCourt = typeof tournamentCourts.$inferInsert;
+export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
+export type NewTournamentParticipant = typeof tournamentParticipants.$inferInsert;
+export type TournamentBlock = typeof tournamentBlocks.$inferSelect;
+export type NewTournamentBlock = typeof tournamentBlocks.$inferInsert;
+export type TournamentGroup = typeof tournamentGroups.$inferSelect;
+export type NewTournamentGroup = typeof tournamentGroups.$inferInsert;
+export type TournamentPair = typeof tournamentPairs.$inferSelect;
+export type NewTournamentPair = typeof tournamentPairs.$inferInsert;
+export type TournamentMatch = typeof tournamentMatches.$inferSelect;
+export type NewTournamentMatch = typeof tournamentMatches.$inferInsert;
