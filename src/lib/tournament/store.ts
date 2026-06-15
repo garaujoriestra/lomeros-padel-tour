@@ -80,9 +80,16 @@ export async function createTournament(db: Db, input: CreateTournamentInput): Pr
     await db.insert(tournamentParticipants).values({ tournamentId: tournament.id, playerId });
   }
 
-  for (const block of input.blocks) {
+  await insertBlocks(db, tournament.id, input.blocks);
+
+  return tournament.id;
+}
+
+// Inserta bloques (con sus grupos y parejas) bajo un torneo ya existente.
+async function insertBlocks(db: Db, tournamentId: string, blocks: CreateBlockInput[]): Promise<void> {
+  for (const block of blocks) {
     const [blockRow] = await db.insert(tournamentBlocks).values({
-      tournamentId: tournament.id, order: block.order, type: block.type,
+      tournamentId, order: block.order, type: block.type,
       name: block.name, durationMinutes: block.durationMinutes,
       config: JSON.stringify(block.config),
     }).returning();
@@ -102,8 +109,25 @@ export async function createTournament(db: Db, input: CreateTournamentInput): Pr
       }
     }
   }
+}
 
-  return tournament.id;
+// Reemplaza TODOS los bloques de un torneo. Borra explícitamente la parrilla y los
+// bloques/grupos/parejas previos (las FK están OFF en Turso, no me fío del cascade),
+// reinserta los nuevos y devuelve el torneo a 'draft' (la parrilla anterior ya no vale).
+export async function replaceBlocks(db: Db, tournamentId: string, blocks: CreateBlockInput[]): Promise<void> {
+  const existing = await db.select({ id: tournamentBlocks.id }).from(tournamentBlocks)
+    .where(eq(tournamentBlocks.tournamentId, tournamentId));
+
+  await db.delete(tournamentMatches).where(eq(tournamentMatches.tournamentId, tournamentId));
+  for (const b of existing) {
+    await db.delete(tournamentPairs).where(eq(tournamentPairs.blockId, b.id));
+    await db.delete(tournamentGroups).where(eq(tournamentGroups.blockId, b.id));
+  }
+  await db.delete(tournamentBlocks).where(eq(tournamentBlocks.tournamentId, tournamentId));
+
+  await insertBlocks(db, tournamentId, blocks);
+
+  await db.update(tournaments).set({ status: 'draft' }).where(eq(tournaments.id, tournamentId));
 }
 
 // Edita el "cascarón" del torneo: meta + reemplazo completo de pistas y participantes.

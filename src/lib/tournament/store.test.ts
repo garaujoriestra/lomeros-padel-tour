@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
-import { createTournament, loadTournamentConfig, generateAndStore, updateTournamentShell } from './store';
+import { createTournament, loadTournamentConfig, generateAndStore, updateTournamentShell, replaceBlocks } from './store';
 import type { CreateTournamentInput } from './store';
 import type { GenPozoBlock, GenFixedPairsBlock } from './generate';
 import { tournamentCourts, tournamentParticipants, tournamentBlocks, tournamentGroups, tournamentPairs, tournamentMatches, tournaments } from '@/lib/db/schema';
@@ -53,6 +53,37 @@ describe('createTournament', () => {
     const pairs = await db.select().from(tournamentPairs).where(eq(tournamentPairs.blockId, fixedBlock.id));
     expect(pairs).toHaveLength(2);
     expect(pairs.every((p) => p.groupId === groups[0].id)).toBe(true);
+  });
+});
+
+describe('replaceBlocks', () => {
+  it('reemplaza los bloques, borra la parrilla previa y vuelve a draft', async () => {
+    const db = await createTestDb();
+    const id = await createTournament(db, sampleInput); // tiene 2 bloques
+    await generateAndStore(db, id); // crea matches y pone status scheduled
+
+    const before = await db.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+    expect(before.length).toBeGreaterThan(0);
+
+    await replaceBlocks(db, id, [
+      {
+        order: 1, type: 'pozo', name: 'Solo pozo', durationMinutes: 60,
+        config: {
+          matchFormat: { kind: 'timed', minutes: 15, tieRule: 'golden_point' },
+          bufferMinutes: 0, roundMinutes: 15, participantOrder: ['pl1', 'pl2', 'pl3', 'pl4'],
+        },
+      },
+    ]);
+
+    const blocks = await db.select().from(tournamentBlocks).where(eq(tournamentBlocks.tournamentId, id));
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].name).toBe('Solo pozo');
+
+    const after = await db.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+    expect(after).toHaveLength(0);
+
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id));
+    expect(t.status).toBe('draft');
   });
 });
 
