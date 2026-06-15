@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
 import { createEvent } from './event-store';
-import { generatePozo, listPozoMatches } from './pozo-run';
+import { generatePozo, listPozoMatches, recordPozoResult } from './pozo-run';
 import type { PozoConfig } from './types';
 
 async function seedPlayers(client: import('@libsql/client').Client, ids: string[]) {
@@ -23,6 +23,13 @@ async function makePozo(db: any, client: any, nPlayers: number, nCourts: number)
     config: POZO_CFG, createdBy: null, courts, participantPlayerIds: players,
   });
   return { id, players };
+}
+
+async function playRound(db: any, id: string, round: number) {
+  const matches = await listPozoMatches(db, id, round);
+  // El equipo A gana siempre 4-2 (determinista para el test).
+  for (const m of matches) await recordPozoResult(db, m.id, 4, 2);
+  return matches;
 }
 
 describe('generatePozo (americano)', () => {
@@ -63,5 +70,37 @@ describe('generatePozo (americano)', () => {
     await generatePozo(db, id, 1);
     const { loadEvent } = await import('./event-store');
     expect((await loadEvent(db, id)).status).toBe('scheduled');
+  });
+});
+
+describe('recordPozoResult + avance', () => {
+  it('al cerrar la ronda 0, genera la ronda 1 con el movimiento del pozo', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePozo(db, client, 8, 2);
+    await generatePozo(db, id, 5);
+
+    expect((await listPozoMatches(db, id, 1)).length).toBe(0); // aún no
+    await playRound(db, id, 0);
+    const r1 = await listPozoMatches(db, id, 1);
+    expect(r1.length).toBe(2); // se generó la ronda 1
+    for (const m of r1) {
+      expect(m.status).toBe('pending');
+      expect(m.scheduledStart).not.toBe('17:00'); // ronda 1 va después en la rejilla
+    }
+  });
+
+  it('escribe marcador y ganador y no genera más allá del nº de rondas', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePozo(db, client, 8, 2); // rounds: 3
+    await generatePozo(db, id, 9);
+    await playRound(db, id, 0);
+    await playRound(db, id, 1);
+    await playRound(db, id, 2);
+    // 3 rondas configuradas → no debe existir ronda 3
+    expect((await listPozoMatches(db, id, 3)).length).toBe(0);
+    const r0 = await listPozoMatches(db, id, 0);
+    expect(r0[0].winner).toBe('A');
+    expect(r0[0].teamAScore).toBe(4);
+    expect(r0[0].status).toBe('completed');
   });
 });
