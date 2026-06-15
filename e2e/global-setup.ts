@@ -27,6 +27,25 @@ export default async function globalSetup() {
 
   // 2) Seed directo en la DB de fichero.
   const db = createClient({ url: TEST_ENV.DB_URL });
+
+  // Las columnas de players añadidas por migraciones posteriores (rasgo zurdo,
+  // fichas de La Timba, juega_padel) no las crea /api/init-db, pero el schema
+  // drizzle las espera: getSession hace `select().from(players)` con la fila
+  // completa. Las añadimos aquí (idempotente) para que la sesión del jugador
+  // cargue sin fallar y se muestre "Tu próximo partido".
+  const playerColumns = [
+    'is_left_handed INTEGER NOT NULL DEFAULT 0',
+    'token_balance INTEGER NOT NULL DEFAULT 0',
+    'juega_padel INTEGER NOT NULL DEFAULT 1',
+  ];
+  for (const col of playerColumns) {
+    try {
+      await db.execute(`ALTER TABLE players ADD COLUMN ${col}`);
+    } catch {
+      // La columna ya existe — seguir.
+    }
+  }
+
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
   }
