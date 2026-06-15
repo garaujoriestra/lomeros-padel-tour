@@ -100,5 +100,13 @@ describe('event-store', () => {
     expect((loaded.config as PozoConfig).rounds).toBe(5);
     expect(loaded.participantPlayerIds.length).toBe(3);
     expect(loaded.courts[0].availableFrom).toBe('18:00');
+    // Invariante: updateEvent NO cambia kind/format.
+    expect(loaded.kind).toBe('pozo');
+    expect(loaded.format).toBe('americano');
+  });
+
+  it('loadEvent lanza si el evento no existe', async () => {
+    const { db } = await createTestDb();
+    await expect(loadEvent(db, 'no-existe')).rejects.toThrow('NOT_FOUND');
   });
 });
