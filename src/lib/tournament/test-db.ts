@@ -11,5 +11,6 @@ export async function createTestDb() {
   for (const stmt of TOURNAMENT_DDL) {
     await client.execute(stmt);
   }
-  return drizzle(client, { schema });
+  const db = drizzle(client, { schema });
+  return { db, client };
 }

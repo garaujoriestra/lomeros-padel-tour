@@ -7,7 +7,7 @@ import { createTournament, generateAndStore } from './store';
 
 // Inserta un partido suelto con los slots dados. Devuelve el id.
 async function insertMatch(
-  db: Awaited<ReturnType<typeof createTestDb>>,
+  db: Awaited<ReturnType<typeof createTestDb>>['db'],
   fields: Partial<typeof tournamentMatches.$inferInsert> = {},
 ): Promise<string> {
   const id = crypto.randomUUID();
@@ -27,7 +27,7 @@ async function insertMatch(
 
 describe('recordResult', () => {
   it('escribe marcador, deriva el ganador y marca completed', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await insertMatch(db);
 
     await recordResult(db, id, { teamAScore: 6, teamBScore: 3 });
@@ -40,7 +40,7 @@ describe('recordResult', () => {
   });
 
   it('respeta el ganador explícito (formato a tiempo con empate en juegos)', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await insertMatch(db);
     await recordResult(db, id, { teamAScore: 5, teamBScore: 5, winner: 'B' });
     const [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, id));
@@ -48,7 +48,7 @@ describe('recordResult', () => {
   });
 
   it('rechaza si un slot sigue sin resolver (placeholder)', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await insertMatch(db, {
       phaseTag: 'ko:r0',
       slotA1: JSON.stringify({ type: 'placeholder', desc: '1º A' }),
@@ -59,7 +59,7 @@ describe('recordResult', () => {
   });
 
   it('rechaza si una ronda de pozo aún está vacía (slots NULL)', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await insertMatch(db, {
       phaseTag: 'pozo', round: 1,
       slotA1: null, slotA2: null, slotB1: null, slotB2: null,
@@ -69,7 +69,7 @@ describe('recordResult', () => {
   });
 
   it('lanza si el partido no existe', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     await expect(recordResult(db, 'nope', { teamAScore: 1, teamBScore: 0 }))
       .rejects.toThrow(/no encontrado/);
   });
@@ -78,7 +78,7 @@ describe('recordResult', () => {
 describe('recordResult — progresión del pozo', () => {
   it('al cerrar la ronda 0 (2 pistas) rellena la ronda 1 con el movimiento', async () => {
     // 8 jugadores, 2 pistas → 2 partidos por ronda. roundMinutes=15, 90 min → 6 rondas.
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'Pozo', date: '2026-06-15',
       courts: [
@@ -137,7 +137,7 @@ describe('recordResult — progresión del pozo', () => {
   });
 
   it('no rellena la ronda siguiente si la actual no está cerrada del todo', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'Pozo', date: '2026-06-15',
       courts: [
@@ -189,7 +189,7 @@ describe('recordResult — clasificados de grupo al cuadro', () => {
   }
 
   it('al cerrar la liguilla rellena los placeholders del cuadro con los ganadores de grupo', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, groupsInput());
     await generateAndStore(db, id);
 
@@ -211,7 +211,7 @@ describe('recordResult — clasificados de grupo al cuadro', () => {
   });
 
   it('no resuelve nada mientras quede liguilla sin cerrar', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, groupsInput());
     await generateAndStore(db, id);
     const all = await db.select().from(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
@@ -228,7 +228,7 @@ describe('recordResult — clasificados de grupo al cuadro', () => {
 
 describe('recordResult — propagación del cuadro', () => {
   it('cuadro de 4 parejas: las semifinales propagan ganadores a la final', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'KO', date: '2026-06-15',
       courts: [
@@ -281,7 +281,7 @@ describe('recordResult — propagación del cuadro', () => {
 
 describe('clasificaciones', () => {
   it('getPozoStandings ordena por juegos y desempata por victorias', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'Pozo', date: '2026-06-15',
       courts: [{ label: 'P1', order: 1, availableFrom: '17:00', availableTo: '18:00' }],
@@ -311,7 +311,7 @@ describe('clasificaciones', () => {
   });
 
   it('getGroupStandings devuelve la tabla por grupo', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'Grupos', date: '2026-06-15',
       courts: [{ label: 'P1', order: 1, availableFrom: '10:00', availableTo: '14:00' }],

@@ -32,7 +32,7 @@ const sampleInput: CreateTournamentInput = {
 
 describe('createTournament', () => {
   it('inserta torneo, pistas, participantes, bloques, grupos y parejas', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, sampleInput);
     expect(id).toBeTruthy();
 
@@ -58,7 +58,7 @@ describe('createTournament', () => {
 
 describe('replaceBlocks', () => {
   it('reemplaza los bloques, borra la parrilla previa y vuelve a draft', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, sampleInput); // tiene 2 bloques
     await generateAndStore(db, id); // crea matches y pone status scheduled
 
@@ -89,7 +89,7 @@ describe('replaceBlocks', () => {
 
 describe('updateTournamentShell', () => {
   it('actualiza meta y reemplaza pistas y participantes', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, sampleInput);
 
     await updateTournamentShell(db, id, {
@@ -119,7 +119,7 @@ describe('updateTournamentShell', () => {
 
 describe('loadTournamentConfig', () => {
   it('reconstruye GenBlock[]/GenCourt[] con timing de bloques secuencial', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, sampleInput);
     const { blocks, courts } = await loadTournamentConfig(db, id);
 
@@ -143,7 +143,7 @@ describe('loadTournamentConfig', () => {
   });
 
   it('cuadro sin grupos: knockoutSeeds = parejas ordenadas por seed', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'KO', date: '2026-06-13',
       courts: [{ label: 'P1', order: 1, availableFrom: '10:00', availableTo: '12:00' }],
@@ -167,7 +167,7 @@ describe('loadTournamentConfig', () => {
 
 describe('generateAndStore', () => {
   it('guarda la parrilla y remapea las refs del cuadro a UUIDs reales', async () => {
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'KO', date: '2026-06-13',
       courts: [
@@ -216,7 +216,7 @@ describe('generateAndStore', () => {
     //   Liguilla: 1 partido (round-robin de 2 parejas = 1 partido).
     //   KO: qualifierSeeds([grupoA], 1) = [{type:'placeholder','1º A'}] → buildBracket con 1 hoja devuelve [] → 0 partidos de cuadro.
     // Total: 6 + 1 = 7 partidos, 2 blockIds distintos.
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, sampleInput);
 
     const res = await generateAndStore(db, id);
@@ -280,7 +280,7 @@ describe('generateAndStore', () => {
     // Los slots del partido KO son placeholders (los clasificados aún no se conocen).
     // No hay matchWinner refs porque la final es el único partido de cuadro (no hay semifinales previas).
     // Total: 2 partidos de liguilla (1 por grupo) + 1 partido de cuadro = 3.
-    const db = await createTestDb();
+    const { db } = await createTestDb();
     const id = await createTournament(db, {
       name: 'KO Groups', date: '2026-06-13',
       courts: [
