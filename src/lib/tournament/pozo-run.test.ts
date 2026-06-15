@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
 import { createEvent } from './event-store';
-import { generatePozo, listPozoMatches, recordPozoResult } from './pozo-run';
+import { generatePozo, listPozoMatches, recordPozoResult, pozoStandingsLive } from './pozo-run';
 import type { PozoConfig } from './types';
 
 async function seedPlayers(client: import('@libsql/client').Client, ids: string[]) {
@@ -102,5 +102,21 @@ describe('recordPozoResult + avance', () => {
     expect(r0[0].winner).toBe('A');
     expect(r0[0].teamAScore).toBe(4);
     expect(r0[0].status).toBe('completed');
+  });
+});
+
+describe('pozoStandingsLive', () => {
+  it('clasifica por la pista de la última ronda con datos; acumula juegos', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePozo(db, client, 8, 2);
+    await generatePozo(db, id, 5);
+    await playRound(db, id, 0); // genera ronda 1
+    const table = await pozoStandingsLive(db, id);
+    expect(table.length).toBe(8);
+    expect(table[0].rank).toBe(1);
+    // ranks 1..8 sin huecos
+    expect(table.map((r) => r.rank)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    // todos los participantes presentes
+    expect(new Set(table.map((r) => r.entityId)).size).toBe(8);
   });
 });
