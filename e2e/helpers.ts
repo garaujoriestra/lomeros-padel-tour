@@ -1,5 +1,7 @@
-import { expect, type APIRequestContext, type Playwright } from '@playwright/test';
+import { expect, type APIRequestContext, type PlaywrightWorkerArgs } from '@playwright/test';
 import { BASE_URL } from '../playwright.config';
+
+type Playwright = PlaywrightWorkerArgs['playwright'];
 
 export const PLAYERS = ['pl1', 'pl2', 'pl3', 'pl4', 'pl5', 'pl6', 'pl7', 'pl8'];
 
