@@ -17,5 +17,8 @@ describe('schema nuevo (event)', () => {
 
     const pairs = await client.execute(`PRAGMA table_info(tournament_pairs)`);
     expect(pairs.rows.map((r) => r.name as string)).toContain('tournament_id');
+
+    const groups = await client.execute(`PRAGMA table_info(tournament_groups)`);
+    expect(groups.rows.map((r) => r.name as string)).toContain('tournament_id');
   });
 });
