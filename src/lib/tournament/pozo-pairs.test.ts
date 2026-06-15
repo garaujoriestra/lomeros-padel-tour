@@ -44,4 +44,22 @@ describe('nextPozoPairsRound', () => {
     expect(next.courts[1]).toEqual(['B', 'E']);
     expect(next.resting).toEqual(['D']);
   });
+
+  it('una sola pista: el ganador y el perdedor se retienen (no-op de movimiento)', () => {
+    const current: PairsRound = { courts: [['A', 'B']], resting: [] };
+    const next = nextPozoPairsRound(current, [{ winner: 'A', loser: 'B' }]);
+    expect(next.courts).toEqual([['A', 'B']]);
+    expect(next.resting).toEqual([]);
+  });
+
+  it('falla ruidosamente si descansan más parejas que el tamaño de pista', () => {
+    // 6 parejas, 2 pistas → 4 juegan, 2 descansan: restCount(2) == fondo(2), OK.
+    // Forzamos el caso inválido: 3 descansando con fondo de 2.
+    const current: PairsRound = { courts: [['A', 'B'], ['C', 'D']], resting: ['E', 'F', 'G'] };
+    const results: PairCourtResult[] = [
+      { winner: 'A', loser: 'B' },
+      { winner: 'C', loser: 'D' },
+    ];
+    expect(() => nextPozoPairsRound(current, results)).toThrow(/descansan/);
+  });
 });

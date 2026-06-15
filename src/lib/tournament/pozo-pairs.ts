@@ -53,6 +53,12 @@ export function nextPozoPairsRound(current: PairsRound, results: PairCourtResult
 
   const bottomIdx = moved.courts.length - 1;
   const bottom = moved.courts[bottomIdx];
+  // Invariante: el grupo que descansa no puede ser mayor que una pista (2 parejas),
+  // o la rotación por el fondo no es válida. La capa de generación debe elegir el nº de
+  // pistas para que sobren ≤ 2 parejas. Fallamos ruidosamente si no se cumple.
+  if (restCount > bottom.length) {
+    throw new Error(`pozo-pairs: descansan ${restCount} parejas pero el fondo solo tiene ${bottom.length}; reduce el nº de pistas`);
+  }
   const goRest = bottom.slice(bottom.length - restCount);
   const staying = bottom.slice(0, bottom.length - restCount);
   moved.courts[bottomIdx] = [...staying, ...current.resting];
