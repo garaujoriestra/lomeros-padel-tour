@@ -101,6 +101,9 @@ async function replayPozoState(db: Db, tournamentId: string, uptoRound: number):
   ]);
   // Descansan: participantes que no están en ninguna pista de la ronda 0.
   const inCourts = new Set(courts0.flat());
+  // Los que descansan en la ronda 0 no tienen partido, así que se deducen (participantes
+  // no asignados a pista). El orden entre ellos es estable (orden de inserción) y, como las
+  // parejas que descansan son intercambiables, no afecta a la corrección del avance.
   const allParts = (await db.select().from(tournamentParticipants)
     .where(eq(tournamentParticipants.tournamentId, tournamentId))).map((p) => p.playerId);
   const resting0 = allParts.filter((p) => !inCourts.has(p));
@@ -112,6 +115,9 @@ async function replayPozoState(db: Db, tournamentId: string, uptoRound: number):
     const results: CourtResult[] = matches.map((m) => {
       const teamA: [string, string] = [parseParticipant(m.slotA1), parseParticipant(m.slotA2)];
       const teamB: [string, string] = [parseParticipant(m.slotB1), parseParticipant(m.slotB2)];
+      if (m.winner !== 'A' && m.winner !== 'B') {
+        throw new Error(`pozo-run: el partido ${m.id} de la ronda ${r} no tiene ganador; no se puede avanzar`);
+      }
       return m.winner === 'A' ? { winners: teamA, losers: teamB } : { winners: teamB, losers: teamA };
     });
     state = nextPozoRoundWithRest(state, results);
