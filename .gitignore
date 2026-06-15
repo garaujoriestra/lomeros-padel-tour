@@ -55,3 +55,11 @@ next-env.d.ts
 
 # playwright-mcp local artifacts
 .playwright-mcp/
+
+# Playwright / e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.auth/
+/e2e/test.db

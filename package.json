@@ -8,6 +8,9 @@
     "start": "next start",
     "test": "vitest run",
     "lint": "eslint",
+    "dev:e2e": "next dev -p 3100",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "db:init": "curl -X POST http://localhost:3000/api/init-db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
@@ -36,6 +39,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
