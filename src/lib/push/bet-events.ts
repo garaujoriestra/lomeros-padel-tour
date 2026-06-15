@@ -2,8 +2,42 @@
 import { db } from '@/lib/db';
 import { matches, players } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { sendToUsers, userIdsForPlayers } from './send';
-import { buildBetSettledNotification } from './notifications';
+import { sendToAll, sendToUsers, userIdsForPlayers } from './send';
+import { buildBetSettledNotification, buildBettingOpenNotification } from './notifications';
+
+export interface ScheduledMatchForPush {
+  id: string;
+  date: string;
+  time: string | null;
+  location: string | null;
+  team1Player1Id: string;
+  team1Player2Id: string;
+  team2Player1Id: string;
+  team2Player2Id: string;
+}
+
+// Avisa a TODOS los suscritos de que un nuevo partido está disponible para
+// apostar en La Timba. Best-effort: nunca lanza.
+export async function notifyBettingOpen(match: ScheduledMatchForPush): Promise<void> {
+  try {
+    const ids = [match.team1Player1Id, match.team1Player2Id, match.team2Player1Id, match.team2Player2Id];
+    const rows = await db.select().from(players).where(inArray(players.id, ids));
+    const nameOf = (id: string) => {
+      const p = rows.find((r) => r.id === id);
+      return p?.nickname || p?.name || '?';
+    };
+    const label = `${nameOf(ids[0])}/${nameOf(ids[1])} vs ${nameOf(ids[2])}/${nameOf(ids[3])}`;
+    await sendToAll(
+      buildBettingOpenNotification(
+        label,
+        { date: match.date, time: match.time, location: match.location },
+        match.id,
+      ),
+    );
+  } catch (error) {
+    console.error('notifyBettingOpen error', error);
+  }
+}
 
 export interface SettledBetForPush {
   playerId: string;

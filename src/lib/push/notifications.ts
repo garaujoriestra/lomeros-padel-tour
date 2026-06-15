@@ -62,6 +62,29 @@ export function buildReminderNotification(
   };
 }
 
+export function buildBettingOpenNotification(
+  matchLabel: string,
+  opts: { date?: string | null; time?: string | null; location?: string | null },
+  matchId: string,
+): PushPayload {
+  // «15/07 a las 19:00 · Club X» cuando hay datos; si faltan, se omiten.
+  const parts: string[] = [];
+  if (opts.date) {
+    const [, m, d] = opts.date.split('-');
+    if (m && d) parts.push(opts.time ? `${d}/${m} a las ${opts.time}` : `${d}/${m}`);
+  } else if (opts.time) {
+    parts.push(`a las ${opts.time}`);
+  }
+  if (opts.location) parts.push(opts.location);
+  const when = parts.length > 0 ? ` · ${parts.join(' · ')}` : '';
+  return {
+    title: '🎲 Nuevo partido en La Timba',
+    body: `${matchLabel}${when} · ¡Apuestas abiertas!`,
+    url: `/matches/${matchId}`,
+    tag: `betting-open-${matchId}`,
+  };
+}
+
 export function buildBetSettledNotification(
   status: 'won' | 'lost' | 'refunded',
   amount: number,

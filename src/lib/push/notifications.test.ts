@@ -4,6 +4,7 @@ import {
   buildAchievementNotification,
   buildReminderNotification,
   buildBetSettledNotification,
+  buildBettingOpenNotification,
 } from './notifications';
 
 describe('buildResultNotification', () => {
@@ -67,6 +68,30 @@ describe('buildReminderNotification', () => {
     expect(day.body).toBe('Hoy juegas un partido · Club');
     const eve = buildReminderNotification('reminder_eve', {}, 'm6');
     expect(eve.body).toBe('Mañana tienes partido');
+  });
+});
+
+describe('buildBettingOpenNotification', () => {
+  it('incluye fecha, hora, lugar y «apuestas abiertas»', () => {
+    const p = buildBettingOpenNotification(
+      'Pepe/Juan vs Luis/Edu',
+      { date: '2026-07-15', time: '19:00', location: 'Club Padel' },
+      'm1',
+    );
+    expect(p.title).toContain('La Timba');
+    expect(p.body).toBe('Pepe/Juan vs Luis/Edu · 15/07 a las 19:00 · Club Padel · ¡Apuestas abiertas!');
+    expect(p.url).toBe('/matches/m1');
+    expect(p.tag).toBe('betting-open-m1');
+  });
+
+  it('sin hora: muestra solo la fecha', () => {
+    const p = buildBettingOpenNotification('A/B vs C/D', { date: '2026-07-15', time: null, location: null }, 'm2');
+    expect(p.body).toBe('A/B vs C/D · 15/07 · ¡Apuestas abiertas!');
+  });
+
+  it('sin fecha ni hora ni lugar: solo el enfrentamiento', () => {
+    const p = buildBettingOpenNotification('A/B vs C/D', {}, 'm3');
+    expect(p.body).toBe('A/B vs C/D · ¡Apuestas abiertas!');
   });
 });
 

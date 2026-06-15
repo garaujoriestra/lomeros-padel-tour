@@ -6,6 +6,7 @@ import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
 import { notifyMatchResult } from '@/lib/push/match-events';
+import { notifyBettingOpen } from '@/lib/push/bet-events';
 
 // GET /api/matches
 export async function GET() {
@@ -93,7 +94,11 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    if (!isScheduled) {
+    if (isScheduled) {
+      // Apuestas abiertas: avisa a todos los suscritos de La Timba.
+      // Best-effort: no debe romper el guardado del partido.
+      await notifyBettingOpen(match);
+    } else {
       // Save sets
       for (const set of sets) {
         await db.insert(matchSets).values({
