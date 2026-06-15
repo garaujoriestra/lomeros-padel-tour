@@ -43,6 +43,15 @@ export interface CreateTournamentInput {
   blocks: CreateBlockInput[];
 }
 
+export interface UpdateShellInput {
+  name: string;
+  date: string;
+  location: string | null;
+  notes: string | null;
+  courts: CreateCourtInput[];
+  participantPlayerIds: string[];
+}
+
 // Inserta toda la configuración del torneo. Devuelve el id del torneo.
 // NOTA: inserts secuenciales sin transacción. Envolver en db.transaction() sería
 // lo ideal para atomicidad, pero el driver `:memory:` de @libsql/client recrea una
@@ -95,6 +104,30 @@ export async function createTournament(db: Db, input: CreateTournamentInput): Pr
   }
 
   return tournament.id;
+}
+
+// Edita el "cascarón" del torneo: meta + reemplazo completo de pistas y participantes.
+// No toca bloques (eso es el Plan 7). No transaccional (misma razón que createTournament).
+export async function updateTournamentShell(db: Db, id: string, input: UpdateShellInput): Promise<void> {
+  await db.update(tournaments).set({
+    name: input.name,
+    date: input.date,
+    location: input.location,
+    notes: input.notes,
+  }).where(eq(tournaments.id, id));
+
+  await db.delete(tournamentCourts).where(eq(tournamentCourts.tournamentId, id));
+  for (const c of input.courts) {
+    await db.insert(tournamentCourts).values({
+      tournamentId: id, label: c.label, order: c.order,
+      availableFrom: c.availableFrom, availableTo: c.availableTo,
+    });
+  }
+
+  await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+  for (const playerId of input.participantPlayerIds) {
+    await db.insert(tournamentParticipants).values({ tournamentId: id, playerId });
+  }
 }
 
 export interface LoadedConfig {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
-import { createTournament, loadTournamentConfig, generateAndStore } from './store';
+import { createTournament, loadTournamentConfig, generateAndStore, updateTournamentShell } from './store';
 import type { CreateTournamentInput } from './store';
 import type { GenPozoBlock, GenFixedPairsBlock } from './generate';
 import { tournamentCourts, tournamentParticipants, tournamentBlocks, tournamentGroups, tournamentPairs, tournamentMatches, tournaments } from '@/lib/db/schema';
@@ -53,6 +53,36 @@ describe('createTournament', () => {
     const pairs = await db.select().from(tournamentPairs).where(eq(tournamentPairs.blockId, fixedBlock.id));
     expect(pairs).toHaveLength(2);
     expect(pairs.every((p) => p.groupId === groups[0].id)).toBe(true);
+  });
+});
+
+describe('updateTournamentShell', () => {
+  it('actualiza meta y reemplaza pistas y participantes', async () => {
+    const db = await createTestDb();
+    const id = await createTournament(db, sampleInput);
+
+    await updateTournamentShell(db, id, {
+      name: 'Cumple 2026 (editado)',
+      date: '2026-06-20',
+      location: 'Nuevo Club',
+      notes: null,
+      courts: [
+        { label: 'Central', order: 1, availableFrom: '18:00', availableTo: '21:00' },
+      ],
+      participantPlayerIds: ['pl1', 'pl2', 'pl3'],
+    });
+
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.id, id));
+    expect(t.name).toBe('Cumple 2026 (editado)');
+    expect(t.date).toBe('2026-06-20');
+    expect(t.location).toBe('Nuevo Club');
+
+    const courts = await db.select().from(tournamentCourts).where(eq(tournamentCourts.tournamentId, id));
+    expect(courts).toHaveLength(1);
+    expect(courts[0].label).toBe('Central');
+
+    const parts = await db.select().from(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+    expect(parts).toHaveLength(3);
   });
 });
 
