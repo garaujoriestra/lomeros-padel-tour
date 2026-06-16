@@ -22,7 +22,7 @@ export default async function PozosPage() {
         <ul className="space-y-2">
           {pozos.map((p) => (
             <li key={p.id}>
-              <Link href={`/admin/tournaments/${p.id}`} className="block border border-line rounded-md px-3 py-2 hover:bg-surface">
+              <Link href={`/admin/pozos/${p.id}`} className="block border border-line rounded-md px-3 py-2 hover:bg-surface">
                 <span className="font-medium">{p.name}</span>
                 <span className="text-ink-3 text-sm ml-2">{p.date} · {p.format === 'americano' ? 'Americano' : 'Parejas fijas'}</span>
               </Link>

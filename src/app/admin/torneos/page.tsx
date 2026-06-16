@@ -22,7 +22,7 @@ export default async function TorneosPage() {
         <ul className="space-y-2">
           {torneos.map((t) => (
             <li key={t.id}>
-              <Link href={`/admin/tournaments/${t.id}`} className="block border border-line rounded-md px-3 py-2 hover:bg-surface">
+              <Link href={`/admin/torneos/${t.id}`} className="block border border-line rounded-md px-3 py-2 hover:bg-surface">
                 <span className="font-medium">{t.name}</span>
                 <span className="text-ink-3 text-sm ml-2">{t.date} · {t.format === 'groups_elim' ? 'Grupos → eliminación' : 'Eliminación directa'}</span>
               </Link>
