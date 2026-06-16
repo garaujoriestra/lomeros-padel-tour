@@ -190,6 +190,9 @@ export const tournaments = sqliteTable('tournaments', {
   date: text('date').notNull(), // ISO date YYYY-MM-DD
   location: text('location'),
   notes: text('notes'),
+  kind: text('kind').notNull(),   // 'pozo' | 'torneo'
+  format: text('format').notNull(), // pozo: 'fixed_pairs'|'americano' ; torneo: 'single_elim'|'groups_elim'
+  config: text('config').notNull().default('{}'),
   status: text('status').notNull().default('draft'), // 'draft' | 'scheduled' | 'running' | 'completed'
   createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
@@ -212,25 +215,15 @@ export const tournamentParticipants = sqliteTable('tournament_participants', {
   uniqParticipant: unique().on(t.tournamentId, t.playerId),
 }));
 
-export const tournamentBlocks = sqliteTable('tournament_blocks', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
-  order: integer('sort_order').notNull(),
-  type: text('type').notNull(), // 'pozo' | 'fixed_pairs'
-  name: text('name').notNull(),
-  durationMinutes: integer('duration_minutes').notNull(),
-  config: text('config').notNull().default('{}'), // JSON: matchFormat, bufferMinutes, etc.
-});
-
 export const tournamentGroups = sqliteTable('tournament_groups', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
 });
 
 export const tournamentPairs = sqliteTable('tournament_pairs', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
+  tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
   player1Id: text('player1_id').notNull().references(() => players.id),
   player2Id: text('player2_id').notNull().references(() => players.id),
   seed: integer('seed'),
@@ -241,7 +234,6 @@ export const tournamentPairs = sqliteTable('tournament_pairs', {
 export const tournamentMatches = sqliteTable('tournament_matches', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   tournamentId: text('tournament_id').notNull().references(() => tournaments.id, { onDelete: 'cascade' }),
-  blockId: text('block_id').notNull().references(() => tournamentBlocks.id, { onDelete: 'cascade' }),
   courtId: text('court_id').references(() => tournamentCourts.id, { onDelete: 'set null' }),
   round: integer('round').notNull().default(0),
   phaseTag: text('phase_tag'), // 'pozo' | 'group:A' | 'ko:semi' | ...
@@ -287,8 +279,6 @@ export type TournamentCourt = typeof tournamentCourts.$inferSelect;
 export type NewTournamentCourt = typeof tournamentCourts.$inferInsert;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type NewTournamentParticipant = typeof tournamentParticipants.$inferInsert;
-export type TournamentBlock = typeof tournamentBlocks.$inferSelect;
-export type NewTournamentBlock = typeof tournamentBlocks.$inferInsert;
 export type TournamentGroup = typeof tournamentGroups.$inferSelect;
 export type NewTournamentGroup = typeof tournamentGroups.$inferInsert;
 export type TournamentPair = typeof tournamentPairs.$inferSelect;

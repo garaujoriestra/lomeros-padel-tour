@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth/guard';
-import { recordResult } from '@/lib/tournament/results';
-import { validateResultInput } from '@/lib/tournament/validation';
+import { recordResult } from '@/lib/tournament/event-engine';
 
-// POST /api/tournaments/[id]/matches/[matchId]/result — registra resultado + progresión.
+// POST /api/tournaments/[id]/matches/[matchId]/result — registra marcador (admin). Body: { gamesA, gamesB }.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; matchId: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
+  const { matchId } = await params;
   try {
-    const { matchId } = await params;
     const body = await request.json();
-    const v = validateResultInput(body);
-    if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
-
-    await recordResult(db, matchId, v.value);
+    const gamesA = body?.gamesA;
+    const gamesB = body?.gamesB;
+    if (!Number.isInteger(gamesA) || !Number.isInteger(gamesB) || gamesA < 0 || gamesB < 0) {
+      return NextResponse.json({ error: 'Marcador inválido' }, { status: 400 });
+    }
+    await recordResult(db, matchId, gamesA, gamesB);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Error al registrar el resultado';
-    const status = msg.includes('no encontrado') ? 404 : msg.includes('sin resolver') ? 409 : 500;
-    if (status === 500) console.error(error);
-    return NextResponse.json({ error: msg }, { status });
+    if (error instanceof Error && error.message === 'NOT_FOUND') {
+      return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
+    }
+    console.error(error);
+    return NextResponse.json({ error: 'Error al registrar el resultado' }, { status: 500 });
   }
 }

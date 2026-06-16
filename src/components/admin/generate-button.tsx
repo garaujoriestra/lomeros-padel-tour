@@ -1,35 +1,30 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function GenerateButton({ tournamentId }: { tournamentId: string }) {
+interface Props { tournamentId: string; disabled?: boolean; disabledReason?: string }
+
+export function GenerateButton({ tournamentId, disabled, disabledReason }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleGenerate() {
-    setLoading(true);
-    const res = await fetch(`/api/tournaments/${tournamentId}/generate`, { method: 'POST' });
-    const data = await res.json().catch(() => ({}));
+  async function generate() {
+    setLoading(true); setError(null);
+    const res = await fetch(`/api/tournaments/${tournamentId}/generate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+    });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || 'Error'); setLoading(false); return; }
     setLoading(false);
-
-    if (!res.ok) {
-      toast.error(data.error || 'Error al generar la parrilla');
-      return;
-    }
-    toast.success(`${data.matchCount} partidos generados`);
-    if (Array.isArray(data.warnings) && data.warnings.length > 0) {
-      for (const w of data.warnings) toast.warning(w);
-    }
     router.refresh();
   }
 
   return (
-    <Button onClick={handleGenerate} disabled={loading} className="min-h-[40px] px-4 text-sm">
-      <Zap size={15} /> {loading ? 'Generando...' : 'Generar parrilla'}
-    </Button>
+    <div className="space-y-1">
+      <Button onClick={generate} disabled={disabled || loading}>{loading ? 'Generando...' : 'Generar'}</Button>
+      {disabled && disabledReason && <p className="text-xs text-ink-3">{disabledReason}</p>}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+    </div>
   );
 }

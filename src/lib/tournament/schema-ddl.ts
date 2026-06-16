@@ -1,5 +1,6 @@
-// Fuente única del DDL de las tablas del torneo. Lo usan el endpoint de migración
+// Fuente única del DDL del evento (pozo o torneo). Lo usan el endpoint de migración
 // y el harness de test en memoria. Idempotente (CREATE TABLE IF NOT EXISTS).
+// Modelo nuevo: UN formato por evento (sin tournament_blocks).
 export const TOURNAMENT_DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS tournaments (
     id TEXT PRIMARY KEY,
@@ -7,6 +8,9 @@ export const TOURNAMENT_DDL: string[] = [
     date TEXT NOT NULL,
     location TEXT,
     notes TEXT,
+    kind TEXT NOT NULL,            -- 'pozo' | 'torneo'
+    format TEXT NOT NULL,          -- pozo: 'fixed_pairs'|'americano' ; torneo: 'single_elim'|'groups_elim'
+    config TEXT NOT NULL DEFAULT '{}',
     status TEXT NOT NULL DEFAULT 'draft',
     created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -25,23 +29,14 @@ export const TOURNAMENT_DDL: string[] = [
     player_id TEXT NOT NULL REFERENCES players(id),
     UNIQUE(tournament_id, player_id)
   )`,
-  `CREATE TABLE IF NOT EXISTS tournament_blocks (
-    id TEXT PRIMARY KEY,
-    tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-    sort_order INTEGER NOT NULL,
-    type TEXT NOT NULL,
-    name TEXT NOT NULL,
-    duration_minutes INTEGER NOT NULL,
-    config TEXT NOT NULL DEFAULT '{}'
-  )`,
   `CREATE TABLE IF NOT EXISTS tournament_groups (
     id TEXT PRIMARY KEY,
-    block_id TEXT NOT NULL REFERENCES tournament_blocks(id) ON DELETE CASCADE,
+    tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
     name TEXT NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS tournament_pairs (
     id TEXT PRIMARY KEY,
-    block_id TEXT NOT NULL REFERENCES tournament_blocks(id) ON DELETE CASCADE,
+    tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
     player1_id TEXT NOT NULL REFERENCES players(id),
     player2_id TEXT NOT NULL REFERENCES players(id),
     seed INTEGER,
@@ -51,7 +46,6 @@ export const TOURNAMENT_DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS tournament_matches (
     id TEXT PRIMARY KEY,
     tournament_id TEXT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-    block_id TEXT NOT NULL REFERENCES tournament_blocks(id) ON DELETE CASCADE,
     court_id TEXT REFERENCES tournament_courts(id) ON DELETE SET NULL,
     round INTEGER NOT NULL DEFAULT 0,
     phase_tag TEXT,
@@ -64,4 +58,17 @@ export const TOURNAMENT_DDL: string[] = [
     sets_json TEXT,
     winner TEXT
   )`,
+];
+
+// DROP del esquema de torneos para reemplazar el MODELO VIEJO (con `tournament_blocks` y
+// columnas `block_id`) por el nuevo de TOURNAMENT_DDL. Hijos antes que padres. DESTRUCTIVO:
+// borra cualquier dato de torneos (la v1 no tenía torneos reales). Lo usa SOLO la migración v2.
+export const TOURNAMENT_DROP: string[] = [
+  'DROP TABLE IF EXISTS tournament_matches',
+  'DROP TABLE IF EXISTS tournament_pairs',
+  'DROP TABLE IF EXISTS tournament_groups',
+  'DROP TABLE IF EXISTS tournament_blocks',
+  'DROP TABLE IF EXISTS tournament_participants',
+  'DROP TABLE IF EXISTS tournament_courts',
+  'DROP TABLE IF EXISTS tournaments',
 ];
