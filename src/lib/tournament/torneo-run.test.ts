@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
 import { createEvent } from './event-store';
 import { replacePairs, loadPairs } from './pair-store';
-import { generateTorneo, recordTorneoResult, loadTorneoMatches } from './torneo-run';
+import { generateTorneo, recordTorneoResult, loadTorneoMatches, crossSeedLeaves } from './torneo-run';
+import { buildBracket } from './fixed-pairs';
 import type { TorneoConfig } from './types';
 
 type TestDb = Awaited<ReturnType<typeof createTestDb>>['db'];
@@ -140,5 +141,25 @@ describe('transición grupos→cuadro', () => {
       expect(JSON.parse(m.slotA1!).type).toBe('pair');
       expect(JSON.parse(m.slotB1!).type).toBe('pair');
     }
+  });
+});
+
+describe('crossSeedLeaves (cruces sin choque de grupo en 1ª ronda)', () => {
+  function hasSameGroupR1(qbg: string[][]): boolean {
+    const grp = new Map<string, number>();
+    qbg.forEach((q, gi) => q.forEach((p) => grp.set(p, gi)));
+    const bracket = buildBracket(crossSeedLeaves(qbg));
+    return bracket.filter((m) => m.round === 0).some((m) =>
+      m.slotA.type === 'pair' && m.slotB.type === 'pair' && grp.get(m.slotA.pairId) === grp.get(m.slotB.pairId));
+  }
+  it('2, 3 y 4 grupos × 2 clasificados: ningún partido de 1ª ronda enfrenta a dos del mismo grupo', () => {
+    expect(hasSameGroupR1([['A1', 'A2'], ['B1', 'B2']])).toBe(false);
+    expect(hasSameGroupR1([['A1', 'A2'], ['B1', 'B2'], ['C1', 'C2']])).toBe(false);
+    expect(hasSameGroupR1([['A1', 'A2'], ['B1', 'B2'], ['C1', 'C2'], ['D1', 'D2']])).toBe(false);
+  });
+  it('preserva todos los clasificados (sin perder ni duplicar)', () => {
+    const leaves = crossSeedLeaves([['A1', 'A2'], ['B1', 'B2'], ['C1', 'C2']]);
+    const pairIds = leaves.filter((s) => s.type === 'pair').map((s) => (s as { pairId: string }).pairId).sort();
+    expect(pairIds).toEqual(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
   });
 });

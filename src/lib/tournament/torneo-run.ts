@@ -170,13 +170,40 @@ function toPairMatchResult(m: PozoMatchRow): PairMatchResult {
   };
 }
 
-// Cruces estándar: lista sembrada rank-major (todos los 1ºs por orden de grupo, luego 2ºs…).
-// Para 2 grupos × 2 → [1ºA,1ºB,2ºA,2ºB], que con seedOrder produce 1ºA-2ºB y 1ºB-2ºA.
-function crossSeed(qualifiersByGroup: string[][]): string[] {
+// Hojas del cuadro (longitud potencia de 2, con byes explícitos) sembradas por cruces:
+// rank-major + un pase que intercambia los "débiles" de cada par espejo para que en 1ª ronda
+// ningún clasificado se cruce con otro de su MISMO grupo. buildBracket respeta el array completo.
+export function crossSeedLeaves(qualifiersByGroup: string[][]): SlotRef[] {
+  const g = qualifiersByGroup.length;
+  const ranked: { pairId: string; group: number }[] = [];
   const maxRank = Math.max(0, ...qualifiersByGroup.map((q) => q.length));
-  const out: string[] = [];
-  for (let r = 0; r < maxRank; r++) for (const g of qualifiersByGroup) if (g[r]) out.push(g[r]);
-  return out;
+  for (let r = 0; r < maxRank; r++) {
+    for (let gi = 0; gi < g; gi++) {
+      const p = qualifiersByGroup[gi][r];
+      if (p) ranked.push({ pairId: p, group: gi });
+    }
+  }
+  const count = ranked.length;
+  if (count === 0) return [];
+  let size = 1; while (size < count) size *= 2;
+  const leaves: ({ pairId: string; group: number } | null)[] = Array.from({ length: size }, (_, s) => (s < count ? ranked[s] : null));
+  const half = size / 2;
+  const grp = (slot: number) => leaves[slot]?.group ?? -1; // -1 = bye
+  for (let s = 0; s < half; s++) {
+    const weak = size - 1 - s;
+    if (grp(s) === -1 || grp(weak) === -1 || grp(s) !== grp(weak)) continue; // sin clash
+    // Clash: intercambia leaves[weak] con el débil de otro par que no genere un nuevo clash.
+    for (let s2 = 0; s2 < half; s2++) {
+      if (s2 === s) continue;
+      const weak2 = size - 1 - s2;
+      if (grp(weak2) === -1) continue;
+      if (grp(s) !== grp(weak2) && grp(s2) !== grp(weak)) {
+        const tmp = leaves[weak]; leaves[weak] = leaves[weak2]; leaves[weak2] = tmp;
+        break;
+      }
+    }
+  }
+  return leaves.map((l) => (l ? ({ type: 'pair', pairId: l.pairId } as SlotRef) : ({ type: 'bye' } as SlotRef)));
 }
 
 export async function recordTorneoResult(db: Db, matchId: string, gamesA: number, gamesB: number): Promise<void> {
@@ -214,8 +241,7 @@ async function maybeGenerateBracketFromGroups(db: Db, tournamentId: string): Pro
     qualifiersByGroup.push(standings.slice(0, advance).map((s) => s.pairId));
   }
 
-  const seededLeaves = crossSeed(qualifiersByGroup);
-  const bracket = buildBracket(seededLeaves.map((pid) => ({ type: 'pair', pairId: pid } as SlotRef)));
+  const bracket = buildBracket(crossSeedLeaves(qualifiersByGroup));
   const courts = courtWindowsOf(ev);
   const slotMinutes = estimatedMatchMinutes(cfg.matchFormat);
   const groupEnds = groupMatches.map((m) => (m.scheduledEnd ? hhmmToMin(m.scheduledEnd) : 0));
