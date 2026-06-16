@@ -26,6 +26,7 @@ export async function recordPozoResult(db: Db, matchId: string, gamesA: number, 
   const [m] = await db.select().from(tournamentMatches).where(eq(tournamentMatches.id, matchId));
   if (!m) throw new Error('NOT_FOUND');
   const ev = await loadEvent(db, m.tournamentId);
+  if (ev.kind !== 'pozo') throw new Error('NOT_POZO');
   if (ev.format === 'fixed_pairs') return pairs.recordPozoPairsResult(db, matchId, gamesA, gamesB);
   return americano.recordPozoResult(db, matchId, gamesA, gamesB);
 }

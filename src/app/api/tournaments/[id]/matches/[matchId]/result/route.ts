@@ -21,6 +21,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error instanceof Error && error.message === 'NOT_FOUND') {
       return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     }
+    if (error instanceof Error && error.message === 'NOT_POZO') {
+      return NextResponse.json({ error: 'Este partido no pertenece a un pozo' }, { status: 400 });
+    }
     console.error(error);
     return NextResponse.json({ error: 'Error al registrar el resultado' }, { status: 500 });
   }
