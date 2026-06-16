@@ -10,11 +10,12 @@ export interface LoadedPair {
   player1Id: string;
   player2Id: string;
   label: string | null;
+  groupId: string | null;
 }
 
 export async function loadPairs(db: Db, tournamentId: string): Promise<LoadedPair[]> {
   const rows = await db.select().from(tournamentPairs).where(eq(tournamentPairs.tournamentId, tournamentId));
-  return rows.map((r) => ({ id: r.id, player1Id: r.player1Id, player2Id: r.player2Id, label: r.label ?? null }));
+  return rows.map((r) => ({ id: r.id, player1Id: r.player1Id, player2Id: r.player2Id, label: r.label ?? null, groupId: r.groupId ?? null }));
 }
 
 // Reemplaza el set completo de parejas del evento (FK OFF en Turso/harness → borrado explícito).
