@@ -59,3 +59,16 @@ export const TOURNAMENT_DDL: string[] = [
     winner TEXT
   )`,
 ];
+
+// DROP del esquema de torneos para reemplazar el MODELO VIEJO (con `tournament_blocks` y
+// columnas `block_id`) por el nuevo de TOURNAMENT_DDL. Hijos antes que padres. DESTRUCTIVO:
+// borra cualquier dato de torneos (la v1 no tenía torneos reales). Lo usa SOLO la migración v2.
+export const TOURNAMENT_DROP: string[] = [
+  'DROP TABLE IF EXISTS tournament_matches',
+  'DROP TABLE IF EXISTS tournament_pairs',
+  'DROP TABLE IF EXISTS tournament_groups',
+  'DROP TABLE IF EXISTS tournament_blocks',
+  'DROP TABLE IF EXISTS tournament_participants',
+  'DROP TABLE IF EXISTS tournament_courts',
+  'DROP TABLE IF EXISTS tournaments',
+];
