@@ -56,6 +56,13 @@ export async function generatePozoPairs(db: Db, tournamentId: string, seed: numb
 
   const pairIds = shuffleDeterministic(pairs.map((p) => p.id), seed);
   const state0 = seedPozoPairsCourts(pairIds, courtsByOrder.length);
+
+  // El descanso solo rota por la pista del fondo (≤ 2 parejas). Si sobran más, el avance de
+  // ronda sería imposible: lo rechazamos AHORA en vez de fallar a mitad de torneo.
+  if (state0.resting.length > 2) {
+    throw new Error('UNBALANCED_PAIRS');
+  }
+
   await writePozoPairsRound(db, tournamentId, 0, state0, courtsByOrder, slotMinutes);
 
   await db.update(tournaments).set({ status: 'scheduled' }).where(eq(tournaments.id, tournamentId));

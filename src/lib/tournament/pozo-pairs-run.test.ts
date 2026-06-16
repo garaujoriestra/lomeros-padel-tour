@@ -73,6 +73,13 @@ describe('generatePozoPairs', () => {
     expect(ma.length).toBe(mb.length);
   });
 
+  it('rechaza generar si quedan más de 2 parejas descansando (config desbalanceada)', async () => {
+    const { db, client } = await createTestDb();
+    // 4 parejas en 1 sola pista → 1 pista usable, 2 parejas juegan, 2 descansan (OK). Forzamos 6 parejas en 1 pista → 4 descansan.
+    const { id } = await makePairsPozo(db, client, 6, 1); // 6 parejas, 1 pista → 4 descansan (>2)
+    await expect(generatePozoPairs(db, id, 1)).rejects.toThrow(/UNBALANCED_PAIRS|descans/i);
+  });
+
   it('lanza si no hay parejas definidas', async () => {
     const { db, client } = await createTestDb();
     const players = ['p1', 'p2'];
