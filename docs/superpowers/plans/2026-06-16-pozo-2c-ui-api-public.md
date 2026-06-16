@@ -233,6 +233,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error instanceof Error && error.message === 'NO_PAIRS') {
       return NextResponse.json({ error: 'Define las parejas antes de generar' }, { status: 400 });
     }
+    if (error instanceof Error && error.message === 'UNBALANCED_PAIRS') {
+      return NextResponse.json({ error: 'Demasiadas parejas para las pistas: como mucho pueden descansar 2 (una pista). Añade pistas o quita parejas.' }, { status: 400 });
+    }
     console.error(error);
     return NextResponse.json({ error: 'Error al generar' }, { status: 500 });
   }
