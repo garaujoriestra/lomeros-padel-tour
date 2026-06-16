@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEventInput } from './validation';
+import { validateEventInput, validatePairsInput } from './validation';
 
 describe('validateEventInput', () => {
   const roster = new Set(['p1', 'p2', 'p3', 'p4']);
@@ -54,5 +54,40 @@ describe('validateEventInput', () => {
       config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
     }, roster);
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('validatePairsInput', () => {
+  const roster = new Set(['p1', 'p2', 'p3', 'p4']);
+
+  it('acepta un emparejado completo y válido', () => {
+    const r = validatePairsInput({ pairs: [['p1', 'p2'], ['p3', 'p4']] }, roster);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toEqual([['p1', 'p2'], ['p3', 'p4']]);
+  });
+
+  it('rechaza un jugador en dos parejas', () => {
+    const r = validatePairsInput({ pairs: [['p1', 'p2'], ['p1', 'p4']] }, roster);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza un jugador fuera del roster', () => {
+    const r = validatePairsInput({ pairs: [['p1', 'p2'], ['p3', 'pX']] }, roster);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza una pareja con el mismo jugador dos veces', () => {
+    const r = validatePairsInput({ pairs: [['p1', 'p1'], ['p3', 'p4']] }, roster);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza si quedan participantes sin emparejar', () => {
+    const r = validatePairsInput({ pairs: [['p1', 'p2']] }, roster);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza cuerpo sin array de pairs', () => {
+    expect(validatePairsInput({}, roster).ok).toBe(false);
+    expect(validatePairsInput({ pairs: 'x' }, roster).ok).toBe(false);
   });
 });

@@ -108,3 +108,30 @@ export function validateEventInput(body: unknown, rosterIds: Set<string>): Valid
 
   return { ok: true, value: { name, date, location, kind, format, config, courts, participantPlayerIds } };
 }
+
+// Valida el set de parejas de un evento. participantIds = roster del evento.
+// Exige: cada pareja con 2 jugadores distintos del roster, cada jugador en una sola
+// pareja, y TODOS los participantes emparejados (nº par y completo).
+export function validatePairsInput(body: unknown, participantIds: Set<string>): Validated<[string, string][]> {
+  if (typeof body !== 'object' || body === null) return { ok: false, error: 'Cuerpo inválido' };
+  const b = body as Record<string, unknown>;
+  if (!Array.isArray(b.pairs)) return { ok: false, error: 'Faltan las parejas' };
+
+  const pairs: [string, string][] = [];
+  const seen = new Set<string>();
+  for (const [i, raw] of b.pairs.entries()) {
+    if (!Array.isArray(raw) || raw.length !== 2) return { ok: false, error: `La pareja ${i + 1} es inválida` };
+    const [p1, p2] = raw;
+    if (typeof p1 !== 'string' || typeof p2 !== 'string') return { ok: false, error: `La pareja ${i + 1} es inválida` };
+    if (p1 === p2) return { ok: false, error: `Una pareja no puede repetir jugador` };
+    for (const p of [p1, p2]) {
+      if (!participantIds.has(p)) return { ok: false, error: 'Jugador fuera del roster' };
+      if (seen.has(p)) return { ok: false, error: 'Un jugador no puede estar en dos parejas' };
+      seen.add(p);
+    }
+    pairs.push([p1, p2]);
+  }
+  if (pairs.length === 0) return { ok: false, error: 'Define al menos una pareja' };
+  if (seen.size !== participantIds.size) return { ok: false, error: 'Todos los participantes deben estar emparejados' };
+  return { ok: true, value: pairs };
+}
