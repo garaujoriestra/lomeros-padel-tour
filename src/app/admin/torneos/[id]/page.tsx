@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function TorneoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let ev;
   try {
-    const ev = await loadEvent(db, id);
-    if (ev.kind !== 'torneo') notFound();
+    ev = await loadEvent(db, id);
   } catch { notFound(); }
+  if (ev.kind !== 'torneo') notFound();
   return <EventPanel id={id} />;
 }

@@ -24,8 +24,8 @@ export async function EventPanel({ id }: { id: string }) {
   const needsPairs = isPozo && ev.format === 'fixed_pairs';
   const pairsComplete = pairs.length > 0 && pairs.length * 2 === ev.participantPlayerIds.length;
 
-  const matches = ev.status !== 'draft' ? await listPozoMatches(db, id) : [];
-  const standings = ev.status !== 'draft' ? await pozoStandingsLive(db, id) : [];
+  const matches = isPozo && !isDraft ? await listPozoMatches(db, id) : [];
+  const standings = isPozo && !isDraft ? await pozoStandingsLive(db, id) : [];
   const grid = buildPozoGrid(matches, courtsByOrder, ctx);
 
   return (
