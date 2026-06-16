@@ -1,4 +1,4 @@
-import { and, eq, asc } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import { tournaments, tournamentCourts, tournamentMatches } from '@/lib/db/schema';
