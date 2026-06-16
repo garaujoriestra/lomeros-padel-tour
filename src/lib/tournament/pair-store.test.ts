@@ -4,9 +4,11 @@ import { createEvent } from './event-store';
 import { loadPairs, replacePairs } from './pair-store';
 import type { PozoConfig } from './types';
 
+type TestDb = Awaited<ReturnType<typeof createTestDb>>['db'];
+
 const CFG: PozoConfig = { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } };
 
-async function makeEvent(db: any) {
+async function makeEvent(db: TestDb) {
   return createEvent(db, {
     name: 'P', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
     config: CFG, createdBy: null,

@@ -4,7 +4,10 @@ import { createEvent } from './event-store';
 import { generatePozo, listPozoMatches, recordPozoResult, pozoStandingsLive } from './pozo-run';
 import type { PozoConfig } from './types';
 
-async function seedPlayers(client: import('@libsql/client').Client, ids: string[]) {
+type TestDb = Awaited<ReturnType<typeof createTestDb>>['db'];
+type TestClient = Awaited<ReturnType<typeof createTestDb>>['client'];
+
+async function seedPlayers(client: TestClient, ids: string[]) {
   for (const id of ids) {
     await client.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [id, id.toUpperCase()] });
   }
@@ -12,7 +15,7 @@ async function seedPlayers(client: import('@libsql/client').Client, ids: string[
 
 const POZO_CFG: PozoConfig = { rounds: 3, matchFormat: { kind: 'timed', minutes: 15, tieRule: 'golden_point' } };
 
-async function makePozo(db: any, client: any, nPlayers: number, nCourts: number) {
+async function makePozo(db: TestDb, client: TestClient, nPlayers: number, nCourts: number) {
   const players = Array.from({ length: nPlayers }, (_, i) => `p${i + 1}`);
   await seedPlayers(client, players);
   const courts = Array.from({ length: nCourts }, (_, i) => ({
@@ -25,7 +28,7 @@ async function makePozo(db: any, client: any, nPlayers: number, nCourts: number)
   return { id, players };
 }
 
-async function playRound(db: any, id: string, round: number) {
+async function playRound(db: TestDb, id: string, round: number) {
   const matches = await listPozoMatches(db, id, round);
   // El equipo A gana siempre 4-2 (determinista para el test).
   for (const m of matches) await recordPozoResult(db, m.id, 4, 2);

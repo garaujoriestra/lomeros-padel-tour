@@ -5,9 +5,11 @@ import { replacePairs } from './pair-store';
 import { generatePozo, recordPozoResult, listPozoMatches, pozoStandingsLive } from './pozo-engine';
 import type { PozoConfig } from './types';
 
+type TestClient = Awaited<ReturnType<typeof createTestDb>>['client'];
+
 const CFG: PozoConfig = { rounds: 2, matchFormat: { kind: 'timed', minutes: 15, tieRule: 'golden_point' } };
 
-async function seedPlayers(client: any, ids: string[]) {
+async function seedPlayers(client: TestClient, ids: string[]) {
   for (const id of ids) await client.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [id, id] });
 }
 
