@@ -93,3 +93,65 @@ describe('generatePozoPairs', () => {
     await expect(generatePozoPairs(db, id, 1)).rejects.toThrow();
   });
 });
+
+describe('recordPozoPairsResult + avance', () => {
+  it('al cerrar la ronda 0 genera la ronda 1 con el movimiento de parejas', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePairsPozo(db, client, 4, 2);
+    await generatePozoPairs(db, id, 5);
+
+    expect((await listPozoMatches(db, id, 1)).length).toBe(0);
+    await playRound(db, id, 0);
+    const r1 = await listPozoMatches(db, id, 1);
+    expect(r1.length).toBe(2);
+    for (const m of r1) {
+      expect(m.status).toBe('pending');
+      expect(m.scheduledStart).not.toBe('17:00');
+      expect(JSON.parse(m.slotA1!).type).toBe('pair');
+    }
+  });
+
+  it('las parejas no se rompen: cada pairId aparece en exactamente un partido por ronda', async () => {
+    const { db, client } = await createTestDb();
+    const { id, pairIds } = await makePairsPozo(db, client, 4, 2);
+    await generatePozoPairs(db, id, 5);
+    await playRound(db, id, 0);
+    const r1 = await listPozoMatches(db, id, 1);
+    const present = r1.flatMap((m) => [JSON.parse(m.slotA1!).pairId, JSON.parse(m.slotB1!).pairId]);
+    expect(new Set(present).size).toBe(present.length);
+    for (const pid of present) expect(pairIds).toContain(pid);
+  });
+
+  it('escribe marcador/ganador y no genera más allá del nº de rondas', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePairsPozo(db, client, 4, 2); // rounds: 3
+    await generatePozoPairs(db, id, 9);
+    await playRound(db, id, 0);
+    await playRound(db, id, 1);
+    await playRound(db, id, 2);
+    expect((await listPozoMatches(db, id, 3)).length).toBe(0);
+    const r0 = await listPozoMatches(db, id, 0);
+    expect(r0[0].winner).toBe('A');
+    expect(r0[0].teamAScore).toBe(4);
+    expect(r0[0].status).toBe('completed');
+  });
+});
+
+describe('pozoPairsStandingsLive', () => {
+  it('clasifica por la pista de la última ronda con datos; una fila por pareja', async () => {
+    const { db, client } = await createTestDb();
+    const { id, pairIds } = await makePairsPozo(db, client, 4, 2);
+    await generatePozoPairs(db, id, 5);
+    await playRound(db, id, 0); // genera ronda 1
+    const table = await pozoPairsStandingsLive(db, id);
+    expect(table.length).toBe(4); // 4 parejas
+    expect(table.map((r) => r.rank)).toEqual([1, 2, 3, 4]);
+    expect(new Set(table.map((r) => r.entityId))).toEqual(new Set(pairIds));
+  });
+
+  it('devuelve [] si el pozo no se ha generado', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePairsPozo(db, client, 4, 2);
+    expect(await pozoPairsStandingsLive(db, id)).toEqual([]);
+  });
+});
