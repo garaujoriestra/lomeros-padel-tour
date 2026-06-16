@@ -94,3 +94,51 @@ describe('recordTorneoResult (single_elim)', () => {
     expect(after.teamAScore).toBe(2);
   });
 });
+
+const GROUPS_CFG: TorneoConfig = { matchFormat: { kind: 'best_of_3' }, thirdPlace: false, numGroups: 2, advancePerGroup: 2 };
+
+async function playAllGroupMatches(db: TestDb, id: string) {
+  const groupMatches = (await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('group:'));
+  for (const m of groupMatches) {
+    const a = JSON.parse(m.slotA1!).pairId as string;
+    const b = JSON.parse(m.slotB1!).pairId as string;
+    if (a <= b) await recordTorneoResult(db, m.id, 6, 3);
+    else await recordTorneoResult(db, m.id, 3, 6);
+  }
+}
+
+describe('generateTorneo (groups_elim)', () => {
+  it('crea grupos + liguilla y NO crea el cuadro todavía', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 8, 2, 'groups_elim', GROUPS_CFG);
+    await generateTorneo(db, id, 1);
+    const all = await loadTorneoMatches(db, id);
+    const groupMatches = all.filter((m) => m.phaseTag?.startsWith('group:'));
+    const ko = all.filter((m) => m.phaseTag?.startsWith('ko:'));
+    expect(groupMatches.length).toBe(12); // 2 grupos de 4 → 6+6
+    expect(ko.length).toBe(0);
+  });
+
+  it('rechaza GROUP_TOO_SMALL si un grupo recibe menos de 2 parejas', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 3, 2, 'groups_elim', { ...GROUPS_CFG, numGroups: 2 });
+    await expect(generateTorneo(db, id, 1)).rejects.toThrow(/GROUP_TOO_SMALL/);
+  });
+});
+
+describe('transición grupos→cuadro', () => {
+  it('al cerrar toda la liguilla, genera el cuadro con los clasificados (4 → semis+final)', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 8, 2, 'groups_elim', GROUPS_CFG);
+    await generateTorneo(db, id, 1);
+    expect((await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('ko:')).length).toBe(0);
+    await playAllGroupMatches(db, id);
+    const ko = (await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('ko:'));
+    expect(ko.length).toBe(3);
+    const r0 = ko.filter((m) => m.round === 0);
+    for (const m of r0) {
+      expect(JSON.parse(m.slotA1!).type).toBe('pair');
+      expect(JSON.parse(m.slotB1!).type).toBe('pair');
+    }
+  });
+});
