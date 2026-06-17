@@ -61,8 +61,16 @@ export function buildEscaleraView(
   const byRound: Record<number, EscaleraRound> = {};
 
   for (const round of rounds) {
+    // Dedupe defensivo: si por datos legados existieran filas duplicadas (mismo courtId en la
+    // misma ronda), renderizamos un único carril por pista — protege la UI de "Pista duplicada".
+    const seenCourtIds = new Set<string>();
     const lanes: EscaleraLane[] = matches
-      .filter((m) => m.round === round)
+      .filter((m) => {
+        if (m.round !== round) return false;
+        if (m.courtId && seenCourtIds.has(m.courtId)) return false;
+        if (m.courtId) seenCourtIds.add(m.courtId);
+        return true;
+      })
       .map((m) => {
         const slots = matchSlots(m);
         const sideA = [slotMember(slots.slotA1, ctx), slotMember(slots.slotA2, ctx)].filter(Boolean) as EscaleraMember[];

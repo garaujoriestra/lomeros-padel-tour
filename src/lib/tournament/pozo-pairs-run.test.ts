@@ -66,6 +66,19 @@ describe('generatePozoPairs', () => {
     expect((await loadEvent(db, id)).status).toBe('scheduled');
   });
 
+  it('es idempotente: generar dos veces no duplica partidos (mismo (round, courtId))', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePairsPozo(db, client, 4, 2); // 4 parejas, 2 pistas → 2 partidos
+    await generatePozoPairs(db, id, 123);
+    await generatePozoPairs(db, id, 123); // doble-submit / carrera
+
+    const r0 = await listPozoMatches(db, id, 0);
+    expect(r0.length).toBe(2); // = nº de pistas, NO duplicado (no 4)
+    // ningún par (round, courtId) aparece dos veces
+    const keys = r0.map((m) => `${m.round}|${m.courtId}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it('es reproducible: misma semilla → misma ronda 0', async () => {
     const a = await createTestDb(); const pa = await makePairsPozo(a.db, a.client, 4, 2);
     await generatePozoPairs(a.db, pa.id, 777);

@@ -79,6 +79,17 @@ describe('buildEscaleraView', () => {
     expect(v.byRound[0].restingLabels.sort()).toEqual(['m / n', 'o / q']); // p3, p4 (pair labels)
   });
 
+  it('dedupe defensivo: dos partidos con el mismo courtId en la misma ronda → un solo carril', () => {
+    const matches: PozoMatchRow[] = [
+      fixedPairMatch({ id: 'dup0', round: 0, courtId: 'c0', slotA1: pairSlot('p1'), slotB1: pairSlot('p2') }),
+      fixedPairMatch({ id: 'dup1', round: 0, courtId: 'c0', slotA1: pairSlot('p1'), slotB1: pairSlot('p2') }),
+    ];
+    const v = buildEscaleraView(matches, courts, ctx, ['p1', 'p2', 'p3', 'p4']);
+    const lanes = v.byRound[0].lanes;
+    expect(lanes.length).toBe(1); // una sola pista 'c0' a pesar de la fila duplicada
+    expect(lanes[0].courtLabel).toBe('Central');
+  });
+
   it('acumula varias rondas: rounds=[0,1], latestRound=1, byRound[1] con sus carriles', () => {
     const matches: PozoMatchRow[] = [
       fixedPairMatch({ id: 'r0m0', round: 0, courtId: 'c0', slotA1: pairSlot('p1'), slotB1: pairSlot('p2') }),

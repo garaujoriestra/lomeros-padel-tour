@@ -57,6 +57,19 @@ describe('generatePozo (americano)', () => {
     expect(new Set(all).size).toBe(8);
   });
 
+  it('es idempotente: generar dos veces no duplica partidos (mismo (round, courtId))', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makePozo(db, client, 8, 2); // 8 jugadores, 2 pistas → 2 partidos ronda 0
+    await generatePozo(db, id, 123);
+    await generatePozo(db, id, 123); // doble-submit / carrera
+
+    const r0 = await listPozoMatches(db, id, 0);
+    expect(r0.length).toBe(2); // NO duplicado (no 4)
+    // ningún par (round, courtId) aparece dos veces
+    const keys = r0.map((m) => `${m.round}|${m.courtId}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it('es reproducible: misma semilla → misma ronda 0', async () => {
     const a = await createTestDb();
     const pa = await makePozo(a.db, a.client, 8, 2); await generatePozo(a.db, pa.id, 777);

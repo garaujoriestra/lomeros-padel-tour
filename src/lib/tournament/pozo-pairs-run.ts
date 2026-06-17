@@ -34,12 +34,14 @@ async function writePozoPairsRound(
     const court = courtsByOrder[k];
     const startMin = court.fromMin + round * slotMinutes;
     await db.insert(tournamentMatches).values({
-      id: crypto.randomUUID(), tournamentId, courtId: court.id, round, phaseTag: PHASE,
+      // id determinista por (torneo, ronda, pista): re-generar la misma ronda no duplica.
+      id: `${tournamentId}-${PHASE}-r${round}-${court.id}`,
+      tournamentId, courtId: court.id, round, phaseTag: PHASE,
       scheduledStart: minToHHMM(startMin), scheduledEnd: minToHHMM(startMin + slotMinutes),
       status: 'pending',
       slotA1: pairSlot(topPair), slotA2: null,
       slotB1: pairSlot(bottomPair), slotB2: null,
-    });
+    }).onConflictDoNothing();
   }
 }
 
