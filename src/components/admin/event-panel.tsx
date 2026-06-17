@@ -55,20 +55,20 @@ export async function EventPanel({ id }: { id: string }) {
         </div>
       )}
 
-      {isPozo && !isDraft && <PozoSection id={id} courtsByOrder={courtsByOrder} ctx={ctx} />}
+      {isPozo && !isDraft && <PozoSection id={id} courtsByOrder={courtsByOrder} ctx={ctx} format={ev.format} participantPlayerIds={ev.participantPlayerIds} />}
       {!isPozo && !isDraft && <TorneoSection id={id} ctx={ctx} courtLabelById={courtLabelById} />}
     </div>
   );
 }
 
-async function PozoSection({ id, courtsByOrder, ctx }: {
+async function PozoSection({ id, courtsByOrder, ctx, format, participantPlayerIds }: {
   id: string; courtsByOrder: { id: string; label: string }[]; ctx: ReturnType<typeof buildDisplayContext>;
+  format: string; participantPlayerIds: string[];
 }) {
-  const ev = await loadEvent(db, id);
   const matches = await listPozoMatches(db, id);
   const standings = await pozoStandingsLive(db, id);
-  const allEntityIds = ev.format === 'americano'
-    ? ev.participantPlayerIds
+  const allEntityIds = format === 'americano'
+    ? participantPlayerIds
     : (await loadPairs(db, id)).map((p) => p.id);
   const view = buildEscaleraView(matches, courtsByOrder, ctx, allEntityIds);
   return (
