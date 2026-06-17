@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { createTestDb } from './test-db';
 import { createEvent } from './event-store';
 import { replacePairs, loadPairs } from './pair-store';
 import { generateTorneo, recordTorneoResult, loadTorneoMatches, crossSeedLeaves } from './torneo-run';
 import { buildBracket } from './fixed-pairs';
+import { tournamentGroups } from '@/lib/db/schema';
 import type { TorneoConfig } from './types';
 
 type TestDb = Awaited<ReturnType<typeof createTestDb>>['db'];
@@ -161,5 +163,38 @@ describe('crossSeedLeaves (cruces sin choque de grupo en 1ª ronda)', () => {
     const leaves = crossSeedLeaves([['A1', 'A2'], ['B1', 'B2'], ['C1', 'C2']]);
     const pairIds = leaves.filter((s) => s.type === 'pair').map((s) => (s as { pairId: string }).pairId).sort();
     expect(pairIds).toEqual(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+  });
+});
+
+describe('idempotencia de generación (sin filas duplicadas)', () => {
+  it('single_elim: generar dos veces no duplica el cuadro', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 4, 2, 'single_elim', KO_CFG);
+    await generateTorneo(db, id, 123);
+    await generateTorneo(db, id, 123); // doble-submit / carrera
+    const ko = (await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('ko:'));
+    expect(ko.length).toBe(3); // 2 semis + 1 final, NO 6
+    expect(new Set(ko.map((m) => m.phaseTag)).size).toBe(3); // phaseTags únicos
+  });
+
+  it('groups_elim: generar dos veces no duplica grupos ni partidos de liguilla', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 8, 2, 'groups_elim', GROUPS_CFG);
+    await generateTorneo(db, id, 5);
+    await generateTorneo(db, id, 5);
+    const groupMatches = (await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('group:'));
+    expect(groupMatches.length).toBe(12); // 2 grupos de 4 → 6+6, NO 24
+    const groups = await db.select().from(tournamentGroups).where(eq(tournamentGroups.tournamentId, id));
+    expect(groups.length).toBe(2); // NO 4
+  });
+
+  it('groups_elim: cerrar la liguilla dos veces no duplica el cuadro', async () => {
+    const { db, client } = await createTestDb();
+    const { id } = await makeTorneo(db, client, 8, 2, 'groups_elim', GROUPS_CFG);
+    await generateTorneo(db, id, 5);
+    await playAllGroupMatches(db, id);          // dispara la creación del cuadro
+    await playAllGroupMatches(db, id);          // re-registra resultados → re-dispara (idempotente)
+    const ko = (await loadTorneoMatches(db, id)).filter((m) => m.phaseTag?.startsWith('ko:'));
+    expect(ko.length).toBe(3); // semis + final, NO 6
   });
 });

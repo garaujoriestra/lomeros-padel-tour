@@ -62,11 +62,12 @@ async function writeBracket(
   for (const m of bracket) {
     const s = sched.get(m.matchId);
     await db.insert(tournamentMatches).values({
-      id: crypto.randomUUID(), tournamentId, phaseTag: `ko:${m.matchId}`, round: m.round,
+      // id determinista por (torneo, matchId del cuadro): re-generar no duplica.
+      id: `${tournamentId}-ko-${m.matchId}`, tournamentId, phaseTag: `ko:${m.matchId}`, round: m.round,
       courtId: s?.courtId ?? null,
       scheduledStart: s ? minToHHMM(s.startMin) : null, scheduledEnd: s ? minToHHMM(s.endMin) : null,
       status: 'pending', slotA1: slotJson(m.slotA), slotA2: null, slotB1: slotJson(m.slotB), slotB2: null,
-    });
+    }).onConflictDoNothing();
   }
   await autoCompleteByes(db, tournamentId);
 }
@@ -136,8 +137,9 @@ async function generateGroups(
   const toWrite: { phaseTag: string; round: number; pairA: string; pairB: string; key: string }[] = [];
   for (let gi = 0; gi < numGroups; gi++) {
     const name = groupName(gi);
-    const groupId = crypto.randomUUID();
-    await db.insert(tournamentGroups).values({ id: groupId, tournamentId, name });
+    // id determinista por (torneo, nombre de grupo): re-generar no duplica.
+    const groupId = `${tournamentId}-grp-${name}`;
+    await db.insert(tournamentGroups).values({ id: groupId, tournamentId, name }).onConflictDoNothing();
     for (const pid of groups[gi]) {
       await db.update(tournamentPairs).set({ groupId }).where(eq(tournamentPairs.id, pid));
     }
@@ -152,12 +154,13 @@ async function generateGroups(
   for (const w of toWrite) {
     const s = schedByKey.get(w.key);
     await db.insert(tournamentMatches).values({
-      id: crypto.randomUUID(), tournamentId, phaseTag: w.phaseTag, round: w.round,
+      // id determinista por (torneo, key de liguilla): re-generar no duplica.
+      id: `${tournamentId}-group-${w.key}`, tournamentId, phaseTag: w.phaseTag, round: w.round,
       courtId: s?.courtId ?? null,
       scheduledStart: s ? minToHHMM(s.startMin) : null, scheduledEnd: s ? minToHHMM(s.endMin) : null,
       status: 'pending', slotA1: JSON.stringify({ type: 'pair', pairId: w.pairA } as SlotRef), slotA2: null,
       slotB1: JSON.stringify({ type: 'pair', pairId: w.pairB } as SlotRef), slotB2: null,
-    });
+    }).onConflictDoNothing();
   }
 }
 
