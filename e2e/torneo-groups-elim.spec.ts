@@ -25,17 +25,29 @@ test('torneo grupos→eliminación: liguilla → cuadro automático', async ({ p
   await expect(page.getByRole('heading', { name: 'Grupos', exact: true })).toBeVisible();
   await expect(page.getByText('Grupo A')).toBeVisible();
 
-  // Cierra toda la liguilla recorriendo los Guardar visibles (12 partidos de grupo).
+  // Los partidos de cada grupo viven en <details> cerrados; ábrelos para ver los "Guardar".
+  const openAllDetails = async () => {
+    for (const d of await page.locator('details').all()) {
+      const isOpen = await d.evaluate((el) => (el as HTMLDetailsElement).open).catch(() => true);
+      if (!isOpen) await d.locator('summary').click().catch(() => {});
+    }
+  };
+
+  // Cierra toda la liguilla (12 partidos) registrando cada Guardar visible.
   for (let guard = 0; guard < 40; guard++) {
+    await openAllDetails();
     const btn = page.getByRole('button', { name: 'Guardar' }).first();
     if (!(await btn.isVisible().catch(() => false))) break;
     await page.getByLabel('Juegos equipo A').first().fill('6');
     await page.getByLabel('Juegos equipo B').first().fill('3');
     await btn.click();
-    await page.waitForTimeout(150);
-    // Si ya apareció el Cuadro, paramos (no queremos empezar a registrar el cuadro).
-    if (await page.getByText('Cuadro').isVisible().catch(() => false)) break;
+    await page.waitForTimeout(250);
   }
 
-  await expect(page.getByText('Cuadro')).toBeVisible();
+  // Cerrada la liguilla, el conmutador "Cuadro" se habilita → cambiar y ver el árbol + cruces.
+  const cuadroTab = page.getByRole('button', { name: 'Cuadro' });
+  await expect(cuadroTab).toBeEnabled();
+  await cuadroTab.click();
+  await expect(page.getByText('🔀 Del grupo al cuadro')).toBeVisible();
+  await expect(page.getByText('Final', { exact: true })).toBeVisible();
 });

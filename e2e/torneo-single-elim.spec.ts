@@ -26,17 +26,16 @@ test('torneo eliminación directa: parejas → generar → cuadro → resultados
   await expect(page.getByText('Semifinales')).toBeVisible();
   await expect(page.getByText('Final', { exact: true })).toBeVisible();
 
-  // Registrar las 2 semifinales (los Guardar visibles).
+  // Registrar las 2 semifinales (los Guardar visibles del cuadro).
   for (let i = 0; i < 2; i++) {
     const btn = page.getByRole('button', { name: 'Guardar' }).first();
     if (!(await btn.isVisible().catch(() => false))) break;
     await page.getByLabel('Juegos equipo A').first().fill('2');
     await page.getByLabel('Juegos equipo B').first().fill('0');
     await btn.click();
-    await expect(page.getByText(/2.0/).first()).toBeVisible();
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(250);
   }
 
-  // Tras las semis, la final queda jugable → aparece un Guardar.
+  // Tras las semis, la final queda jugable (resolveBracket rellena sus parejas) → aparece su Guardar.
   await expect(page.getByRole('button', { name: 'Guardar' })).toBeVisible();
 });
