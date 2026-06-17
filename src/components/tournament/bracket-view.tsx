@@ -1,7 +1,10 @@
-import type { BracketView as BracketViewModel } from '@/lib/tournament/torneo-view';
+'use client';
+
+import { useEffect, useRef } from 'react';
+import type { BracketView as BracketViewModel, MatchCell } from '@/lib/tournament/torneo-view';
 import { ResultEntry } from './result-entry';
 
-interface Props { tournamentId: string; bracket: BracketViewModel; editable: boolean }
+const D = { fontFamily: 'var(--font-display)' as const };
 
 const roundTitle = (round: number, total: number) => {
   const fromEnd = total - 1 - round; // 0 = final
@@ -11,30 +14,83 @@ const roundTitle = (round: number, total: number) => {
   return `Ronda ${round + 1}`;
 };
 
-export function BracketView({ tournamentId, bracket, editable }: Props) {
+interface Props { tournamentId: string; bracket: BracketViewModel; editable: boolean; myPairIds?: string[]; }
+
+export function BracketView({ tournamentId, bracket, editable, myPairIds = [] }: Props) {
+  const mine = new Set(myPairIds);
+  const scroller = useRef<HTMLDivElement>(null);
+  const liveCol = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Auto-centra la ronda en juego en móvil al abrir.
+    if (liveCol.current) liveCol.current.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+  }, []);
+
   if (bracket.rounds.length === 0) return null;
   const total = bracket.rounds.length;
+  const liveRound = bracket.rounds.find((r) => r.matches.some((m) => m.playable))?.round ?? -1;
+  const finalMatch = bracket.rounds[total - 1]?.matches[0];
+  const champion = finalMatch && finalMatch.status === 'completed'
+    ? (finalMatch.winner === 'A' ? finalMatch.teamA : finalMatch.teamB)
+    : null;
+
+  const sideRow = (label: string, id: string | null, score: number | null, isWinner: boolean, isBye: boolean) => (
+    <div className={`flex items-center gap-2 px-2.5 py-1.5 ${isWinner ? 'bg-[color-mix(in_oklab,var(--win)_14%,transparent)]' : ''}`}>
+      <span className={`flex-1 min-w-0 truncate text-[13.5px] ${isWinner ? 'font-extrabold text-win' : 'font-medium'} ${id && mine.has(id) ? 'underline decoration-dotted' : ''}`}>
+        {isBye ? <span className="text-ink-3 italic">pasa directo</span> : label}
+      </span>
+      <span style={D} className={`italic font-extrabold text-base w-6 text-center tabular-nums ${isWinner ? 'text-win' : 'text-ink-3'}`}>
+        {score ?? '·'}
+      </span>
+    </div>
+  );
+
+  const matchCard = (m: MatchCell) => {
+    const isMine = (m.teamAId && mine.has(m.teamAId)) || (m.teamBId && mine.has(m.teamBId));
+    const pending = m.status !== 'completed';
+    return (
+      <div key={m.matchId} className={`lpt-card overflow-hidden ${m.isBye ? 'border-dashed opacity-80' : ''} ${isMine ? 'ring-2 ring-[color-mix(in_oklab,var(--win)_42%,var(--line))]' : ''}`}>
+        <div className="flex justify-between items-center px-2.5 pt-1.5 text-[11px] text-ink-3">
+          <span className="truncate">{m.courtLabel ?? ''}{m.scheduledStart ? ` · ${m.scheduledStart}` : ''}</span>
+          {m.status === 'completed'
+            ? <span className="status-pill completed">Final</span>
+            : m.playable
+              ? <span className="status-pill" style={{ background: 'color-mix(in oklab, var(--win) 16%, transparent)', color: 'var(--win)' }}>● En juego</span>
+              : <span className="status-pill scheduled">Pendiente</span>}
+        </div>
+        {sideRow(m.teamA, m.teamAId, m.teamAScore, m.winner === 'A', m.isBye && m.teamAId === null)}
+        <div className="border-t border-line" />
+        {sideRow(m.teamB, m.teamBId, m.teamBScore, m.winner === 'B', m.isBye && m.teamBId === null)}
+        {editable && m.playable && pending && (
+          <div className="px-2.5 py-2 border-t border-line">
+            <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className="flex gap-6 overflow-x-auto">
+    <div ref={scroller} className="flex gap-5 overflow-x-auto pb-2 -mx-1 px-1">
       {bracket.rounds.map(({ round, matches }) => (
-        <div key={round} className="space-y-3 min-w-48">
-          <p className="font-medium text-sm">{roundTitle(round, total)}</p>
-          {matches.map((m) => (
-            <div key={m.matchId} className="border border-line rounded-md p-2 space-y-1">
-              <div className="text-xs text-ink-3">{m.courtLabel ?? ''}{m.scheduledStart ? ` · ${m.scheduledStart}` : ''}</div>
-              <div className={m.winner === 'A' ? 'font-semibold' : ''}>{m.teamA}</div>
-              <div className={m.winner === 'B' ? 'font-semibold' : ''}>{m.teamB}</div>
-              {m.status === 'completed' ? (
-                <div className="text-xs">{m.teamAScore}–{m.teamBScore}</div>
-              ) : editable && m.playable ? (
-                <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} />
-              ) : (
-                <div className="text-xs text-ink-3">Pendiente</div>
-              )}
-            </div>
-          ))}
+        <div
+          key={round}
+          ref={round === liveRound ? liveCol : undefined}
+          className="flex flex-col gap-3 min-w-[230px] max-h-[70vh] overflow-y-auto snap-start"
+        >
+          <p className="kicker sticky top-0 z-[1] py-0.5 bg-surface">{roundTitle(round, total)}</p>
+          {matches.map((m) => matchCard(m))}
         </div>
       ))}
+      {champion && (
+        <div className="flex flex-col justify-center min-w-[200px]">
+          <p className="kicker mb-2">Campeón</p>
+          <div className="lpt-card card-pad podium-gold text-center">
+            <p className="text-2xl mb-1">👑</p>
+            <p style={D} className="italic font-extrabold text-lg leading-tight">{champion}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
