@@ -55,39 +55,43 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
   }
 
   return (
-    <div className="space-y-6">
-      {/* Meta */}
-      <div className="space-y-3 max-w-2xl">
-        <div><Label htmlFor="name">Nombre *</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} required /></div>
-        <div><Label htmlFor="date">Fecha *</Label><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></div>
-        <div><Label htmlFor="location">Lugar</Label><Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} /></div>
+    <div className="space-y-4 max-w-2xl">
+      {/* Datos básicos */}
+      <div className="lpt-card card-pad space-y-3">
+        <p className="kicker">Datos</p>
+        <div><Label htmlFor="name">Nombre *</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+        <div><Label htmlFor="date">Fecha *</Label><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+        <div><Label htmlFor="location">Lugar</Label><Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
       </div>
 
-      {/* Config por tipo */}
-      <div className="space-y-3 max-w-2xl">
-        <Label htmlFor="format">Formato *</Label>
-        <select id="format" aria-label="Formato" value={format} onChange={(e) => setFormat(e.target.value)} className="border border-line rounded-md px-2 py-1.5">
-          {kind === 'pozo' ? (
-            <>
-              <option value="americano">Americano (parejas rotativas)</option>
-              <option value="fixed_pairs">Parejas fijas</option>
-            </>
-          ) : (
-            <>
-              <option value="single_elim">Eliminación directa</option>
-              <option value="groups_elim">Grupos → eliminación</option>
-            </>
-          )}
-        </select>
+      {/* Formato y configuración */}
+      <div className="lpt-card card-pad space-y-3">
+        <p className="kicker">Formato</p>
+        <div>
+          <Label htmlFor="format">Formato *</Label>
+          <select id="format" aria-label="Formato" value={format} onChange={(e) => setFormat(e.target.value)} className="border border-line rounded-md px-2 py-1.5 bg-surface-2 text-sm w-full mt-1">
+            {kind === 'pozo' ? (
+              <>
+                <option value="americano">Americano (parejas rotativas)</option>
+                <option value="fixed_pairs">Parejas fijas</option>
+              </>
+            ) : (
+              <>
+                <option value="single_elim">Eliminación directa</option>
+                <option value="groups_elim">Grupos → eliminación</option>
+              </>
+            )}
+          </select>
+        </div>
 
         {kind === 'pozo' && (
           <div><Label htmlFor="rounds">Nº de rondas</Label>
-            <Input id="rounds" type="number" value={rounds} onChange={(e) => setRounds(Number(e.target.value))} /></div>
+            <Input id="rounds" type="number" value={rounds} onChange={(e) => setRounds(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
         )}
         {kind === 'torneo' && format === 'groups_elim' && (
           <div className="flex gap-3">
-            <div><Label htmlFor="numGroups">Nº de grupos</Label><Input id="numGroups" type="number" value={numGroups} onChange={(e) => setNumGroups(Number(e.target.value))} /></div>
-            <div><Label htmlFor="advancePerGroup">Pasan por grupo</Label><Input id="advancePerGroup" type="number" value={advancePerGroup} onChange={(e) => setAdvancePerGroup(Number(e.target.value))} /></div>
+            <div><Label htmlFor="numGroups">Nº de grupos</Label><Input id="numGroups" type="number" value={numGroups} onChange={(e) => setNumGroups(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            <div><Label htmlFor="advancePerGroup">Pasan por grupo</Label><Input id="advancePerGroup" type="number" value={advancePerGroup} onChange={(e) => setAdvancePerGroup(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
           </div>
         )}
         {kind === 'torneo' && (
@@ -95,26 +99,27 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
         )}
       </div>
 
-      {/* Pistas: el ORDEN = la escalera del pozo */}
-      <div className="max-w-2xl space-y-2">
-        <Label>Pistas (con su nombre real; el orden es la escalera del pozo)</Label>
+      {/* Pistas */}
+      <div className="lpt-card card-pad space-y-2">
+        <p className="kicker">Pistas</p>
+        <p className="text-xs text-ink-3 -mt-1">El orden es la escalera del pozo</p>
         {courts.map((c, i) => (
           <div key={i} className="flex items-end gap-2">
             <div className="flex-1">
               <Label className="text-xs">Nombre</Label>
-              <Input aria-label="Nombre de la pista" value={c.label} onChange={(e) => setCourt(i, { label: e.target.value })} />
+              <Input aria-label="Nombre de la pista" value={c.label} onChange={(e) => setCourt(i, { label: e.target.value })} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" />
             </div>
-            <div><Label className="text-xs">Desde</Label><Input type="time" value={c.availableFrom} onChange={(e) => setCourt(i, { availableFrom: e.target.value })} /></div>
-            <div><Label className="text-xs">Hasta</Label><Input type="time" value={c.availableTo} onChange={(e) => setCourt(i, { availableTo: e.target.value })} /></div>
+            <div><Label className="text-xs">Desde</Label><Input type="time" value={c.availableFrom} onChange={(e) => setCourt(i, { availableFrom: e.target.value })} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            <div><Label className="text-xs">Hasta</Label><Input type="time" value={c.availableTo} onChange={(e) => setCourt(i, { availableTo: e.target.value })} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => setCourts((cs) => [...cs, { label: '', availableFrom: '17:00', availableTo: '20:00' }])}>Añadir pista</Button>
+        <button type="button" className="lpt-btn text-sm mt-1" onClick={() => setCourts((cs) => [...cs, { label: '', availableFrom: '17:00', availableTo: '20:00' }])}>Añadir pista</button>
       </div>
 
       {/* Participantes */}
-      <div className="max-w-2xl">
-        <Label>Participantes ({selected.size})</Label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto">
+      <div className="lpt-card card-pad space-y-2">
+        <p className="kicker">Participantes ({selected.size})</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-80 overflow-y-auto">
           {roster.map((p) => (
             <label key={p.id} className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-1.5 hover:bg-surface">
               <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
@@ -124,8 +129,8 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <Button onClick={submit} disabled={loading}>{loading ? 'Creando...' : (kind === 'pozo' ? 'Crear pozo' : 'Crear torneo')}</Button>
+      {error && <p className="text-sm text-loss">{error}</p>}
+      <button type="button" className="lpt-btn primary" onClick={submit} disabled={loading}>{loading ? 'Creando...' : (kind === 'pozo' ? 'Crear pozo' : 'Crear torneo')}</button>
     </div>
   );
 }
