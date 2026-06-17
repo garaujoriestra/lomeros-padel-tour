@@ -28,3 +28,13 @@ describe('ladderStandings', () => {
     expect(table.map((r) => r.entityId)).toEqual(['A', 'B']);
   });
 });
+
+describe('ladderStandings · games', () => {
+  it('expone los juegos acumulados de cada entidad', () => {
+    const games = new Map<string, number>([['a', 12], ['b', 9], ['c', 4]]);
+    const out = ladderStandings([['a', 'b']], games, ['c']);
+    expect(out.find((s) => s.entityId === 'a')).toMatchObject({ rank: 1, court: 0, games: 12 });
+    expect(out.find((s) => s.entityId === 'b')).toMatchObject({ rank: 2, court: 0, games: 9 });
+    expect(out.find((s) => s.entityId === 'c')).toMatchObject({ rank: 3, court: null, games: 4 });
+  });
+});

@@ -7,6 +7,7 @@ export interface LadderStanding {
   entityId: string;
   court: number | null; // índice de pista en la ronda final (0 = top); null si descansaba
   rank: number;
+  games: number; // juegos acumulados (para mostrar y desempate)
 }
 
 export function ladderStandings(
@@ -20,9 +21,9 @@ export function ladderStandings(
       .map((entityId, pos) => ({ entityId, pos, games: gamesByEntity.get(entityId) ?? 0 }))
       // juegos desc; desempate estable por la posición original dentro de la pista
       .sort((a, b) => b.games - a.games || a.pos - b.pos);
-    for (const s of sorted) out.push({ entityId: s.entityId, court: courtIdx, rank: 0 });
+    for (const s of sorted) out.push({ entityId: s.entityId, court: courtIdx, rank: 0, games: s.games });
   });
-  for (const entityId of restingFinal) out.push({ entityId, court: null, rank: 0 });
+  for (const entityId of restingFinal) out.push({ entityId, court: null, rank: 0, games: gamesByEntity.get(entityId) ?? 0 });
   out.forEach((row, i) => { row.rank = i + 1; });
   return out;
 }
