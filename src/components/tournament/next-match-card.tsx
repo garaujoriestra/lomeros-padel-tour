@@ -20,10 +20,12 @@ export function NextMatchCard({ matches, playerId, myPairIds, courtLabelById, ct
   const { teamA, teamB } = matchTeamLabels(next, ctx);
   const court = next.courtId ? (courtLabelById.get(next.courtId) ?? '') : '';
   return (
-    <div className="border border-line rounded-md p-3 bg-surface">
-      <p className="font-medium">Tu próximo partido</p>
-      <p className="text-sm">{teamA} vs {teamB}</p>
-      <p className="text-xs text-ink-3">{court}{next.scheduledStart ? ` · ${next.scheduledStart}` : ''}</p>
+    <div className="lpt-card card-pad flex items-center gap-3">
+      <span className="status-pill scheduled">Tu próximo</span>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-sm truncate">{teamA} vs {teamB}</p>
+        <p className="text-xs text-ink-3">{court}{next.scheduledStart ? ` · ${next.scheduledStart}` : ''}</p>
+      </div>
     </div>
   );
 }

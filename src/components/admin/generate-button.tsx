@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 
 interface Props { tournamentId: string; disabled?: boolean; disabledReason?: string }
 
@@ -22,9 +21,11 @@ export function GenerateButton({ tournamentId, disabled, disabledReason }: Props
 
   return (
     <div className="space-y-1">
-      <Button onClick={generate} disabled={disabled || loading}>{loading ? 'Generando...' : 'Generar'}</Button>
+      <button onClick={generate} disabled={disabled || loading} className="lpt-btn primary">
+        {loading ? 'Generando...' : 'Generar'}
+      </button>
       {disabled && disabledReason && <p className="text-xs text-ink-3">{disabledReason}</p>}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-loss">{error}</p>}
     </div>
   );
 }

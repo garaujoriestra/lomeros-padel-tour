@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 
 interface Participant { id: string; name: string }
 interface Props {
@@ -45,13 +43,13 @@ export function PairsEditor({ tournamentId, participants, initialPairs }: Props)
   }
 
   return (
-    <div className="space-y-3 max-w-xl border border-line rounded-md p-3">
-      <p className="font-medium">Definir parejas</p>
+    <div className="lpt-card card-pad space-y-3 max-w-xl">
+      <p className="kicker">Definir parejas</p>
       <ul className="space-y-1">
         {pairs.map((pr, i) => (
           <li key={i} className="flex items-center gap-2 text-sm">
             <span>{nameOf(pr[0])} + {nameOf(pr[1])}</span>
-            <button type="button" aria-label={`Quitar pareja ${i + 1}`} className="text-red-500"
+            <button type="button" aria-label={`Quitar pareja ${i + 1}`} className="text-ink-3 hover:text-loss"
               onClick={() => removePair(i)}>✕</button>
           </li>
         ))}
@@ -61,30 +59,30 @@ export function PairsEditor({ tournamentId, participants, initialPairs }: Props)
       {available.length >= 2 && (
         <div className="flex items-end gap-2">
           <div>
-            <Label className="text-xs">Jugador A</Label>
             <select aria-label="Jugador A" value={a} onChange={(e) => setA(e.target.value)}
-              className="border border-line rounded-md px-2 py-1.5 block">
+              className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm block">
               <option value="">—</option>
               {available.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
           <div>
-            <Label className="text-xs">Jugador B</Label>
             <select aria-label="Jugador B" value={b} onChange={(e) => setB(e.target.value)}
-              className="border border-line rounded-md px-2 py-1.5 block">
+              className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm block">
               <option value="">—</option>
               {available.filter((p) => p.id !== a).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={addPair}>Añadir pareja</Button>
+          <button type="button" className="lpt-btn" onClick={addPair}>Añadir pareja</button>
         </div>
       )}
 
       <div className="flex items-center gap-2">
-        <Button onClick={save} disabled={saving}>{saving ? 'Guardando...' : 'Guardar parejas'}</Button>
-        {saved && <span className="text-sm text-green-600">Guardado ✓</span>}
+        <button type="button" className="lpt-btn primary" onClick={save} disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar parejas'}
+        </button>
+        {saved && <span className="text-sm text-win">Guardado ✓</span>}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-loss">{error}</p>}
     </div>
   );
 }
