@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildDisplayContext } from './pozo-view';
-import { buildGroupsView, buildBracketView, torneoNextMatch } from './torneo-view';
+import { buildGroupsView, buildBracketView, torneoNextMatch, seedLabelByPair } from './torneo-view';
 import type { PozoMatchRow } from './pozo-run';
 
 function row(p: Partial<PozoMatchRow>): PozoMatchRow {
@@ -55,6 +55,51 @@ describe('buildBracketView', () => {
     expect(final.teamA).toBe('Ana / Luis');
     expect(final.teamB).toBe('Ganador (pdte.)');
     expect(final.playable).toBe(false);
+  });
+});
+
+const byeSlot = () => JSON.stringify({ type: 'bye' });
+
+describe('MatchCell aditivos (isBye, teamAId/teamBId)', () => {
+  it('expone pairId por lado y marca isBye=false en partido normal', () => {
+    const matches: PozoMatchRow[] = [
+      row({ id: 's0', phaseTag: 'ko:r0m0', round: 0, status: 'pending', slotA1: pairSlot('prA'), slotB1: pairSlot('prB') }),
+    ];
+    const bracket = buildBracketView(matches, ctx, courtLabelById);
+    const cell = bracket.rounds.find((r) => r.round === 0)!.matches[0];
+    expect(cell.teamAId).toBe('prA');
+    expect(cell.teamBId).toBe('prB');
+    expect(cell.isBye).toBe(false);
+  });
+
+  it('marca isBye=true cuando un lado es bye y deja su pairId en null', () => {
+    const matches: PozoMatchRow[] = [
+      row({ id: 's0', phaseTag: 'ko:r0m0', round: 0, status: 'pending', slotA1: pairSlot('prA'), slotB1: byeSlot() }),
+    ];
+    const bracket = buildBracketView(matches, ctx, courtLabelById);
+    const cell = bracket.rounds.find((r) => r.round === 0)!.matches[0];
+    expect(cell.teamAId).toBe('prA');
+    expect(cell.teamBId).toBeNull();
+    expect(cell.isBye).toBe(true);
+  });
+});
+
+describe('seedLabelByPair', () => {
+  it('etiqueta cada pareja con "<rank>º <grupo>"', () => {
+    const groups = [
+      { name: 'A', standings: [
+        { pairId: 'pa1', label: 'A1', played: 2, wins: 2, draws: 0, losses: 0, gameDiff: 6, points: 6, rank: 1 },
+        { pairId: 'pa2', label: 'A2', played: 2, wins: 0, draws: 0, losses: 2, gameDiff: -6, points: 0, rank: 2 },
+      ], matches: [] },
+      { name: 'B', standings: [
+        { pairId: 'pb1', label: 'B1', played: 2, wins: 2, draws: 0, losses: 0, gameDiff: 6, points: 6, rank: 1 },
+        { pairId: 'pb2', label: 'B2', played: 2, wins: 0, draws: 0, losses: 2, gameDiff: -6, points: 0, rank: 2 },
+      ], matches: [] },
+    ];
+    const m = seedLabelByPair(groups);
+    expect(m.get('pa1')).toBe('1º A');
+    expect(m.get('pb2')).toBe('2º B');
+    expect(m.get('desconocida')).toBeUndefined();
   });
 });
 

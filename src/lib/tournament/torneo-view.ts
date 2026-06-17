@@ -7,6 +7,8 @@ import type { SlotRef } from './types';
 export interface MatchCell {
   matchId: string;
   teamA: string; teamB: string;
+  teamAId: string | null; teamBId: string | null;   // pairId por lado (null si no es pareja resuelta)
+  isBye: boolean;                                    // un lado es un bye ("pasa directo")
   teamAScore: number | null; teamBScore: number | null;
   winner: string | null; status: string; playable: boolean;
   scheduledStart: string | null; courtLabel: string | null;
@@ -23,10 +25,16 @@ function pairIdOf(slot: string | null): string | undefined {
   const s = slot ? (JSON.parse(slot) as SlotRef) : null;
   return s && s.type === 'pair' ? s.pairId : undefined;
 }
+function slotPairId(slot: SlotRef | null): string | null {
+  return slot && slot.type === 'pair' ? slot.pairId : null;
+}
 function cellFrom(m: PozoMatchRow, slots: MatchSlots, ctx: DisplayContext, courtLabelById: Map<string, string>): MatchCell {
   const { teamA, teamB } = matchTeamLabels(slots, ctx);
   return {
-    matchId: m.id, teamA, teamB, teamAScore: m.teamAScore, teamBScore: m.teamBScore,
+    matchId: m.id, teamA, teamB,
+    teamAId: slotPairId(slots.slotA1), teamBId: slotPairId(slots.slotB1),
+    isBye: slots.slotA1?.type === 'bye' || slots.slotB1?.type === 'bye',
+    teamAScore: m.teamAScore, teamBScore: m.teamBScore,
     winner: m.winner, status: m.status, playable: isMatchPlayable(slots) && m.status !== 'completed',
     scheduledStart: m.scheduledStart, courtLabel: m.courtId ? (courtLabelById.get(m.courtId) ?? null) : null,
   };
@@ -115,4 +123,11 @@ export function torneoNextMatch(
   if (!next) return null;
   const { teamA, teamB } = matchTeamLabels(next, ctx);
   return { teamA, teamB, courtLabel: next.courtId ? (courtLabelById.get(next.courtId) ?? null) : null, scheduledStart: next.scheduledStart };
+}
+
+// "1º A", "2º B", … por pareja, a partir de las clasificaciones de grupo ya calculadas.
+export function seedLabelByPair(groups: GroupView[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const g of groups) for (const s of g.standings) out.set(s.pairId, `${s.rank}º ${g.name}`);
+  return out;
 }
