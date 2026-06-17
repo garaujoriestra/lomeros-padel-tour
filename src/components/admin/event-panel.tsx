@@ -5,12 +5,11 @@ import { loadEvent } from '@/lib/tournament/event-store';
 import { loadPairs } from '@/lib/tournament/pair-store';
 import { listPozoMatches, pozoStandingsLive } from '@/lib/tournament/pozo-engine';
 import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
-import { buildDisplayContext, buildPozoGrid } from '@/lib/tournament/pozo-view';
+import { buildDisplayContext, buildEscaleraView } from '@/lib/tournament/pozo-view';
 import { buildGroupsView, buildBracketView } from '@/lib/tournament/torneo-view';
 import { PairsEditor } from './pairs-editor';
 import { GenerateButton } from './generate-button';
-import { PozoGrid } from '@/components/tournament/pozo-grid';
-import { PozoStandings } from '@/components/tournament/pozo-standings';
+import { PozoEscalera } from '@/components/tournament/pozo-escalera';
 import { GroupsTable } from '@/components/tournament/groups-table';
 import { BracketView } from '@/components/tournament/bracket-view';
 
@@ -65,14 +64,18 @@ export async function EventPanel({ id }: { id: string }) {
 async function PozoSection({ id, courtsByOrder, ctx }: {
   id: string; courtsByOrder: { id: string; label: string }[]; ctx: ReturnType<typeof buildDisplayContext>;
 }) {
+  const ev = await loadEvent(db, id);
   const matches = await listPozoMatches(db, id);
   const standings = await pozoStandingsLive(db, id);
-  const grid = buildPozoGrid(matches, courtsByOrder, ctx);
+  const allEntityIds = ev.format === 'americano'
+    ? ev.participantPlayerIds
+    : (await loadPairs(db, id)).map((p) => p.id);
+  const view = buildEscaleraView(matches, courtsByOrder, ctx, allEntityIds);
   return (
-    <div className="space-y-6">
-      <section><h2 className="font-medium mb-2">Parrilla</h2><PozoGrid tournamentId={id} grid={grid} editable /></section>
-      <section><h2 className="font-medium mb-2">Clasificación</h2><PozoStandings standings={standings} courtsByOrder={courtsByOrder} ctx={ctx} /></section>
-    </div>
+    <section>
+      <h2 className="sec-title mb-3">Escalera</h2>
+      <PozoEscalera tournamentId={id} view={view} standings={standings} editable />
+    </section>
   );
 }
 
