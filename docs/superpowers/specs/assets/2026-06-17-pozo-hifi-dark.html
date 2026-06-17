@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pozo · alta fidelidad (dark)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Barlow:ital,wght@0,800;1,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --win: oklch(0.66 0.16 150);
+    --loss: oklch(0.64 0.18 25);
+    --warn: oklch(0.72 0.14 80);
+    --acc:#c8f03c; --on-acc: oklch(0.2 0.03 140);
+    --r-card:14px; --r-pill:999px;
+    /* tema OSCURO */
+    --bg: oklch(0.16 0.022 188);
+    --surface: oklch(0.205 0.024 186);
+    --surface-2: oklch(0.245 0.026 184);
+    --line: oklch(0.3 0.028 184);
+    --line-strong: oklch(0.38 0.03 182);
+    --ink: oklch(0.965 0.008 120);
+    --ink-2: oklch(0.82 0.02 150);
+    --ink-3: oklch(0.62 0.025 170);
+    --acc-text: var(--acc);
+    --card-shadow: 0 1px 0 oklch(1 0 0 /.04) inset, 0 12px 32px oklch(0 0 0 /.25);
+    --hero-bg: linear-gradient(160deg, oklch(0.225 0.03 190) 0%, oklch(0.17 0.025 186) 60%);
+    --glow: 0 0 24px;
+    --font-sans:'Archivo',ui-sans-serif,system-ui,sans-serif;
+    --font-display:'Barlow','Archivo',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:15.5px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px 60px;}
+
+  .topbar{position:sticky;top:0;z-index:5;backdrop-filter:blur(12px);background:color-mix(in oklab,var(--bg) 86%,transparent);border-bottom:1px solid var(--line);margin:0 -16px 18px;padding:0 16px;}
+  .topbar-inner{height:58px;display:flex;align-items:center;gap:12px;}
+  .crest{width:30px;height:30px;border-radius:9px;background:var(--hero-bg);display:grid;place-items:center;color:var(--acc);font-family:var(--font-display);font-style:italic;font-weight:800;font-size:16px;border:1px solid var(--line);}
+  .brand-name{font-family:var(--font-display);font-style:italic;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:18px;}
+  .topbar-actions{margin-left:auto;display:flex;gap:8px;}
+  .icon-btn{width:36px;height:36px;border-radius:var(--r-pill);display:grid;place-items:center;color:var(--ink-3);border:1px solid var(--line);background:var(--surface);font-size:15px;}
+
+  .kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+  .kicker .live-dot{width:7px;height:7px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px color-mix(in oklab,var(--win) 25%,transparent);}
+  .title{font-family:var(--font-display);font-style:italic;font-weight:800;text-transform:uppercase;letter-spacing:.015em;font-size:30px;line-height:1;margin:0 0 16px;}
+
+  .scrub{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .scrub-lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);}
+  .seg{display:inline-flex;gap:3px;background:var(--surface-2);border-radius:var(--r-pill);padding:3px;border:1px solid var(--line);}
+  .seg button{border:0;font-family:var(--font-display);font-style:italic;font-weight:800;padding:6px 13px;border-radius:var(--r-pill);font-size:14px;color:var(--ink-3);background:transparent;cursor:pointer;font-variant-numeric:tabular-nums;}
+  .seg button.done{color:var(--acc-text);}
+  .seg button.on{background:var(--acc);color:var(--on-acc);box-shadow:0 0 16px color-mix(in oklab,var(--acc) 40%,transparent);}
+
+  .ladder{display:flex;flex-direction:column;gap:0;}
+  .lane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--card-shadow);padding:13px 16px;}
+  .lane.king{border-color:color-mix(in oklab,var(--acc) 40%,var(--line));background:color-mix(in oklab,var(--acc) 6%,var(--surface));box-shadow:var(--card-shadow),0 0 38px color-mix(in oklab,var(--acc) 15%,transparent);}
+  .lane.you{border-color:color-mix(in oklab,var(--win) 42%,var(--line));box-shadow:var(--card-shadow),0 0 0 3px color-mix(in oklab,var(--win) 16%,transparent);}
+  .lane.rest{opacity:.7;}
+  .lane-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+  .court{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:7px;}
+  .court .crown{color:var(--acc-text);font-size:14px;letter-spacing:0;}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:var(--r-pill);}
+  .status-pill.scheduled{background:color-mix(in oklab,var(--acc) 16%,transparent);color:var(--acc-text);}
+  .status-pill.live{background:color-mix(in oklab,var(--win) 18%,transparent);color:var(--win);}
+  .status-pill.completed{background:var(--surface-2);color:var(--ink-3);}
+
+  .team{display:flex;align-items:center;gap:11px;padding:4px 0;}
+  .rk{font-family:var(--font-display);font-style:italic;font-weight:800;font-size:19px;width:26px;text-align:center;color:var(--ink-3);flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .rk.gold{color:var(--acc-text);}
+  .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;border:2px solid color-mix(in oklab,var(--surface) 60%,#fff 10%);}
+  .nm{flex:1;font-weight:700;font-size:14.5px;min-width:0;}
+  .team.loser .nm,.team.loser .av{opacity:.5;}
+  .set-cell{font-family:var(--font-display);font-style:italic;font-weight:800;font-size:22px;color:var(--ink-3);font-variant-numeric:tabular-nums;width:34px;text-align:center;border-radius:6px;}
+  .set-cell.w{color:var(--acc-text);background:color-mix(in oklab,var(--acc) 14%,transparent);}
+
+  .mv{display:flex;justify-content:center;gap:18px;padding:5px 0;}
+  .delta{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:3px;}
+  .delta.up{color:var(--win);} .delta.down{color:var(--loss);}
+
+  .entry{display:flex;align-items:center;gap:7px;margin-top:8px;padding-top:9px;border-top:1px solid var(--line);}
+  .ninput{width:40px;height:34px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface-2);font-family:var(--font-display);font-style:italic;font-weight:800;font-size:17px;text-align:center;color:var(--ink);}
+  .save{display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:var(--r-pill);min-height:40px;background:var(--acc);color:var(--on-acc);border:0;cursor:pointer;box-shadow:0 0 18px color-mix(in oklab,var(--acc) 30%,transparent);}
+  .admin-tag{font-size:10px;color:var(--ink-3);margin-left:auto;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+
+  .note{font-size:12.5px;color:var(--ink-3);margin-top:20px;line-height:1.55;}
+  code{background:var(--surface-2);padding:1px 5px;border-radius:5px;font-size:11.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar"><div class="topbar-inner">
+    <div class="crest">L</div><div class="brand-name">Lomeros</div>
+    <div class="topbar-actions"><div class="icon-btn">🔔</div><div class="icon-btn">⚙️</div></div>
+  </div></div>
+
+  <div class="kicker"><span class="live-dot"></span> Pozo · en vivo</div>
+  <h1 class="title">Pozo del Jueves</h1>
+
+  <div class="scrub">
+    <span class="scrub-lbl">Ronda</span>
+    <div class="seg">
+      <button class="done">1</button><button class="done">2</button><button class="on">3</button><button>4</button><button>5</button>
+    </div>
+    <span style="font-size:12.5px;color:var(--ink-3)">3 de 5</span>
+  </div>
+
+  <div class="ladder">
+
+    <div class="lane king">
+      <div class="lane-head">
+        <span class="court"><span class="crown">👑</span> Pista Central</span>
+        <span class="status-pill completed">Final</span>
+      </div>
+      <div class="team">
+        <span class="rk gold">1</span>
+        <span class="av" style="background:oklch(0.55 0.13 150)">AB</span>
+        <span class="nm">Ana / Beto</span>
+        <span class="set-cell w">6</span>
+      </div>
+      <div class="team loser">
+        <span class="rk">2</span>
+        <span class="av" style="background:oklch(0.55 0.05 200)">CD</span>
+        <span class="nm">Carla / Dani</span>
+        <span class="set-cell">3</span>
+      </div>
+    </div>
+
+    <div class="mv">
+      <span class="delta up">▲ Ana/Beto se quedan arriba</span>
+      <span class="delta down">▼ Carla/Dani bajan</span>
+    </div>
+
+    <div class="lane you">
+      <div class="lane-head">
+        <span class="court">Pista 2 · tu pista</span>
+        <span class="status-pill live">● Jugándose</span>
+      </div>
+      <div class="team">
+        <span class="rk">3</span>
+        <span class="av" style="background:oklch(0.58 0.12 60)">EF</span>
+        <span class="nm">Eva / Fran</span>
+        <span class="set-cell">4</span>
+      </div>
+      <div class="team">
+        <span class="rk">4</span>
+        <span class="av" style="background:oklch(0.5 0.1 300)">GH</span>
+        <span class="nm">Gio / Hugo</span>
+        <span class="set-cell">4</span>
+      </div>
+      <div class="entry">
+        <input class="ninput" value="4"><span style="color:var(--ink-3)">–</span><input class="ninput" value="4">
+        <button class="save">Guardar resultado</button>
+        <span class="admin-tag">Solo admin</span>
+      </div>
+    </div>
+
+    <div class="mv"><span class="delta" style="color:var(--ink-3)">▲▼ se decide al guardar</span></div>
+
+    <div class="lane">
+      <div class="lane-head">
+        <span class="court">Pista 3</span>
+        <span class="status-pill scheduled">Pendiente</span>
+      </div>
+      <div class="team">
+        <span class="rk">5</span><span class="av" style="background:oklch(0.5 0.08 30)">IJ</span>
+        <span class="nm">Iván / Jon</span><span class="set-cell">·</span>
+      </div>
+      <div class="team">
+        <span class="rk">6</span><span class="av" style="background:oklch(0.52 0.07 260)">LM</span>
+        <span class="nm">Leo / Max</span><span class="set-cell">·</span>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+
+    <div class="lane rest">
+      <div class="lane-head">
+        <span class="court">Pista Fondo</span>
+        <span class="status-pill completed">Descanso</span>
+      </div>
+      <div class="team">
+        <span class="rk">😴</span><span class="nm" style="font-weight:600;color:var(--ink-2)">Nico descansa esta ronda</span>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note">Modo oscuro con tus tokens dark reales: fondo teal profundo, acento lima <code>#c8f03c</code> que resalta, el 👑 con glow sutil tipo broadcast, y el verde <code>--win</code>/naranja <code>--loss</code> del sube-baja. Si este es tu modo habitual, lo tomamos como referencia principal. Dime si lo damos por bueno y cierro el diseño para escribir el spec.</p>
+
+</div>
+</body>
+</html>
