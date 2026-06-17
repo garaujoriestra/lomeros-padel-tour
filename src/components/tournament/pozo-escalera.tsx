@@ -49,16 +49,20 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
     </div>
   );
 
+  const sideLabel = (side: EscaleraSide) => side.members.map((m) => m.label).join(' / ');
+
   const movement = (lane: EscaleraLane) => {
     if (lane.status !== 'completed') {
       return <div className="flex justify-center text-[11px] text-ink-3 py-1">▲▼ se decide al guardar</div>;
     }
-    const up = lane.isTop ? 'se quedan arriba' : 'suben';
-    const down = lane.isBottom ? 'se quedan' : 'bajan';
+    const winSide = lane.sideA.isWinner ? lane.sideA : lane.sideB;
+    const loseSide = lane.sideA.isWinner ? lane.sideB : lane.sideA;
+    const upText = lane.isTop ? 'se quedan arriba' : 'suben';
+    const downText = lane.isBottom ? 'se quedan' : 'bajan';
     return (
-      <div className="flex justify-center gap-4 py-1 text-[11px] font-extrabold">
-        <span className="text-win">▲ {up}</span>
-        <span className="text-loss">▼ {down}</span>
+      <div className="flex justify-center gap-4 py-1 text-[11px] font-extrabold flex-wrap">
+        <span className="text-win">▲ {sideLabel(winSide)} {upText}</span>
+        <span className="text-loss">▼ {sideLabel(loseSide)} {downText}</span>
       </div>
     );
   };
