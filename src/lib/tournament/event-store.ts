@@ -1,4 +1,4 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, desc, sql } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import {
@@ -103,6 +103,48 @@ export async function listEvents(db: Db, kind: EventKind): Promise<LoadedEvent[]
   // N+1 aceptable: uso exclusivo admin, N = nº de eventos (decenas como mucho).
   for (const r of rows) out.push(await loadEvent(db, r.id));
   return out;
+}
+
+// Resumen ligero de un evento para listados públicos (sin recargar pistas/participantes/config).
+export interface EventSummary {
+  id: string;
+  name: string;
+  date: string;
+  location: string | null;
+  kind: EventKind;
+  format: string;
+  status: string;
+  totalMatches: number;
+  completedMatches: number;
+}
+
+// Lista TODOS los eventos (cualquier kind) ordenados por fecha DESC (más recientes primero).
+// Sin N+1: una query a `tournaments` + UNA query agrupada a `tournament_matches` para los
+// conteos (total y completados por torneo), y luego mapeo en memoria.
+export async function listEventSummaries(db: Db): Promise<EventSummary[]> {
+  const rows = await db.select({
+    id: tournaments.id, name: tournaments.name, date: tournaments.date,
+    location: tournaments.location, kind: tournaments.kind, format: tournaments.format,
+    status: tournaments.status,
+  }).from(tournaments).orderBy(desc(tournaments.date));
+
+  const counts = await db.select({
+    tournamentId: tournamentMatches.tournamentId,
+    total: sql<number>`count(*)`,
+    completed: sql<number>`sum(case when ${tournamentMatches.status} = 'completed' then 1 else 0 end)`,
+  }).from(tournamentMatches).groupBy(tournamentMatches.tournamentId);
+
+  const countById = new Map(counts.map((c) => [c.tournamentId, c] as const));
+
+  return rows.map((r) => {
+    const c = countById.get(r.id);
+    return {
+      id: r.id, name: r.name, date: r.date, location: r.location ?? null,
+      kind: r.kind as EventKind, format: r.format, status: r.status,
+      totalMatches: Number(c?.total ?? 0),
+      completedMatches: Number(c?.completed ?? 0),
+    };
+  });
 }
 
 // Edita la meta + reemplaza pistas/participantes. NO toca kind/format (inmutables tras crear)

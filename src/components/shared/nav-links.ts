@@ -1,4 +1,4 @@
-import { House, Trophy, Users, Swords, Info, Coins, type LucideIcon } from 'lucide-react';
+import { House, Trophy, Users, Swords, Info, Coins, CalendarDays, type LucideIcon } from 'lucide-react';
 
 export interface NavLink {
   href: string;
@@ -11,6 +11,7 @@ export const navLinks: NavLink[] = [
   { href: '/rankings', label: 'Ranking', icon: Trophy },
   { href: '/rankings/pairs', label: 'Parejas', icon: Users },
   { href: '/matches', label: 'Partidos', icon: Swords },
+  { href: '/eventos', label: 'Eventos', icon: CalendarDays },
   { href: '/rankings/tokens', label: 'La Timba', icon: Coins },
   { href: '/info', label: 'Info', icon: Info },
 ];
@@ -22,5 +23,8 @@ export function isNavActive(href: string, pathname: string): boolean {
   if (href === '/rankings/pairs') return pathname === '/rankings/pairs';
   if (href === '/rankings/tokens') return pathname === '/rankings/tokens';
   if (href === '/matches') return pathname.startsWith('/matches');
+  if (href === '/eventos') {
+    return pathname.startsWith('/eventos') || pathname.startsWith('/pozos') || pathname.startsWith('/torneos');
+  }
   return pathname === href;
 }

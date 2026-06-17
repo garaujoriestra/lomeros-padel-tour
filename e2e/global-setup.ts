@@ -46,6 +46,37 @@ export default async function globalSetup() {
     }
   }
 
+  // Mismo problema con `matches`: /api/init-db crea una versión reducida de la tabla,
+  // pero el schema drizzle (que usa `select().from(matches)` en p.ej. la home pública)
+  // espera columnas añadidas por migraciones posteriores. Las alineamos aquí
+  // (idempotente) para que la home renderice sin "no such column".
+  const matchColumns = [
+    'time TEXT',
+    'team1_player1_side TEXT',
+    'team1_player2_side TEXT',
+    'team2_player1_side TEXT',
+    'team2_player2_side TEXT',
+    'photo_url TEXT',
+  ];
+  for (const col of matchColumns) {
+    try {
+      await db.execute(`ALTER TABLE matches ADD COLUMN ${col}`);
+    } catch {
+      // La columna ya existe — seguir.
+    }
+  }
+
+  // `player_achievements` tampoco la crea /api/init-db, pero el schema drizzle la
+  // consulta (p.ej. la home hace `select().from(playerAchievements)`). La creamos
+  // aquí (idempotente) para que la home pública renderice sin "no such table".
+  await db.execute(`CREATE TABLE IF NOT EXISTS player_achievements (
+    id TEXT PRIMARY KEY,
+    player_id TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    earned_at TEXT NOT NULL,
+    trigger_match_id TEXT
+  )`);
+
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
   }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
-import { createEvent, loadEvent, listEvents, updateEvent, deleteEvent } from './event-store';
+import { createEvent, loadEvent, listEvents, listEventSummaries, updateEvent, deleteEvent } from './event-store';
 import type { PozoConfig } from './types';
 
 describe('schema nuevo (event)', () => {
@@ -103,6 +103,49 @@ describe('event-store', () => {
     // Invariante: updateEvent NO cambia kind/format.
     expect(loaded.kind).toBe('pozo');
     expect(loaded.format).toBe('americano');
+  });
+
+  it('listEventSummaries devuelve eventos ordenados por fecha DESC con conteo de partidos (sin N+1)', async () => {
+    const { db, client } = await createTestDb();
+    await seedPlayers(client, ['p1', 'p2', 'p3', 'p4']);
+
+    // Evento más antiguo: con partidos (1 completado + 1 pendiente).
+    const older = await createEvent(db, {
+      name: 'Pozo viejo', date: '2026-07-01', location: 'Club', kind: 'pozo', format: 'americano',
+      config: { rounds: 2, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+      createdBy: null,
+      courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
+      participantPlayerIds: ['p1', 'p2', 'p3', 'p4'],
+    });
+    // Evento más reciente: sin partidos generados.
+    const newer = await createEvent(db, {
+      name: 'Torneo nuevo', date: '2026-08-15', location: null, kind: 'torneo', format: 'single_elim',
+      config: { matchFormat: { kind: 'best_of_3' }, thirdPlace: false },
+      createdBy: null,
+      courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
+      participantPlayerIds: ['p1', 'p2', 'p3', 'p4'],
+    });
+
+    // Sembramos partidos del evento viejo: uno completado, uno pendiente.
+    await client.execute({ sql: 'INSERT INTO tournament_matches (id, tournament_id, round, status) VALUES (?, ?, ?, ?)', args: ['m1', older, 1, 'completed'] });
+    await client.execute({ sql: 'INSERT INTO tournament_matches (id, tournament_id, round, status) VALUES (?, ?, ?, ?)', args: ['m2', older, 1, 'pending'] });
+
+    const summaries = await listEventSummaries(db);
+    // Orden por fecha DESC: el nuevo (agosto) primero.
+    expect(summaries.map((s) => s.name)).toEqual(['Torneo nuevo', 'Pozo viejo']);
+
+    const newerSummary = summaries.find((s) => s.id === newer)!;
+    expect(newerSummary.kind).toBe('torneo');
+    expect(newerSummary.format).toBe('single_elim');
+    expect(newerSummary.status).toBe('draft');
+    expect(newerSummary.totalMatches).toBe(0);
+    expect(newerSummary.completedMatches).toBe(0);
+
+    const olderSummary = summaries.find((s) => s.id === older)!;
+    expect(olderSummary.kind).toBe('pozo');
+    expect(olderSummary.location).toBe('Club');
+    expect(olderSummary.totalMatches).toBe(2);
+    expect(olderSummary.completedMatches).toBe(1);
   });
 
   it('loadEvent lanza si el evento no existe', async () => {

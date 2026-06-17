@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { players, matches, matchSets, ratingHistory, playerAchievements } from '@/lib/db/schema';
 import { desc, sql, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
-import { Trophy, Calendar } from 'lucide-react';
+import { Trophy, Calendar, CalendarDays } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
 import { ActivityFeed } from '@/components/shared/activity-feed';
@@ -12,6 +12,9 @@ import { CountUp } from '@/components/lpt/count-up';
 import { buildFeed } from '@/lib/feed/build-feed';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
 import { buildPodiumGroups } from '@/lib/rankings/podium-groups';
+import { listEventSummaries } from '@/lib/tournament/event-store';
+import { eventLiveState } from '@/lib/tournament/event-summary';
+import { EventCard } from '@/components/tournament/event-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +28,7 @@ export default async function HomePage() {
     recentHistory,
     recentNewPlayers,
     recentAchievements,
+    eventSummaries,
   ] = await Promise.all([
     db.select().from(players)
       .where(sql`${players.matchesPlayed} > 0`)
@@ -37,10 +41,22 @@ export default async function HomePage() {
     db.select().from(ratingHistory).orderBy(desc(ratingHistory.recordedAt)).limit(100),
     db.select().from(players).orderBy(desc(players.createdAt)).limit(5),
     db.select().from(playerAchievements).orderBy(desc(playerAchievements.earnedAt)).limit(20),
+    listEventSummaries(db),
   ]);
 
   const totalMatches = totalMatchesRow.count;
   const totalPlayers = totalPlayersRow.count;
+
+  // Eventos públicos (no borradores), "en directo" primero y luego por fecha desc; máx 4.
+  const publicEvents = eventSummaries
+    .filter((s) => eventLiveState(s) !== 'upcoming')
+    .sort((a, b) => {
+      const liveA = eventLiveState(a) === 'live' ? 0 : 1;
+      const liveB = eventLiveState(b) === 'live' ? 0 : 1;
+      if (liveA !== liveB) return liveA - liveB;
+      return b.date.localeCompare(a.date);
+    })
+    .slice(0, 4);
 
   const matchIds = recentMatchesAll.map((m) => m.id);
   const allSets = matchIds.length > 0
@@ -127,6 +143,18 @@ export default async function HomePage() {
             <section className="section">
               <SectionHead icon={Trophy} title="Clasificación" linkLabel="Ver completa" linkHref="/rankings" />
               <Podium groups={buildPodiumGroups(podiumPlayers)} />
+            </section>
+          )}
+
+          {/* ── EVENTOS ── */}
+          {publicEvents.length > 0 && (
+            <section className="section">
+              <SectionHead icon={CalendarDays} title="Eventos" linkLabel="Ver todos" linkHref="/eventos" />
+              <div className="grid-2 stagger">
+                {publicEvents.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
             </section>
           )}
 
