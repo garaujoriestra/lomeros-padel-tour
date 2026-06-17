@@ -18,6 +18,9 @@ test('admin elimina un pozo desde el panel y desaparece de la lista', async ({ p
   await page.goto(`/admin/pozos/${id}`);
   await expect(page.getByRole('heading', { name: 'E2E Pozo A Borrar' }).first()).toBeVisible();
 
+  // El botón de compartir enlace es visible.
+  await expect(page.getByRole('button', { name: 'Compartir enlace' }).first()).toBeVisible();
+
   // El confirm() del navegador se acepta automáticamente.
   page.on('dialog', (d) => d.accept());
 

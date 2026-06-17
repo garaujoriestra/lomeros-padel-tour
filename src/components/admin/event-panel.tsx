@@ -10,6 +10,7 @@ import { buildGroupsView, buildBracketView } from '@/lib/tournament/torneo-view'
 import { PairsEditor } from './pairs-editor';
 import { GenerateButton } from './generate-button';
 import { DeleteEventButton } from './delete-event-button';
+import { ShareEventButton } from './share-event-button';
 import { PozoEscalera } from '@/components/tournament/pozo-escalera';
 import { GroupsTable } from '@/components/tournament/groups-table';
 import { BracketView } from '@/components/tournament/bracket-view';
@@ -59,7 +60,8 @@ export async function EventPanel({ id }: { id: string }) {
       {isPozo && !isDraft && <PozoSection id={id} courtsByOrder={courtsByOrder} ctx={ctx} format={ev.format} participantPlayerIds={ev.participantPlayerIds} />}
       {!isPozo && !isDraft && <TorneoSection id={id} ctx={ctx} courtLabelById={courtLabelById} />}
 
-      <div className="pt-6 mt-2 border-t border-line">
+      <div className="pt-6 mt-2 border-t border-line flex flex-wrap gap-3">
+        <ShareEventButton id={id} kind={ev.kind} />
         <DeleteEventButton id={id} kind={ev.kind} />
       </div>
     </div>
