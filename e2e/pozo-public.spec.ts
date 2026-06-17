@@ -26,9 +26,13 @@ test('vista pública del pozo: solo lectura + tu próximo partido', async ({ bro
   await page.goto(`/pozos/${id}`);
 
   await expect(page.getByRole('heading', { name: 'E2E Pozo Público' }).first()).toBeVisible();
-  await expect(page.getByText('Parrilla').first()).toBeVisible();
-  await expect(page.getByText('Clasificación').first()).toBeVisible();
-  await expect(page.getByText('Tu próximo partido').first()).toBeVisible();
+  // La escalera pública (solo lectura): scrubber de rondas + carril de cabeza 👑.
+  await expect(page.getByText('Ronda').first()).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Selector de ronda' })).toBeVisible();
+  await expect(page.getByText('👑', { exact: false }).first()).toBeVisible();
+  // Banda "Tu próximo" del jugador logueado.
+  await expect(page.getByText('Tu próximo').first()).toBeVisible();
+  // Solo lectura: no hay botones de guardar resultado.
   await expect(page.getByRole('button', { name: 'Guardar' })).toHaveCount(0);
 
   await playerCtx.close();

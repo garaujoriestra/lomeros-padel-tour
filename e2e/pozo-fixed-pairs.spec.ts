@@ -25,7 +25,10 @@ test('pozo parejas fijas: crear → parejas → generar → resultados → clasi
   await page.goto(`/admin/pozos/${id}`);
   await page.getByRole('button', { name: 'Generar' }).click();
 
-  await expect(page.getByText('Ronda 1')).toBeVisible();
+  // La UI nueva es la "escalera": cabecera de sección + scrubber de rondas.
+  await expect(page.getByText('Escalera').first()).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Selector de ronda' })).toBeVisible();
+  await expect(page.getByText('Ronda').first()).toBeVisible();
 
   // Registrar el resultado de los partidos de la ronda 0 (2 pistas → 2 partidos).
   for (let i = 0; i < 2; i++) {
@@ -34,10 +37,11 @@ test('pozo parejas fijas: crear → parejas → generar → resultados → clasi
     await page.getByLabel('Juegos equipo A').first().fill('4');
     await page.getByLabel('Juegos equipo B').first().fill('2');
     await btn.click();
-    await expect(page.getByText(/4.2/).first()).toBeVisible();
+    // Tras guardar, el carril pasa a "Final" (pill de completado).
+    await expect(page.getByText('Final').first()).toBeVisible();
   }
 
-  await expect(page.getByText('Clasificación')).toBeVisible();
+  // El carril de cabeza muestra la corona 👑 en la escalera.
   await expect(page.getByText('👑', { exact: false }).first()).toBeVisible();
 });
 

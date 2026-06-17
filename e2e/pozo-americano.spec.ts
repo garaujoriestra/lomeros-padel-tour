@@ -18,12 +18,16 @@ test('pozo americano: generar → resultado → clasificación', async ({ page }
 
   await page.goto(`/admin/pozos/${id}`);
   await page.getByRole('button', { name: 'Generar' }).click();
-  await expect(page.getByText('Ronda 1')).toBeVisible();
+
+  // La UI nueva es la "escalera": cabecera de sección + scrubber de rondas.
+  await expect(page.getByText('Escalera').first()).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Selector de ronda' })).toBeVisible();
 
   await page.getByLabel('Juegos equipo A').first().fill('4');
   await page.getByLabel('Juegos equipo B').first().fill('1');
   await page.getByRole('button', { name: 'Guardar' }).first().click();
-  await expect(page.getByText(/4.1/).first()).toBeVisible();
 
-  await expect(page.getByText('Clasificación')).toBeVisible();
+  // Tras guardar, el carril pasa a "Final" y la escalera muestra el carril de cabeza 👑.
+  await expect(page.getByText('Final').first()).toBeVisible();
+  await expect(page.getByText('👑', { exact: false }).first()).toBeVisible();
 });
