@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import type { EscaleraView, EscaleraLane, EscaleraSide } from '@/lib/tournament/pozo-view';
 import type { LadderStanding } from '@/lib/tournament/ladder';
 import { ResultEntry } from './result-entry';
@@ -26,7 +26,7 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
   const memberRow = (entityId: string, label: string) => {
     const s = stand.get(entityId);
     return (
-      <div key={entityId} className="flex items-center gap-3 py-0.5">
+      <div className="flex items-center gap-3 py-0.5">
         <span style={D} className={`italic font-extrabold text-lg w-6 text-center tabular-nums ${s?.rank === 1 ? 'text-acc-text' : 'text-ink-3'}`}>
           {s ? s.rank : '·'}
         </span>
@@ -44,7 +44,7 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
 
   const sideBlock = (side: EscaleraSide) => (
     <div className="flex items-center gap-2">
-      <div className="flex-1">{side.members.map((m) => memberRow(m.entityId, m.label))}</div>
+      <div className="flex-1">{side.members.map((m) => <Fragment key={m.entityId}>{memberRow(m.entityId, m.label)}</Fragment>)}</div>
       {sideScore(side)}
     </div>
   );
@@ -70,16 +70,17 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
   };
 
   const laneIsMine = (lane: EscaleraLane) =>
-    [...lane.sideA.members, ...lane.sideB.members].some((m) => mine.has(m.entityId));
+    lane.sideA.members.some((m) => mine.has(m.entityId)) ||
+    lane.sideB.members.some((m) => mine.has(m.entityId));
 
   return (
     <div>
       {/* Scrubber */}
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <span className="kicker">Ronda</span>
-        <div className="seg">
+        <div className="seg" role="group" aria-label="Selector de ronda">
           {view.rounds.map((r) => (
-            <button key={r} onClick={() => setRound(r)} className={r === round ? 'on' : (r < view.latestRound ? 'text-acc-text' : '')} style={D}>
+            <button key={r} onClick={() => setRound(r)} className={r === round ? 'on' : (r < view.latestRound ? 'text-acc-text' : '')} style={D} aria-label={`Ronda ${r + 1}`} aria-pressed={r === round}>
               {r + 1}
             </button>
           ))}
