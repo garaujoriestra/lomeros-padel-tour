@@ -2,6 +2,17 @@ import type { PozoMatchRow } from './pozo-run';
 import { isMatchPlayable, type DisplayContext, type MatchSlots } from './display';
 import type { SlotRef } from './types';
 
+// Etiqueta legible del formato de un evento (pozo o torneo).
+export function formatLabel(format: string): string {
+  switch (format) {
+    case 'fixed_pairs': return 'Parejas fijas';
+    case 'americano': return 'Americano';
+    case 'single_elim': return 'Eliminación directa';
+    case 'groups_elim': return 'Grupos → eliminación';
+    default: return format;
+  }
+}
+
 function parseSlot(s: string | null): SlotRef | null {
   if (!s) return null;
   try { return JSON.parse(s) as SlotRef; } catch { return null; }

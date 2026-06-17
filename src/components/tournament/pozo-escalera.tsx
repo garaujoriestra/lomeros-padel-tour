@@ -119,6 +119,7 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
               <span className="kicker">Descanso</span>
             </div>
             <p className="text-sm text-ink-2">😴 {data.restingLabels.join(', ')} {data.restingLabels.length === 1 ? 'descansa' : 'descansan'} esta ronda</p>
+            <p className="text-xs text-ink-3 mt-0.5">Descansa el último de la pista de abajo; rota cada ronda.</p>
           </div>
         )}
       </div>

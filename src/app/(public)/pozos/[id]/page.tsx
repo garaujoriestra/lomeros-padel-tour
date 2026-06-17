@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { loadEvent } from '@/lib/tournament/event-store';
 import { loadPairs } from '@/lib/tournament/pair-store';
 import { listPozoMatches, pozoStandingsLive } from '@/lib/tournament/pozo-engine';
-import { buildDisplayContext, buildEscaleraView } from '@/lib/tournament/pozo-view';
+import { buildDisplayContext, buildEscaleraView, formatLabel } from '@/lib/tournament/pozo-view';
 import { getSession } from '@/lib/auth/session';
 import { PozoEscalera } from '@/components/tournament/pozo-escalera';
 import { NextMatchCard } from '@/components/tournament/next-match-card';
@@ -44,7 +44,10 @@ export default async function PublicPozoPage({ params }: { params: Promise<{ id:
     <div className="space-y-6">
       <div>
         <h1 className="sec-title">{ev.name}</h1>
-        <p className="muted text-sm mt-1">{ev.date}{ev.location ? ` · ${ev.location}` : ''} · Pozo</p>
+        <p className="muted text-sm mt-1">{ev.date}{ev.location ? ` · ${ev.location}` : ''} · Pozo · {formatLabel(ev.format)}</p>
+        {ev.format === 'americano' && (
+          <p className="text-ink-3 text-xs mt-1">Las parejas rotan cada ronda; clasificación individual.</p>
+        )}
       </div>
 
       {ev.status === 'draft' && <p className="text-ink-3 text-sm">El pozo aún no se ha generado.</p>}

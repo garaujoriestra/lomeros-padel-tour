@@ -22,7 +22,7 @@ test('torneo grupos→eliminación: liguilla → cuadro automático', async ({ p
   await page.goto(`/admin/torneos/${id}`);
   await page.getByRole('button', { name: 'Generar' }).click();
 
-  await expect(page.getByText('Grupos')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Grupos', exact: true })).toBeVisible();
   await expect(page.getByText('Grupo A')).toBeVisible();
 
   // Cierra toda la liguilla recorriendo los Guardar visibles (12 partidos de grupo).

@@ -5,7 +5,7 @@ import { loadEvent } from '@/lib/tournament/event-store';
 import { loadPairs } from '@/lib/tournament/pair-store';
 import { listPozoMatches, pozoStandingsLive } from '@/lib/tournament/pozo-engine';
 import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
-import { buildDisplayContext, buildEscaleraView } from '@/lib/tournament/pozo-view';
+import { buildDisplayContext, buildEscaleraView, formatLabel } from '@/lib/tournament/pozo-view';
 import { buildGroupsView, buildBracketView } from '@/lib/tournament/torneo-view';
 import { PairsEditor } from './pairs-editor';
 import { GenerateButton } from './generate-button';
@@ -34,7 +34,7 @@ export async function EventPanel({ id }: { id: string }) {
       <div>
         <h1 className="sec-title">{ev.name}</h1>
         <p className="muted text-sm mt-1">
-          {ev.date}{ev.location ? ` · ${ev.location}` : ''} · {isPozo ? 'Pozo' : 'Torneo'} · {ev.format}
+          {ev.date}{ev.location ? ` · ${ev.location}` : ''} · {isPozo ? 'Pozo' : 'Torneo'} · {formatLabel(ev.format)}
         </p>
       </div>
 

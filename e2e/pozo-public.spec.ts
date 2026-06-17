@@ -26,6 +26,8 @@ test('vista pública del pozo: solo lectura + tu próximo partido', async ({ bro
   await page.goto(`/pozos/${id}`);
 
   await expect(page.getByRole('heading', { name: 'E2E Pozo Público' }).first()).toBeVisible();
+  // La variante del pozo es visible en la cabecera (fixture = fixed_pairs).
+  await expect(page.getByText('Parejas fijas').first()).toBeVisible();
   // La escalera pública (solo lectura): scrubber de rondas + carril de cabeza 👑.
   await expect(page.getByText('Ronda').first()).toBeVisible();
   await expect(page.getByRole('group', { name: 'Selector de ronda' })).toBeVisible();
