@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const event = await loadEvent(db, id);
     return NextResponse.json({ event });
   } catch (error) {
-    if (error === 'NOT_FOUND') {
+    if (error === 'NOT_FOUND' || (error instanceof Error && error.message === 'NOT_FOUND')) {
       return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
     }
     console.error(error);
