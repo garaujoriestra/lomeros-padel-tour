@@ -3,6 +3,7 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import {
   tournaments, tournamentCourts, tournamentParticipants,
+  tournamentGroups, tournamentPairs, tournamentMatches,
 } from '@/lib/db/schema';
 import type { EventKind, EventConfig } from './types';
 
@@ -115,4 +116,16 @@ export async function updateEvent(db: Db, id: string, input: UpdateEventInput): 
   await db.delete(tournamentCourts).where(eq(tournamentCourts.tournamentId, id));
   await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
   await insertCourtsAndParticipants(db, id, input.courts, input.participantPlayerIds);
+}
+
+// Borra el evento y TODOS sus hijos. FK puede estar OFF en Turso/harness, así que NO
+// confiamos en ON DELETE CASCADE: borramos cada tabla hija explícitamente (hijos antes
+// que el padre) y por último la fila de tournaments.
+export async function deleteEvent(db: Db, id: string): Promise<void> {
+  await db.delete(tournamentMatches).where(eq(tournamentMatches.tournamentId, id));
+  await db.delete(tournamentPairs).where(eq(tournamentPairs.tournamentId, id));
+  await db.delete(tournamentGroups).where(eq(tournamentGroups.tournamentId, id));
+  await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+  await db.delete(tournamentCourts).where(eq(tournamentCourts.tournamentId, id));
+  await db.delete(tournaments).where(eq(tournaments.id, id));
 }

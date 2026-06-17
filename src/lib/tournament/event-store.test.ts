@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTestDb } from './test-db';
-import { createEvent, loadEvent, listEvents, updateEvent } from './event-store';
+import { createEvent, loadEvent, listEvents, updateEvent, deleteEvent } from './event-store';
 import type { PozoConfig } from './types';
 
 describe('schema nuevo (event)', () => {
@@ -108,5 +108,62 @@ describe('event-store', () => {
   it('loadEvent lanza si el evento no existe', async () => {
     const { db } = await createTestDb();
     await expect(loadEvent(db, 'no-existe')).rejects.toThrow('NOT_FOUND');
+  });
+
+  it('deleteEvent borra el evento y TODOS sus hijos (FK OFF → borrado explícito)', async () => {
+    const { db, client } = await createTestDb();
+    await seedPlayers(client, ['p1', 'p2', 'p3', 'p4']);
+    const id = await createEvent(db, {
+      name: 'A borrar', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
+      config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+      createdBy: null,
+      courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
+      participantPlayerIds: ['p1', 'p2', 'p3', 'p4'],
+    });
+
+    // Otro evento que NO debe verse afectado por el borrado.
+    const other = await createEvent(db, {
+      name: 'Intacto', date: '2026-07-02', location: null, kind: 'pozo', format: 'americano',
+      config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+      createdBy: null,
+      courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
+      participantPlayerIds: ['p1', 'p2'],
+    });
+
+    // Sembramos grupo, pareja y partido directamente (no hay helper en el store para esto).
+    await client.execute({ sql: 'INSERT INTO tournament_groups (id, tournament_id, name) VALUES (?, ?, ?)', args: ['g1', id, 'A'] });
+    await client.execute({ sql: 'INSERT INTO tournament_pairs (id, tournament_id, player1_id, player2_id, group_id) VALUES (?, ?, ?, ?, ?)', args: ['pr1', id, 'p1', 'p2', 'g1'] });
+    await client.execute({ sql: 'INSERT INTO tournament_matches (id, tournament_id, round) VALUES (?, ?, ?)', args: ['m1', id, 1] });
+
+    async function count(table: string, tid: string): Promise<number> {
+      const res = await client.execute({ sql: `SELECT COUNT(*) AS n FROM ${table} WHERE tournament_id = ?`, args: [tid] });
+      return Number(res.rows[0].n);
+    }
+
+    // Precondición: el evento y sus hijos existen.
+    expect(await count('tournament_courts', id)).toBe(1);
+    expect(await count('tournament_participants', id)).toBe(4);
+    expect(await count('tournament_groups', id)).toBe(1);
+    expect(await count('tournament_pairs', id)).toBe(1);
+    expect(await count('tournament_matches', id)).toBe(1);
+
+    await deleteEvent(db, id);
+
+    // El evento ya no existe.
+    await expect(loadEvent(db, id)).rejects.toThrow('NOT_FOUND');
+    const rows = await client.execute({ sql: 'SELECT COUNT(*) AS n FROM tournaments WHERE id = ?', args: [id] });
+    expect(Number(rows.rows[0].n)).toBe(0);
+
+    // Todos los hijos del evento borrado han desaparecido.
+    expect(await count('tournament_courts', id)).toBe(0);
+    expect(await count('tournament_participants', id)).toBe(0);
+    expect(await count('tournament_groups', id)).toBe(0);
+    expect(await count('tournament_pairs', id)).toBe(0);
+    expect(await count('tournament_matches', id)).toBe(0);
+
+    // El otro evento queda intacto.
+    await expect(loadEvent(db, other)).resolves.toMatchObject({ name: 'Intacto' });
+    expect(await count('tournament_courts', other)).toBe(1);
+    expect(await count('tournament_participants', other)).toBe(2);
   });
 });

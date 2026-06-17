@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth/guard';
-import { loadEvent, updateEvent } from '@/lib/tournament/event-store';
+import { loadEvent, updateEvent, deleteEvent } from '@/lib/tournament/event-store';
 import { validateEventInput } from '@/lib/tournament/validation';
 
 // GET /api/tournaments/[id] — carga un evento por id (admin).
@@ -43,5 +43,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 });
+  }
+}
+
+// DELETE /api/tournaments/[id] — borra un evento (pozo o torneo) y todos sus hijos (admin).
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ('response' in auth) return auth.response;
+  const { id } = await params;
+  try {
+    await deleteEvent(db, id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
   }
 }
