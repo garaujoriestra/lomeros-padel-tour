@@ -110,4 +110,20 @@ describe('buildEscaleraView', () => {
     const v = buildEscaleraView(matches, courts, ctx, ['p1', 'p2', 'p3', 'p4']);
     expect(v.byRound[0].restingLabels.sort()).toEqual(['m / n', 'o / q']); // p3, p4 (pair labels)
   });
+
+  it('acumula varias rondas: rounds=[0,1], latestRound=1, byRound[1] con sus carriles', () => {
+    const matches: PozoMatchRow[] = [
+      fixedPairMatch({ id: 'r0m0', round: 0, courtId: 'c0', slotA1: pairSlot('p1'), slotB1: pairSlot('p2') }),
+      fixedPairMatch({ id: 'r0m1', round: 0, courtId: 'c1', slotA1: pairSlot('p3'), slotB1: pairSlot('p4') }),
+      fixedPairMatch({ id: 'r1m0', round: 1, courtId: 'c0', slotA1: pairSlot('p2'), slotB1: pairSlot('p3') }),
+      fixedPairMatch({ id: 'r1m1', round: 1, courtId: 'c1', slotA1: pairSlot('p1'), slotB1: pairSlot('p4') }),
+    ];
+    const v = buildEscaleraView(matches, courts, ctx, ['p1', 'p2', 'p3', 'p4']);
+    expect(v.rounds).toEqual([0, 1]);
+    expect(v.latestRound).toBe(1);
+    expect(v.byRound[1]).toBeDefined();
+    const lanes1 = v.byRound[1].lanes;
+    expect(lanes1.length).toBe(2);
+    expect(lanes1.map((l) => l.courtLabel)).toEqual(['Central', 'Pista 2']); // ordenados por pista
+  });
 });

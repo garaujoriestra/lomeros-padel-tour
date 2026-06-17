@@ -83,7 +83,8 @@ function slotMember(slot: SlotRef | null, ctx: DisplayContext): EscaleraMember |
 
 // Transforma los partidos del pozo en carriles por ronda (pista top primero).
 // `allEntityIds`: todas las entidades que clasifican (playerIds en americano, pairIds en parejas fijas),
-// para deducir quién descansa cada ronda.
+// para deducir quién descansa cada ronda. `restingLabels` preserva el orden de `allEntityIds`,
+// por lo que el llamador debe pasarlo en el orden de presentación deseado.
 export function buildEscaleraView(
   matches: PozoMatchRow[],
   courtsByOrder: { id: string; label: string }[],
@@ -91,7 +92,7 @@ export function buildEscaleraView(
   allEntityIds: string[],
 ): EscaleraView {
   const courtIndexById = new Map(courtsByOrder.map((c, i) => [c.id, i] as const));
-  const lastCourtIdx = courtsByOrder.length - 1;
+  const lastCourtIdx = Math.max(0, courtsByOrder.length - 1);
   const rounds = [...new Set(matches.map((m) => m.round))].sort((a, b) => a - b);
   const byRound: Record<number, EscaleraRound> = {};
 
@@ -102,6 +103,7 @@ export function buildEscaleraView(
         const slots = matchSlots(m);
         const sideA = [slotMember(slots.slotA1, ctx), slotMember(slots.slotA2, ctx)].filter(Boolean) as EscaleraMember[];
         const sideB = [slotMember(slots.slotB1, ctx), slotMember(slots.slotB2, ctx)].filter(Boolean) as EscaleraMember[];
+        // courtId desconocido o ausente → cae a la pista 0 (no debería pasar en datos válidos)
         const courtIndex = m.courtId ? (courtIndexById.get(m.courtId) ?? 0) : 0;
         return {
           courtIndex,
