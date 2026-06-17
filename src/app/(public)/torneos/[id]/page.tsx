@@ -8,8 +8,7 @@ import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
 import { buildDisplayContext } from '@/lib/tournament/pozo-view';
 import { buildGroupsView, buildBracketView, torneoNextMatch } from '@/lib/tournament/torneo-view';
 import { getSession } from '@/lib/auth/session';
-import { GroupsTable } from '@/components/tournament/groups-table';
-import { BracketView } from '@/components/tournament/bracket-view';
+import { TorneoBoard } from '@/components/tournament/torneo-board';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,21 +47,24 @@ export default async function PublicTorneoPage({ params }: { params: Promise<{ i
       {ev.status === 'draft' && <p className="text-ink-3 text-sm">El torneo aún no se ha generado.</p>}
 
       {next && (
-        <div className="border border-line rounded-md p-3 bg-surface">
-          <p className="font-medium">Tu próximo partido</p>
-          <p className="text-sm">{next.teamA} vs {next.teamB}</p>
-          <p className="text-xs text-ink-3">{next.courtLabel ?? ''}{next.scheduledStart ? ` · ${next.scheduledStart}` : ''}</p>
+        <div className="lpt-card card-pad flex items-center gap-3">
+          <span className="status-pill scheduled">Tu próximo partido</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm truncate">{next.teamA} vs {next.teamB}</p>
+            <p className="text-xs text-ink-3">{next.courtLabel ?? ''}{next.scheduledStart ? ` · ${next.scheduledStart}` : ''}</p>
+          </div>
         </div>
       )}
 
-      {groupsView.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="font-medium">Grupos</h2>
-          {groupsView.map((g) => <GroupsTable key={g.name} tournamentId={id} group={g} editable={false} />)}
-        </section>
-      )}
-      {bracket.rounds.length > 0 && (
-        <section><h2 className="font-medium mb-2">Cuadro</h2><BracketView tournamentId={id} bracket={bracket} editable={false} /></section>
+      {(groupsView.length > 0 || bracket.rounds.length > 0) && (
+        <TorneoBoard
+          tournamentId={id}
+          groups={groupsView}
+          bracket={bracket}
+          advance={(ev.config as { advancePerGroup?: number }).advancePerGroup ?? 2}
+          editable={false}
+          myPairIds={myPairIds}
+        />
       )}
     </div>
   );

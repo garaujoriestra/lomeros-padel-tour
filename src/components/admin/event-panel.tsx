@@ -12,8 +12,7 @@ import { GenerateButton } from './generate-button';
 import { DeleteEventButton } from './delete-event-button';
 import { ShareEventButton } from './share-event-button';
 import { PozoEscalera } from '@/components/tournament/pozo-escalera';
-import { GroupsTable } from '@/components/tournament/groups-table';
-import { BracketView } from '@/components/tournament/bracket-view';
+import { TorneoBoard } from '@/components/tournament/torneo-board';
 
 export async function EventPanel({ id }: { id: string }) {
   const ev = await loadEvent(db, id);
@@ -89,23 +88,13 @@ async function PozoSection({ id, courtsByOrder, ctx, format, participantPlayerId
 async function TorneoSection({ id, ctx, courtLabelById }: {
   id: string; ctx: ReturnType<typeof buildDisplayContext>; courtLabelById: Map<string, string>;
 }) {
+  const ev = await loadEvent(db, id);
   const matches = await loadTorneoMatches(db, id);
   const pairs = await loadPairs(db, id);
   const groupRows = await db.select({ id: tournamentGroups.id, name: tournamentGroups.name })
     .from(tournamentGroups).where(eq(tournamentGroups.tournamentId, id)).orderBy(asc(tournamentGroups.name));
   const groupsView = buildGroupsView(groupRows, pairs, matches, ctx, courtLabelById);
   const bracket = buildBracketView(matches, ctx, courtLabelById);
-  return (
-    <div className="space-y-6">
-      {groupsView.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="font-medium">Grupos</h2>
-          {groupsView.map((g) => <GroupsTable key={g.name} tournamentId={id} group={g} editable />)}
-        </section>
-      )}
-      {bracket.rounds.length > 0 && (
-        <section><h2 className="font-medium mb-2">Cuadro</h2><BracketView tournamentId={id} bracket={bracket} editable /></section>
-      )}
-    </div>
-  );
+  const advance = (ev.config as { advancePerGroup?: number }).advancePerGroup ?? 2;
+  return <TorneoBoard tournamentId={id} groups={groupsView} bracket={bracket} advance={advance} editable />;
 }
