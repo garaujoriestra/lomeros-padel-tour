@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 interface Props {
   tournamentId: string;
@@ -31,14 +29,22 @@ export function ResultEntry({ tournamentId, matchId, initialA, initialB, disable
   }
 
   return (
-    <div className="flex items-center gap-1.5">
-      <Input aria-label="Juegos equipo A" type="number" min={0} value={a}
-        onChange={(e) => setA(Number(e.target.value))} disabled={disabled || saving} className="w-14" />
+    <div className="flex items-center gap-2">
+      <input
+        aria-label="Juegos equipo A" type="number" min={0} inputMode="numeric"
+        value={a} onChange={(e) => setA(Number(e.target.value))} disabled={disabled || saving}
+        className="w-12 h-9 text-center font-display italic font-extrabold text-lg rounded-[9px] border border-line-strong bg-surface-2 text-ink"
+      />
       <span className="text-ink-3">–</span>
-      <Input aria-label="Juegos equipo B" type="number" min={0} value={b}
-        onChange={(e) => setB(Number(e.target.value))} disabled={disabled || saving} className="w-14" />
-      <Button size="sm" onClick={save} disabled={disabled || saving}>{saving ? '...' : 'Guardar'}</Button>
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      <input
+        aria-label="Juegos equipo B" type="number" min={0} inputMode="numeric"
+        value={b} onChange={(e) => setB(Number(e.target.value))} disabled={disabled || saving}
+        className="w-12 h-9 text-center font-display italic font-extrabold text-lg rounded-[9px] border border-line-strong bg-surface-2 text-ink"
+      />
+      <button onClick={save} disabled={disabled || saving} className="lpt-btn primary">
+        {saving ? '...' : 'Guardar'}
+      </button>
+      {error && <span className="text-xs text-loss">{error}</span>}
     </div>
   );
 }
