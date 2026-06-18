@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { sendToUsers, userIdsForPlayers } from './send';
 import { buildResultNotification, buildAchievementNotification } from './notifications';
 import { computeResultPositions } from '@/lib/rankings/match-positions';
@@ -7,6 +8,7 @@ import type { MatchRatingResult } from '@/lib/rating/process-match';
 
 interface MatchTeams {
   id: string;
+  groupId: string;
   winnerTeam: 1 | 2;
   team1Player1Id: string;
   team1Player2Id: string;
@@ -27,7 +29,8 @@ export async function notifyMatchResult(match: MatchTeams, result: MatchRatingRe
     // estado de ELO ya actualizado en la DB.
     const allPlayers = await db
       .select({ id: players.id, eloRating: players.eloRating, matchesPlayed: players.matchesPlayed })
-      .from(players);
+      .from(players)
+      .where(eq(players.groupId, match.groupId));
     const positions = computeResultPositions(allPlayers, result.eloChanges);
 
     for (const ec of result.eloChanges) {

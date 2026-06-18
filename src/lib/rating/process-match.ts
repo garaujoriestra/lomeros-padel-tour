@@ -17,6 +17,7 @@ export interface MatchRatingResult {
 
 type MatchInput = {
   id: string;
+  groupId: string;
   date: string;
   location?: string | null;
   team1Player1Id: string;
@@ -64,7 +65,12 @@ export async function processMatchRatings(match: MatchInput): Promise<MatchRatin
   // Obtener datos de los 4 jugadores
   const playersData = await Promise.all(
     playerIds.map((id) =>
-      db.select().from(players).where(eq(players.id, id)).limit(1).then((r) => r[0])
+      db
+        .select()
+        .from(players)
+        .where(and(eq(players.id, id), eq(players.groupId, match.groupId)))
+        .limit(1)
+        .then((r) => r[0])
     )
   );
 
@@ -166,7 +172,7 @@ export async function processMatchRatings(match: MatchInput): Promise<MatchRatin
   }
 
   // Apply achievements for the 4 players based on the freshly-updated state.
-  const newAchievements = await applyAchievementsForMatch(match.id);
+  const newAchievements = await applyAchievementsForMatch(match.id, match.groupId);
 
   return {
     eloChanges: eloResults.map((r) => ({
@@ -178,13 +184,23 @@ export async function processMatchRatings(match: MatchInput): Promise<MatchRatin
   };
 }
 
-async function applyAchievementsForMatch(matchId: string): Promise<{ playerId: string; achievementId: string }[]> {
-  // Load history + sets + matches + players. We need globals to compute
-  // bagel/doubleBagel and rank changes correctly.
-  const allHistory = await db.select().from(ratingHistory);
-  const allSetsRows = await db.select().from(matchSetsTable);
-  const allMatchesRows = await db.select().from(matchesTable);
-  const allPlayersSnapshot = await db.select().from(players);
+async function applyAchievementsForMatch(
+  matchId: string,
+  groupId: string,
+): Promise<{ playerId: string; achievementId: string }[]> {
+  // Cargamos historial + sets + partidos + jugadores DEL GRUPO. Se ancla en
+  // matches.groupId: los ids de partido del grupo scopean ratingHistory y matchSets
+  // (que no tienen group_id), y players se filtra por groupId. Los detectores son
+  // puros, así que con estos datos ya scopeados quedan correctos y sin fuga.
+  const allMatchesRows = await db.select().from(matchesTable).where(eq(matchesTable.groupId, groupId));
+  const groupMatchIds = allMatchesRows.map((m) => m.id);
+  const allHistory = groupMatchIds.length
+    ? await db.select().from(ratingHistory).where(inArray(ratingHistory.matchId, groupMatchIds))
+    : [];
+  const allSetsRows = groupMatchIds.length
+    ? await db.select().from(matchSetsTable).where(inArray(matchSetsTable.matchId, groupMatchIds))
+    : [];
+  const allPlayersSnapshot = await db.select().from(players).where(eq(players.groupId, groupId));
 
   // Group sets by matchId
   const setsByMatch = new Map<string, { team1Games: number; team2Games: number }[]>();
