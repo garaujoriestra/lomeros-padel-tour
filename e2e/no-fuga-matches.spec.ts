@@ -32,4 +32,24 @@ test.describe('no-fuga · partidos (admin de Lomeros)', () => {
     });
     expect(res.status()).toBe(404);
   });
+
+  test('un admin de Lomeros no puede anular por lesión un partido de otro grupo (404)', async ({ request }) => {
+    const res = await request.post('/api/matches/gt-match1/abandon', {
+      data: { injuredPlayerId: 'gt-pl1' },
+    });
+    expect(res.status()).toBe(404);
+  });
+
+  test('crear partido con un jugador de otro grupo es rechazado (400)', async ({ request }) => {
+    const res = await request.post('/api/matches', {
+      data: {
+        date: '2026-02-02',
+        team1Player1Id: 'pl1',
+        team1Player2Id: 'pl2',
+        team2Player1Id: 'pl3',
+        team2Player2Id: 'gt-pl1', // jugador del otro grupo → no debe colarse
+      },
+    });
+    expect(res.status()).toBe(400);
+  });
 });
