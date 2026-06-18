@@ -67,6 +67,8 @@ export function isSuperAdminEmail(email: string): boolean {
 }
 
 // Id del grupo por defecto para páginas públicas/no-auth (env DEFAULT_GROUP_SLUG, hoy 'lomeros').
+// Si el slug configurado no existe, cae silenciosamente a Lomeros: una página pública nunca debe
+// romper por un grupo por defecto mal configurado.
 export async function getDefaultGroupId(): Promise<string> {
   const slug = (process.env.DEFAULT_GROUP_SLUG ?? LOMEROS_GROUP_SLUG).trim();
   const [g] = await db.select({ id: groups.id }).from(groups).where(eq(groups.slug, slug));
@@ -90,6 +92,8 @@ export async function getGroupContext(
     .from(memberships)
     .where(eq(memberships.userId, session.userId));
 
+  // El cast estrecha `role` (text → 'admin'|'player'): hoy la columna solo se escribe con esos
+  // valores. Cuando 1B-5 empiece a fijar roles desde el DAL, validar/estrechar aquí en vez de confiar.
   return resolveGroupContext({
     memberships: rows as MembershipRow[],
     isSuperAdmin: isSuperAdminEmail(session.email),

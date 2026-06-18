@@ -40,6 +40,11 @@ describe('resolveGroupContext', () => {
     const other: MembershipRow = { id: 'm2', groupId: 'g2', role: 'player', playerId: null };
     expect(resolveGroupContext({ memberships: [lomerosMember, other], isSuperAdmin: false, targetGroupId: null })).toBeNull();
   });
+
+  it('niega un grupo ajeno: miembro de varios grupos, no super-admin, pide uno donde no está', () => {
+    const other: MembershipRow = { id: 'm2', groupId: 'g2', role: 'player', playerId: null };
+    expect(resolveGroupContext({ memberships: [lomerosMember, other], isSuperAdmin: false, targetGroupId: 'g3' })).toBeNull();
+  });
 });
 
 describe('isSuperAdminEmail', () => {
