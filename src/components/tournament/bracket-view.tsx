@@ -18,7 +18,6 @@ interface Props { tournamentId: string; bracket: BracketViewModel; editable: boo
 
 export function BracketView({ tournamentId, bracket, editable, myPairIds = [] }: Props) {
   const mine = new Set(myPairIds);
-  const scroller = useRef<HTMLDivElement>(null);
   const liveCol = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,7 +70,7 @@ export function BracketView({ tournamentId, bracket, editable, myPairIds = [] }:
   };
 
   return (
-    <div ref={scroller} className="flex gap-5 overflow-x-auto pb-2 -mx-1 px-1">
+    <div className="flex gap-5 overflow-x-auto pb-2 -mx-1 px-1">
       {bracket.rounds.map(({ round, matches }) => (
         <div
           key={round}
