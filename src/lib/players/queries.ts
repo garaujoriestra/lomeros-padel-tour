@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { players, type NewPlayer, type Player } from '@/lib/db/schema';
 
@@ -42,4 +42,11 @@ export async function updatePlayerInGroup(
 // Borra un jugador del grupo (un id de otro grupo no borra nada).
 export async function deletePlayerInGroup(groupId: string, id: string): Promise<void> {
   await db.delete(players).where(and(eq(players.id, id), eq(players.groupId, groupId)));
+}
+
+// Los jugadores del grupo cuyo id está en `ids` (para validar que un partido no
+// referencia jugadores de otro grupo).
+export async function getPlayersInGroup(groupId: string, ids: string[]): Promise<Player[]> {
+  if (ids.length === 0) return [];
+  return db.select().from(players).where(and(inArray(players.id, ids), eq(players.groupId, groupId)));
 }
