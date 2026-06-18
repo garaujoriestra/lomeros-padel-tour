@@ -32,3 +32,20 @@ test('admin crea un TORNEO grupos→eliminación', async ({ page }) => {
   await expect(page).toHaveURL(/\/admin\/torneos$/);
   await expect(page.getByRole('link', { name: /E2E Torneo/ })).toBeVisible();
 });
+
+test('admin puede añadir y quitar una pista en el formulario', async ({ page }) => {
+  await page.goto('/admin/torneos/new');
+  // Empieza con 1 pista y sin botón de quitar (no se puede quedar en cero).
+  await expect(page.getByLabel('Nombre de la pista')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Quitar pista/ })).toHaveCount(0);
+
+  // Añadir una segunda pista → aparecen los botones de quitar.
+  await page.getByRole('button', { name: 'Añadir pista' }).click();
+  await expect(page.getByLabel('Nombre de la pista')).toHaveCount(2);
+  await page.getByLabel('Nombre de la pista').nth(1).fill('Pista 2');
+
+  // Quitar la segunda pista → vuelve a 1 y desaparecen los botones de quitar.
+  await page.getByRole('button', { name: 'Quitar pista 2' }).click();
+  await expect(page.getByLabel('Nombre de la pista')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Quitar pista/ })).toHaveCount(0);
+});

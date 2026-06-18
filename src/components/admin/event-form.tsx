@@ -29,6 +29,9 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
   function setCourt(i: number, patch: Partial<typeof courts[number]>) {
     setCourts((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   }
+  function removeCourt(i: number) {
+    setCourts((cs) => cs.filter((_, j) => j !== i));
+  }
 
   function buildConfig() {
     if (kind === 'pozo') {
@@ -110,6 +113,10 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
             </div>
             <div><Label className="text-xs">Desde</Label><Input type="time" value={c.availableFrom} onChange={(e) => setCourt(i, { availableFrom: e.target.value })} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
             <div><Label className="text-xs">Hasta</Label><Input type="time" value={c.availableTo} onChange={(e) => setCourt(i, { availableTo: e.target.value })} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            {courts.length > 1 && (
+              <button type="button" aria-label={`Quitar pista ${i + 1}`} className="text-ink-3 hover:text-loss h-9 px-1 shrink-0"
+                onClick={() => removeCourt(i)}>✕</button>
+            )}
           </div>
         ))}
         <button type="button" className="lpt-btn text-sm mt-1" onClick={() => setCourts((cs) => [...cs, { label: '', availableFrom: '17:00', availableTo: '20:00' }])}>Añadir pista</button>
