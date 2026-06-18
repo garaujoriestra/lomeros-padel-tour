@@ -71,6 +71,8 @@ export async function migrateMultitenant(client: Client): Promise<MultitenantMig
     )
   `);
   await client.execute({
+    // id vía SQL puro (hex de 32 chars, no UUID dasheado como crypto.randomUUID) para que el
+    // backfill sea un único INSERT...SELECT sin round-trip por fila. Ambos son TEXT PK válidos.
     sql: `
       INSERT INTO memberships (id, user_id, group_id, role, player_id)
       SELECT lower(hex(randomblob(16))), u.id, ?, u.role, u.player_id
