@@ -21,7 +21,7 @@
 - `src/app/api/migrate-multitenant/route.ts` — Endpoint POST que ejecuta la migración (patrón `/api/migrate-*` del repo).
 
 **Modificar:**
-- `src/lib/db/schema.ts` — Añadir tablas `groups` y `memberships`; añadir `groupId` a `players`, `matches`, `rewards`, `tournaments`; nuevos tipos.
+- `src/lib/db/schema.ts` — Añadir SOLO las tablas `groups` y `memberships` + sus tipos. (`groupId` en las tablas raíz se difiere a 1B por seguridad de deploy; ver Decisión #3.)
 - `src/lib/db/index.ts` — Exportar el `client` libSQL (lo necesita la ruta de migración).
 - `e2e/global-setup.ts` — Ejecutar `migrate-multitenant` en la lista de migraciones de arranque.
 
@@ -32,8 +32,8 @@
 ## Decisiones clave (leer antes de empezar)
 
 1. **`group_id` = `NOT NULL DEFAULT 'lomeros'` vía `ALTER TABLE ADD COLUMN`.** SQLite permite añadir una columna NOT NULL si tiene DEFAULT no nulo → no hace falta recrear tablas. El DEFAULT backfilla las filas existentes a Lomeros en el acto.
-2. **Sin `REFERENCES` en el `ALTER`.** SQLite prohíbe `ADD COLUMN` con `REFERENCES` y DEFAULT no nulo a la vez. La FK lógica se declara solo en el schema Drizzle (para joins/tipos); físicamente la columna no lleva FK. Es intencional y suficiente.
-3. **El schema Drizzle declara `groupId` con `.default(LOMEROS_GROUP_ID)`.** Así el campo es opcional en los inserts y **todos los call-sites existentes siguen compilando** y escriben Lomeros sin tocarlos. Ese default se ELIMINARÁ en 1B/1C cuando el DAL fije `groupId` explícito siempre (para que un insert que lo olvide falle ruidoso en vez de caer en Lomeros).
+2. **Sin `REFERENCES` en el `ALTER`.** SQLite prohíbe `ADD COLUMN` con `REFERENCES` y DEFAULT no nulo a la vez. La columna física no lleva FK; la FK lógica se declarará en el schema Drizzle en 1B. Es intencional y suficiente.
+3. **`group_id` NO se declara en el schema Drizzle de las tablas raíz en 1A (deploy ventana-cero).** Drizzle inyecta el `.default()` en cada INSERT y enumera columnas en cada SELECT. Si declarásemos `groupId` en el schema de `players`/`matches`/`rewards`/`tournaments` ahora, entre el deploy de 1A y el `curl` de migración las lecturas del núcleo (home, jugadores, partidos) harían `SELECT group_id` sobre una columna inexistente → **500 en toda la web**. Por eso 1A solo declara en el schema las tablas NUEVAS `groups`/`memberships` (que ningún código de 1A consulta aún), y la columna física `group_id` la crea la migración. `groupId` entra en el schema Drizzle en el paso **1B**, cuando las queries lo usan y la columna **ya existe** en prod → sin ventana. Los call-sites de insert existentes no se tocan en 1A.
 4. **`users` no se toca** (`role`/`player_id` siguen). Borrarlos es el contract del paso 1C.
 5. **Idempotencia:** cada paso comprueba existencia (tabla/columna/fila) antes de actuar; ejecutar la migración dos veces es seguro.
 
@@ -278,20 +278,14 @@ git commit -m "feat(multitenant): migración 1A idempotente (groups + membership
 
 ---
 
-## Task 2: Schema Drizzle — groups, memberships, group_id
+## Task 2: Schema Drizzle — SOLO tablas nuevas `groups` y `memberships`
+
+> **Ventana-cero (ver Decisión #3):** en 1A NO se declara `groupId` en el schema Drizzle de `players`/`matches`/`rewards`/`tournaments`. Solo se añaden las tablas NUEVAS `groups` y `memberships` (que ningún código de 1A consulta aún) y sus tipos. La columna física `group_id` la crea la migración (Task 1); su declaración en el schema Drizzle es trabajo del paso 1B.
 
 **Files:**
 - Modify: `src/lib/db/schema.ts`
 
-- [ ] **Step 1: Importar la constante del grupo ancla**
-
-Añadir bajo los imports existentes (tras la línea `import { sql } from 'drizzle-orm';`):
-
-```ts
-import { LOMEROS_GROUP_ID } from '@/lib/groups/constants';
-```
-
-- [ ] **Step 2: Declarar la tabla `groups` (antes de `players`)**
+- [ ] **Step 1: Declarar la tabla `groups` (antes de `players`)**
 
 Insertar justo antes del bloque `// ─── PLAYERS ───`:
 
@@ -305,16 +299,7 @@ export const groups = sqliteTable('groups', {
 });
 ```
 
-- [ ] **Step 3: Añadir `groupId` a `players`**
-
-En `export const players = sqliteTable('players', {`, añadir como primer campo tras `id`:
-
-```ts
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
-```
-
-- [ ] **Step 4: Declarar la tabla `memberships` (tras `users`)**
+- [ ] **Step 2: Declarar la tabla `memberships` (tras `users`)**
 
 Insertar justo después del bloque `export const users = sqliteTable('users', {...});`:
 
@@ -332,16 +317,7 @@ export const memberships = sqliteTable('memberships', {
 ]));
 ```
 
-- [ ] **Step 5: Añadir `groupId` a `matches`, `rewards` y `tournaments`**
-
-En cada una de esas tres tablas, añadir el mismo campo como primer campo tras `id`:
-
-```ts
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
-```
-
-- [ ] **Step 6: Añadir los tipos al final (junto al resto de `export type`)**
+- [ ] **Step 3: Añadir los tipos al final (junto al resto de `export type`)**
 
 ```ts
 export type Group = typeof groups.$inferSelect;
@@ -350,19 +326,21 @@ export type Membership = typeof memberships.$inferSelect;
 export type NewMembership = typeof memberships.$inferInsert;
 ```
 
-- [ ] **Step 7: Verificar que TODO compila y la suite unit sigue verde**
+NO tocar `players`/`matches`/`rewards`/`tournaments` ni añadir el import de `LOMEROS_GROUP_ID` (no se usa en el schema en 1A).
+
+- [ ] **Step 4: Verificar que TODO compila y la suite unit sigue verde**
 
 Run: `npx tsc --noEmit`
-Expected: sin errores. (Confirma que los call-sites de insert en `players`/`matches`/`rewards`/`tournaments` siguen compilando gracias a `.default()`.)
+Expected: sin errores. (Los call-sites de insert no cambian porque el schema de las tablas raíz no cambia.)
 
 Run: `npx vitest run`
 Expected: toda la suite unit en verde (incluido `multitenant.test.ts`).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/lib/db/schema.ts
-git commit -m "feat(multitenant): schema Drizzle de groups, memberships y group_id en tablas raíz"
+git commit -m "feat(multitenant): schema Drizzle de las tablas groups y memberships"
 ```
 
 ---
@@ -493,9 +471,9 @@ La migración en prod NO es automática: se dispara con un `curl` (mismo patrón
 
 ## Self-review (cobertura del spec)
 
-- **Modelo de datos (spec §2):** `groups`, `memberships(userId,groupId,role,playerId)` con único `(userId,groupId)`, `group_id` en raíz tenant (players/matches/rewards/tournaments), hijas heredan vía FK (no se tocan) → Tasks 1-2. ✔
+- **Modelo de datos (spec §2):** `groups`, `memberships(userId,groupId,role,playerId)` con único `(userId,groupId)` → schema en Task 2; columna física `group_id` en raíz tenant (players/matches/rewards/tournaments) → migración Task 1 (su declaración en el schema Drizzle se difiere a 1B). Hijas heredan vía FK (no se tocan). ✔
 - **Principio "no romper Lomeros" (spec §0):** aditivo, DEFAULT backfilla, idempotente, e2e existente verde, reporte de verificación → Tasks 1,4,5. ✔
-- **Red de seguridad default=Lomeros (spec §0/§8):** DEFAULT de columna + `.default()` en schema → Task 2; nota de retirada en 1B. ✔
+- **Red de seguridad default=Lomeros (spec §0/§8):** DEFAULT de la columna física (vía migración, Task 1) cubre los inserts en SQL crudo durante 1B. El `.default()` en el schema Drizzle se difiere a 1B (junto con la declaración de `groupId`). ✔
 - **Patrón de migración del repo (spec §8):** ruta `/api/migrate-*` idempotente + integración en e2e → Tasks 3-4. ✔
 - **`users` intacto hasta 1C (spec §0/§5):** no se borra `role`/`player_id` → confirmado en migración. ✔
 - **Súper-admin (spec §6):** fuera de 1A (es env + resolver, paso 1B). No requiere cambios de datos. ✔

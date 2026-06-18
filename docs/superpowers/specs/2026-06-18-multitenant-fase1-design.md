@@ -231,17 +231,27 @@ Nueva ruta idempotente **`/api/migrate-multitenant`** (protegida por secreto/adm
    en env lo resuelve.
 2. Crea `memberships`; **backfill desde `users`:** cada user → `membership(userId, lomerosId,
    role=users.role, playerId=users.playerId)`.
-3. Añade `groupId` a las raíz tenant (`players`, `matches`, `rewards`, `tournaments`) **nullable →
-   backfill = lomerosId → NOT NULL**. SQLite/Turso no hace ALTER a NOT NULL directo: se usa
-   `.notNull()` en el schema Drizzle + **recreación de tabla** donde haga falta (patrón que
-   `scripts/migrate.mjs` ya aplica para el `winner_team` nullable).
+3. Añade `group_id` a las raíz tenant (`players`, `matches`, `rewards`, `tournaments`) con
+   `ALTER TABLE ADD COLUMN group_id TEXT NOT NULL DEFAULT 'lomeros'`. SQLite permite NOT NULL con
+   DEFAULT no nulo → **sin recrear tablas**; el DEFAULT backfilla las filas existentes en el acto y
+   queda como red de seguridad para inserts en SQL crudo durante 1B.
 4. **No borra** `users.role`/`users.playerId` (eso es el contract del paso 1C).
 
-Cada paso comprueba si ya existe (idempotente). Se actualiza `src/lib/db/schema.ts` y se replica
-la migración en `scripts/migrate.mjs` (DB local) y en el setup SQLite de e2e.
+Cada paso comprueba si ya existe (idempotente). La lógica vive en `src/lib/db/migrations/multitenant.ts`
+(consumida por la ruta `/api/migrate-multitenant`, por el setup de e2e y por un test de integración).
 
-**Verificación post-migración (prod):** script/consulta que confirme que toda fila tenant tiene
-`groupId`=Lomeros y que los conteos por tabla cuadran con antes de migrar.
+**Deploy ventana-cero (no romper Lomeros):** Drizzle inyecta defaults en cada INSERT y enumera
+columnas en cada SELECT, así que declarar `groupId` en el schema Drizzle de las tablas raíz haría
+que, entre el deploy y el `curl` de migración, las lecturas del núcleo hicieran `SELECT group_id`
+sobre una columna inexistente → 500. Por eso en 1A el schema Drizzle **solo** declara las tablas
+nuevas `groups`/`memberships`; la columna física `group_id` la crea la migración, y su declaración
+en el schema Drizzle (con su FK/uso en queries) se difiere al paso **1B**, cuando la columna ya
+existe en prod. Resultado: el deploy de 1A no toca el path de lectura/escritura existente.
+
+**Verificación post-migración (prod):** la función de migración devuelve un reporte
+(`groupsTotal`, `usersTotal`, `membershipsTotal`, y por tabla `total`/`withGroup`) que sirve de
+check de integridad: `membershipsTotal === usersTotal`, `groupsTotal === 1`, y `withGroup === total`
+en cada tabla.
 
 ---
 
