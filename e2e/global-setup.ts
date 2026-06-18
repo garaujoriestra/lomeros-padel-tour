@@ -115,6 +115,20 @@ export default async function globalSetup() {
     args: ['gt-pl1', 'grupo-test', 'Jugador GT'],
   });
 
+  // 3 jugadores más del grupo de test + un partido programado suyo, para no-fuga de partidos.
+  for (let i = 2; i <= 4; i++) {
+    await db.execute({
+      sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
+      args: [`gt-pl${i}`, 'grupo-test', `Jugador GT ${i}`],
+    });
+  }
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO matches
+      (id, group_id, date, team1_player1_id, team1_player2_id, team2_player1_id, team2_player2_id, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: ['gt-match1', 'grupo-test', '2026-01-01', 'gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4', 'scheduled'],
+  });
+
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, 'admin', TEST_ENV.AUTH_SECRET)));
