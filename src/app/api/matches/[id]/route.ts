@@ -1,65 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { matches, matchSets } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import type { NewMatch } from '@/lib/db/schema';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import {
+  getMatchInGroup,
+  getMatchSetsForMatch,
+  updateMatchInGroup,
+  deleteMatchInGroup,
+  insertMatchSets,
+} from '@/lib/matches/queries';
 import { notifyMatchResult } from '@/lib/push/match-events';
 import { settleMatchBets, refundOpenBets, reverseSettlement } from '@/lib/betting/settle';
 import { notifyBetSettlements } from '@/lib/push/bet-events';
 
-// GET /api/matches/[id]
+// GET /api/matches/[id] (público)
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    const groupId = await getDefaultGroupId();
+    const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
-
-    const sets = await db
-      .select()
-      .from(matchSets)
-      .where(eq(matchSets.matchId, id))
-      .orderBy(matchSets.setNumber);
-
+    const sets = await getMatchSetsForMatch(id);
     return NextResponse.json({ ...match, sets });
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
 
-// DELETE /api/matches/[id]
+// DELETE /api/matches/[id] (admin)
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    const match = await getMatchInGroup(groupId, id);
     if (match) {
       if (match.status === 'completed') {
-        // Deshacer la liquidación: retira lo pagado a ganadores/devueltos y
-        // reabre todas las apuestas. Los perdedores (con su stake aún
-        // comprometido) recuperan su apuesta en el refundOpenBets siguiente.
         await reverseSettlement(id);
       }
-      // Devolver TODAS las apuestas reabiertas (incluidas las que perdieron).
       const refunded = await refundOpenBets(id);
       await notifyBetSettlements(id, refunded);
     }
-    // Los sets se borran en cascada (ON DELETE CASCADE)
-    await db.delete(matches).where(eq(matches.id, id));
+    // Los sets se borran en cascada (ON DELETE CASCADE). Scopeado por grupo.
+    await deleteMatchInGroup(groupId, id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
 
-// PUT /api/matches/[id] — add result to a scheduled match
+// PUT /api/matches/[id] — add result to a scheduled match (admin)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await request.json();
     const {
       sets,
@@ -78,13 +77,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
     }
 
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     if (match.status === 'completed') {
       return NextResponse.json({ error: 'Este partido ya tiene resultado' }, { status: 400 });
     }
 
-    // Optional pairing reassignment: the 4 IDs must match the originally scheduled players.
+    // Reajuste opcional de parejas: los 4 ids deben coincidir con los del partido programado (in-group).
     const newPairingIds = [team1Player1Id, team1Player2Id, team2Player1Id, team2Player2Id];
     const pairingProvided = newPairingIds.every((v) => typeof v === 'string' && v.length > 0);
     if (pairingProvided) {
@@ -97,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         match.team2Player1Id,
         match.team2Player2Id,
       ]);
-      if (!newPairingIds.every((id) => originalIds.has(id as string))) {
+      if (!newPairingIds.every((pid) => originalIds.has(pid as string))) {
         return NextResponse.json(
           { error: 'Los jugadores deben coincidir con los del partido programado' },
           { status: 400 },
@@ -105,7 +104,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    // ¿Cambió la composición de los equipos respecto a lo programado?
     const sameTeam = (a: [string, string], b: [string, string]) =>
       [...a].sort().join() === [...b].sort().join();
     const pairingChanged = pairingProvided && !(
@@ -113,7 +111,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       sameTeam([match.team2Player1Id, match.team2Player2Id], [team2Player1Id, team2Player2Id])
     );
 
-    // Calculate winner
     let team1SetsWon = 0;
     let team2SetsWon = 0;
     for (const set of sets) {
@@ -122,18 +119,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     const winnerTeam: 1 | 2 = team1SetsWon > team2SetsWon ? 1 : 2;
 
-    // Save sets
-    for (const set of sets) {
-      await db.insert(matchSets).values({
-        matchId: id,
-        setNumber: set.setNumber,
-        team1Games: set.team1Games,
-        team2Games: set.team2Games,
-      });
-    }
+    await insertMatchSets(id, sets);
 
-    // Update match status + winner
-    const updateFields: Record<string, unknown> = { winnerTeam, status: 'completed' };
+    const updateFields: Partial<NewMatch> = { winnerTeam, status: 'completed' };
     if (pairingProvided) {
       updateFields.team1Player1Id = team1Player1Id;
       updateFields.team1Player2Id = team1Player2Id;
@@ -146,19 +134,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (team2Player2Side !== undefined) updateFields.team2Player2Side = coerceSide(team2Player2Side);
     if (typeof photoUrl === 'string' && photoUrl.length > 0) updateFields.photoUrl = photoUrl;
 
-    const [updated] = await db
-      .update(matches)
-      .set(updateFields)
-      .where(eq(matches.id, id))
-      .returning();
+    const updated = await updateMatchInGroup(groupId, id, updateFields);
+    if (!updated) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
 
-    // Trigger Elo calculation
     const ratingResult = await processMatchRatings({ ...updated, winnerTeam, sets });
 
-    // Push best-effort (no debe romper el guardado del resultado)
     await notifyMatchResult({ ...updated, winnerTeam }, ratingResult);
 
-    // «La Timba»: liquidar apuestas (o devolverlas si el cartel cambió)
     const betOutcomes = pairingChanged
       ? await refundOpenBets(id)
       : await settleMatchBets(id, winnerTeam, sets);

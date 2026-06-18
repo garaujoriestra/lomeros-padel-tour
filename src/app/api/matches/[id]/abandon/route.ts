@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { matches } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getMatchInGroup, updateMatchInGroup } from '@/lib/matches/queries';
 import { refundOpenBets } from '@/lib/betting/settle';
 import { notifyBetSettlements } from '@/lib/push/bet-events';
 
-// POST /api/matches/[id]/abandon
-// Marks a scheduled match as not finished due to injury. The match keeps its
-// players and date but counts for nothing — no ELO, no V/D, no achievements.
-// Body: { injuredPlayerId: string } — must be one of the four match players.
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+// POST /api/matches/[id]/abandon (admin)
+// Marca un partido programado como no disputado por lesión. Body: { injuredPlayerId }.
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await req.json();
     const { injuredPlayerId } = body as { injuredPlayerId?: string };
 
@@ -25,9 +20,8 @@ export async function POST(
       return NextResponse.json({ error: 'Falta injuredPlayerId' }, { status: 400 });
     }
 
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
-
     if (match.status === 'completed') {
       return NextResponse.json({ error: 'El partido ya está completado' }, { status: 400 });
     }
@@ -45,11 +39,11 @@ export async function POST(
       );
     }
 
-    const [updated] = await db
-      .update(matches)
-      .set({ status: 'injury_aborted', injuredPlayerId, winnerTeam: null })
-      .where(eq(matches.id, id))
-      .returning();
+    const updated = await updateMatchInGroup(groupId, id, {
+      status: 'injury_aborted',
+      injuredPlayerId,
+      winnerTeam: null,
+    });
 
     // «La Timba»: partido anulado → devolución íntegra
     const refunded = await refundOpenBets(id);

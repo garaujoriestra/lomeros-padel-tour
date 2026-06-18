@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { matches, matchSets } from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listMatchesByDate, createMatchInGroup, insertMatchSets } from '@/lib/matches/queries';
+import { getPlayersInGroup } from '@/lib/players/queries';
 import { notifyMatchResult } from '@/lib/push/match-events';
 import { notifyBettingOpen } from '@/lib/push/bet-events';
 
-// GET /api/matches
+// GET /api/matches (público; grupo por defecto)
 export async function GET() {
   try {
-    const all = await db
-      .select()
-      .from(matches)
-      .orderBy(desc(matches.date));
+    const groupId = await getDefaultGroupId();
+    const all = await listMatchesByDate(groupId);
     return NextResponse.json(all);
   } catch {
     return NextResponse.json({ error: 'Error al obtener partidos' }, { status: 500 });
   }
 }
 
-// POST /api/matches
-// Supports two modes:
+// POST /api/matches (admin)
 //   - With sets  → status='completed', calculates winner, triggers Elo
 //   - Without sets → status='scheduled', winnerTeam=null, no Elo yet
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await request.json();
     const {
       date,
@@ -48,19 +46,19 @@ export async function POST(request: NextRequest) {
     // 4 distinct players always required
     const playerIds = [team1Player1Id, team1Player2Id, team2Player1Id, team2Player2Id];
     if (playerIds.some((id) => !id) || new Set(playerIds).size !== 4) {
-      return NextResponse.json(
-        { error: 'Se necesitan 4 jugadores distintos' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Se necesitan 4 jugadores distintos' }, { status: 400 });
+    }
+
+    // Los 4 jugadores deben pertenecer al grupo (no se cuela un jugador de otro grupo).
+    const inGroup = await getPlayersInGroup(groupId, playerIds);
+    if (inGroup.length !== 4) {
+      return NextResponse.json({ error: 'Jugadores no válidos para este grupo' }, { status: 400 });
     }
 
     const isScheduled = !sets || sets.length === 0;
 
     if (!isScheduled && (sets.length < 2 || sets.length > 3)) {
-      return NextResponse.json(
-        { error: 'El partido necesita 2 o 3 sets' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
     }
 
     let winnerTeam: 1 | 2 | null = null;
@@ -74,49 +72,34 @@ export async function POST(request: NextRequest) {
       winnerTeam = team1SetsWon > team2SetsWon ? 1 : 2;
     }
 
-    // Save match
-    const [match] = await db
-      .insert(matches)
-      .values({
-        date,
-        time: typeof time === 'string' && /^\d{2}:\d{2}$/.test(time) ? time : null,
-        location: location?.trim() || null,
-        team1Player1Id,
-        team1Player2Id,
-        team2Player1Id,
-        team2Player2Id,
-        team1Player1Side: coerceSide(team1Player1Side),
-        team1Player2Side: coerceSide(team1Player2Side),
-        team2Player1Side: coerceSide(team2Player1Side),
-        team2Player2Side: coerceSide(team2Player2Side),
-        winnerTeam,
-        status: isScheduled ? 'scheduled' : 'completed',
-      })
-      .returning();
+    const match = await createMatchInGroup(groupId, {
+      date,
+      time: typeof time === 'string' && /^\d{2}:\d{2}$/.test(time) ? time : null,
+      location: location?.trim() || null,
+      team1Player1Id,
+      team1Player2Id,
+      team2Player1Id,
+      team2Player2Id,
+      team1Player1Side: coerceSide(team1Player1Side),
+      team1Player2Side: coerceSide(team1Player2Side),
+      team2Player1Side: coerceSide(team2Player1Side),
+      team2Player2Side: coerceSide(team2Player2Side),
+      winnerTeam,
+      status: isScheduled ? 'scheduled' : 'completed',
+    });
 
     if (isScheduled) {
-      // Apuestas abiertas: avisa a todos los suscritos de La Timba.
-      // Best-effort: no debe romper el guardado del partido.
+      // Apuestas abiertas: avisa a todos los suscritos de La Timba. Best-effort.
       await notifyBettingOpen(match);
     } else {
-      // Save sets
-      for (const set of sets) {
-        await db.insert(matchSets).values({
-          matchId: match.id,
-          setNumber: set.setNumber,
-          team1Games: set.team1Games,
-          team2Games: set.team2Games,
-        });
-      }
+      await insertMatchSets(match.id, sets);
 
-      // Update ratings
       const ratingResult = await processMatchRatings({
         ...match,
         winnerTeam: winnerTeam as 1 | 2,
         sets,
       });
 
-      // Push best-effort (no debe romper el guardado del partido)
       await notifyMatchResult({ ...match, winnerTeam: winnerTeam as 1 | 2 }, ratingResult);
     }
 
