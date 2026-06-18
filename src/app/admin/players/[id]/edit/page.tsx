@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
-import { players, users } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getPlayerInGroup } from '@/lib/players/queries';
 import { notFound } from 'next/navigation';
 import { PlayerForm } from '@/components/admin/player-form';
 
@@ -8,7 +10,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function EditPlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [player] = await db.select().from(players).where(eq(players.id, id));
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const player = await getPlayerInGroup(groupId, id);
   if (!player) notFound();
 
   const [linkedUser] = await db.select().from(users).where(eq(users.playerId, id));

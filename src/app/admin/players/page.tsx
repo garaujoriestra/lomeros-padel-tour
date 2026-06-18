@@ -1,6 +1,5 @@
-import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listPlayersByElo } from '@/lib/players/queries';
 import Link from 'next/link';
 import { Pencil, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,8 @@ import { DeletePlayerButton } from './delete-player-button';
 export const dynamic = 'force-dynamic';
 
 export default async function PlayersAdminPage() {
-  const allPlayers = await db.select().from(players).orderBy(desc(players.eloRating));
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const allPlayers = await listPlayersByElo(groupId);
 
   return (
     <div className="space-y-6">

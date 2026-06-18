@@ -1,28 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
 import { upsertPlayerUser } from '@/lib/auth/users';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listPlayersByElo, createPlayerInGroup } from '@/lib/players/queries';
 
-// GET /api/players - listar todos los jugadores
+// GET /api/players - listar los jugadores del grupo por defecto (público)
 export async function GET() {
   try {
-    const all = await db
-      .select()
-      .from(players)
-      .orderBy(players.eloRating);
-    return NextResponse.json(all.reverse());
+    const groupId = await getDefaultGroupId();
+    const all = await listPlayersByElo(groupId);
+    return NextResponse.json(all);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error al obtener jugadores' }, { status: 500 });
   }
 }
 
-// POST /api/players - crear jugador
+// POST /api/players - crear jugador (admin)
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await request.json();
     const { name, nickname, avatarUrl, isLeftHanded, email, juegaPadel } = body;
 
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
     }
 
-    const [player] = await db.insert(players).values({
+    const player = await createPlayerInGroup(groupId, {
       name: name.trim(),
       nickname: nickname?.trim() || null,
       avatarUrl: avatarUrl?.trim() || null,
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
       juegaPadel: juegaPadel === false ? false : true,
       // La Timba v2: se arranca a 0; las fichas solo entran pagando el buy-in.
       tokenBalance: 0,
-    }).returning();
+    });
 
     const result = await upsertPlayerUser(player.id, email);
     if (!result.ok) {

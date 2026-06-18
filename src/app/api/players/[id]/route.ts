@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { upsertPlayerUser } from '@/lib/auth/users';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getPlayerInGroup, updatePlayerInGroup, deletePlayerInGroup } from '@/lib/players/queries';
 
-// GET /api/players/[id]
+// GET /api/players/[id] (público; grupo por defecto)
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const [player] = await db.select().from(players).where(eq(players.id, id));
+    const groupId = await getDefaultGroupId();
+    const player = await getPlayerInGroup(groupId, id);
     if (!player) return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 });
     return NextResponse.json(player);
   } catch {
@@ -17,12 +17,13 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   }
 }
 
-// PUT /api/players/[id]
+// PUT /api/players/[id] (admin)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await request.json();
     const { name, nickname, avatarUrl, isLeftHanded, juegaPadel, email } = body;
 
@@ -30,19 +31,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
     }
 
-    const [updated] = await db
-      .update(players)
-      .set({
-        name: name.trim(),
-        nickname: nickname?.trim() || null,
-        avatarUrl: avatarUrl?.trim() || null,
-        isLeftHanded: !!isLeftHanded,
-        // Solo se toca si viene en el body; una edición parcial no debe
-        // resetear a un apostante (juegaPadel=false) de vuelta a jugador.
-        ...(typeof juegaPadel === 'boolean' ? { juegaPadel } : {}),
-      })
-      .where(eq(players.id, id))
-      .returning();
+    const updated = await updatePlayerInGroup(groupId, id, {
+      name: name.trim(),
+      nickname: nickname?.trim() || null,
+      avatarUrl: avatarUrl?.trim() || null,
+      isLeftHanded: !!isLeftHanded,
+      // Solo se toca si viene en el body; una edición parcial no debe
+      // resetear a un apostante (juegaPadel=false) de vuelta a jugador.
+      ...(typeof juegaPadel === 'boolean' ? { juegaPadel } : {}),
+    });
 
     if (!updated) return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 });
 
@@ -57,13 +54,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// DELETE /api/players/[id]
+// DELETE /api/players/[id] (admin)
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   try {
     const { id } = await params;
-    await db.delete(players).where(eq(players.id, id));
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    await deletePlayerInGroup(groupId, id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
