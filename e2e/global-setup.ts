@@ -20,7 +20,7 @@ async function sessionStorageState(userId: string, role: 'admin' | 'player', sec
 
 export default async function globalSetup() {
   // 1) Migraciones de esquema (el dev server ya está arriba; estos endpoints no requieren auth).
-  for (const ep of ['init-db', 'migrate-auth', 'migrate-tournaments']) {
+  for (const ep of ['init-db', 'migrate-auth', 'migrate-tournaments', 'migrate-multitenant']) {
     const res = await fetch(`${BASE_URL}/api/${ep}`, { method: 'POST' });
     if (!res.ok) throw new Error(`Migración /api/${ep} falló: ${res.status}`);
   }
