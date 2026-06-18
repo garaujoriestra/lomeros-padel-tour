@@ -79,6 +79,26 @@ export default async function globalSetup() {
     trigger_match_id TEXT
   )`);
 
+  // La tabla `bets` la crean las migraciones de La Timba (no /api/init-db ni las del
+  // global-setup), pero el detalle de un partido PROGRAMADO la consulta vía
+  // `currentMatchPools` (apuestas abiertas). Sin ella, la página revienta con
+  // "no such table: bets". La creamos aquí (idempotente, `odds` ya nullable como en prod).
+  await db.execute(`CREATE TABLE IF NOT EXISTS bets (
+    id TEXT PRIMARY KEY,
+    match_id TEXT NOT NULL,
+    player_id TEXT NOT NULL,
+    market TEXT NOT NULL,
+    predicted_team INTEGER NOT NULL,
+    predicted_score TEXT,
+    amount INTEGER NOT NULL,
+    odds REAL,
+    status TEXT NOT NULL DEFAULT 'open',
+    payout INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    settled_at TEXT,
+    UNIQUE (match_id, player_id, market)
+  )`);
+
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
   }

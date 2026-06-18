@@ -75,6 +75,39 @@ export function calculateDoublesElo(
   return results;
 }
 
+export interface EloProjection {
+  /** Cambio de Elo si el equipo del jugador gana (≥ 0). */
+  ifWin: number;
+  /** Cambio de Elo si el equipo del jugador pierde (≤ 0). */
+  ifLose: number;
+}
+
+/**
+ * Proyecta, para un partido aún no jugado, cuánto Elo ganaría/perdería cada jugador
+ * según el resultado. Calcula ambos escenarios con `calculateDoublesElo` y, para cada
+ * jugador, toma como `ifWin` el delta de "su equipo gana" y como `ifLose` el de "su
+ * equipo pierde". No persiste nada.
+ * @returns mapa playerId → { ifWin, ifLose }
+ */
+export function projectDoublesElo(
+  team1: [PlayerForElo, PlayerForElo],
+  team2: [PlayerForElo, PlayerForElo],
+): Record<string, EloProjection> {
+  const ifTeam1Wins = new Map(calculateDoublesElo(team1, team2, 1).map((r) => [r.playerId, r.eloChange]));
+  const ifTeam2Wins = new Map(calculateDoublesElo(team1, team2, 2).map((r) => [r.playerId, r.eloChange]));
+  const team1Ids = new Set([team1[0].id, team1[1].id]);
+
+  const projection: Record<string, EloProjection> = {};
+  for (const player of [...team1, ...team2]) {
+    const onTeam1 = team1Ids.has(player.id);
+    // Para el equipo 1: gana en el escenario "gana equipo 1"; para el equipo 2, al revés.
+    projection[player.id] = onTeam1
+      ? { ifWin: ifTeam1Wins.get(player.id)!, ifLose: ifTeam2Wins.get(player.id)! }
+      : { ifWin: ifTeam2Wins.get(player.id)!, ifLose: ifTeam1Wins.get(player.id)! };
+  }
+  return projection;
+}
+
 /**
  * Calcula el Elo de una pareja en base a sus propias estadísticas de pareja.
  */

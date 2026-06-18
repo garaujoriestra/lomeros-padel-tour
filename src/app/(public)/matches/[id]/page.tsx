@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, MapPin, Users, Bandage } from 'lucide-react';
-import { expectedScore } from '@/lib/rating/elo';
+import { expectedScore, projectDoublesElo, type EloProjection } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
 import { getSession } from '@/lib/auth/session';
 import { currentMatchPools } from '@/lib/betting/match-odds';
@@ -89,11 +89,13 @@ function TeamBlock({
   playerMap,
   sides,
   align,
+  projection,
 }: {
   players: string[];
   playerMap: Record<string, { id: string; name: string; nickname: string | null; avatarUrl: string | null; eloRating: number }>;
   sides: Record<string, string | null>;
   align: 'left' | 'right';
+  projection?: Record<string, EloProjection> | null;
 }) {
   return (
     <div style={{ textAlign: align, minWidth: 0 }}>
@@ -101,6 +103,7 @@ function TeamBlock({
         const p = playerMap[pid];
         if (!p) return null;
         const side = sides[pid];
+        const proj = projection?.[pid];
         return (
           <Link
             key={pid}
@@ -121,6 +124,23 @@ function TeamBlock({
               <div className="small num" style={{ opacity: 0.6, fontSize: 11 }}>
                 {Math.round(p.eloRating)} Elo{side === 'drive' ? ' · Drive' : side === 'reves' ? ' · Revés' : ''}
               </div>
+              {proj && (
+                <div
+                  data-testid="elo-en-juego"
+                  className="small num"
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    marginTop: 1,
+                    justifyContent: align === 'right' ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <span style={{ color: 'var(--win)' }}>▲ +{proj.ifWin}</span>
+                  <span style={{ color: 'var(--loss)' }}>▼ {proj.ifLose}</span>
+                </div>
+              )}
             </div>
             {align === 'right' && <LptAvatar player={p} size={30} />}
           </Link>
@@ -166,6 +186,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const isInjury = match.status === 'injury_aborted';
   const prediction = isUp && fourPlayers.length === 4
     ? Math.round(expectedScore((t1p1!.eloRating + t1p2!.eloRating) / 2, (t2p1!.eloRating + t2p2!.eloRating) / 2) * 100)
+    : null;
+  // Elo en juego: cuánto ganaría/perdería cada jugador según el resultado (solo programados).
+  const projection = isUp && fourPlayers.length === 4
+    ? projectDoublesElo([t1p1!, t1p2!], [t2p1!, t2p2!])
     : null;
 
   const sides: Record<string, string | null> = {
@@ -257,14 +281,24 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {isUp ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 14, alignItems: 'center' }}>
-            <TeamBlock players={[match.team1Player1Id, match.team1Player2Id]} playerMap={playerMap} sides={sides} align="left" />
-            <div style={{ textAlign: 'center' }}>
-              <div className="display" style={{ fontSize: 36, color: 'var(--acc)' }}>VS</div>
-              <div className="small" style={{ opacity: 0.6, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 10 }}>Pendiente</div>
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 14, alignItems: 'center' }}>
+              <TeamBlock players={[match.team1Player1Id, match.team1Player2Id]} playerMap={playerMap} sides={sides} align="left" projection={projection} />
+              <div style={{ textAlign: 'center' }}>
+                <div className="display" style={{ fontSize: 36, color: 'var(--acc)' }}>VS</div>
+                <div className="small" style={{ opacity: 0.6, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 10 }}>Pendiente</div>
+              </div>
+              <TeamBlock players={[match.team2Player1Id, match.team2Player2Id]} playerMap={playerMap} sides={sides} align="right" projection={projection} />
             </div>
-            <TeamBlock players={[match.team2Player1Id, match.team2Player2Id]} playerMap={playerMap} sides={sides} align="right" />
-          </div>
+            {projection && (
+              <div className="small" style={{ textAlign: 'center', opacity: 0.55, fontSize: 10.5, marginTop: 10, fontWeight: 600 }}>
+                <span style={{ color: 'var(--win)' }}>▲ si gana</span>
+                {' · '}
+                <span style={{ color: 'var(--loss)' }}>▼ si pierde</span>
+                {' (Elo en juego)'}
+              </div>
+            )}
+          </>
         ) : (
           <ScoreGrid
             team1={[t1p1, t1p2]}

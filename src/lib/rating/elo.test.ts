@@ -3,6 +3,7 @@ import {
   kFactor,
   expectedScore,
   calculateDoublesElo,
+  projectDoublesElo,
   calculatePairElo,
   calculateSynergy,
   calculateAdaptability,
@@ -109,6 +110,72 @@ describe('calculateDoublesElo', () => {
     expect(results[1].playerId).toBe('p2');
     expect(results[2].playerId).toBe('p3');
     expect(results[3].playerId).toBe('p4');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// projectDoublesElo
+// ---------------------------------------------------------------------------
+describe('projectDoublesElo', () => {
+  function player(id: string, eloRating: number, matchesPlayed = 0): PlayerForElo {
+    return { id, eloRating, matchesPlayed };
+  }
+
+  it('devuelve una entrada por cada uno de los 4 jugadores', () => {
+    const proj = projectDoublesElo(
+      [player('a', 1500), player('b', 1500)],
+      [player('c', 1500), player('d', 1500)],
+    );
+    expect(Object.keys(proj).sort()).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('equipos iguales (1500, 0 partidos): cada jugador +20 si gana / −20 si pierde', () => {
+    const proj = projectDoublesElo(
+      [player('a', 1500), player('b', 1500)],
+      [player('c', 1500), player('d', 1500)],
+    );
+    for (const id of ['a', 'b', 'c', 'd']) {
+      expect(proj[id].ifWin).toBe(20);
+      expect(proj[id].ifLose).toBe(-20);
+    }
+  });
+
+  it('ifWin es ≥ 0 y ifLose es ≤ 0 para todos los jugadores', () => {
+    const proj = projectDoublesElo(
+      [player('a', 1700), player('b', 1680)],
+      [player('c', 1400), player('d', 1420)],
+    );
+    for (const id of ['a', 'b', 'c', 'd']) {
+      expect(proj[id].ifWin).toBeGreaterThanOrEqual(0);
+      expect(proj[id].ifLose).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('coincide con calculateDoublesElo: ifWin = delta cuando su equipo gana, ifLose = delta cuando pierde', () => {
+    const team1: [PlayerForElo, PlayerForElo] = [player('a', 1600), player('b', 1550)];
+    const team2: [PlayerForElo, PlayerForElo] = [player('c', 1450), player('d', 1500)];
+    const proj = projectDoublesElo(team1, team2);
+
+    const t1Wins = calculateDoublesElo(team1, team2, 1);
+    const t2Wins = calculateDoublesElo(team1, team2, 2);
+    // Jugador del equipo 1: gana en el escenario "gana equipo 1".
+    expect(proj['a'].ifWin).toBe(t1Wins.find((r) => r.playerId === 'a')!.eloChange);
+    expect(proj['a'].ifLose).toBe(t2Wins.find((r) => r.playerId === 'a')!.eloChange);
+    // Jugador del equipo 2: gana en el escenario "gana equipo 2".
+    expect(proj['c'].ifWin).toBe(t2Wins.find((r) => r.playerId === 'c')!.eloChange);
+    expect(proj['c'].ifLose).toBe(t1Wins.find((r) => r.playerId === 'c')!.eloChange);
+  });
+
+  it('el favorito gana menos al vencer y pierde más al caer que el underdog', () => {
+    // team1 favorito (1700) vs team2 underdog (1400), mismo nº de partidos → mismo K.
+    const proj = projectDoublesElo(
+      [player('fav1', 1700), player('fav2', 1700)],
+      [player('und1', 1400), player('und2', 1400)],
+    );
+    // Favorito gana poco al vencer; underdog gana mucho al vencer.
+    expect(proj['fav1'].ifWin).toBeLessThan(proj['und1'].ifWin);
+    // Favorito pierde mucho al caer (más negativo); underdog pierde poco.
+    expect(proj['fav1'].ifLose).toBeLessThan(proj['und1'].ifLose);
   });
 });
 
