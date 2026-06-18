@@ -104,6 +104,17 @@ export default async function globalSetup() {
     args: ['mb-player', playerUserId, 'lomeros', 'player', 'pl1'],
   });
 
+  // Segundo grupo "Grupo Test" con un jugador propio, para los tests de no-fuga.
+  // Lomeros nunca debe ver a gt-pl1, ni poder tocarlo por id.
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO groups (id, slug, name) VALUES (?, ?, ?)',
+    args: ['grupo-test', 'grupo-test', 'Grupo Test'],
+  });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
+    args: ['gt-pl1', 'grupo-test', 'Jugador GT'],
+  });
+
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, 'admin', TEST_ENV.AUTH_SECRET)));
