@@ -20,10 +20,8 @@ async function sessionStorageState(userId: string, role: 'admin' | 'player', sec
 
 export default async function globalSetup() {
   // 1) Migraciones de esquema (el dev server ya está arriba; estos endpoints no requieren auth).
-  // OJO (para 1B): migrate-multitenant backfilla `memberships` desde `users`, pero aquí corre
-  // ANTES del seed del paso 2, así que los usuarios e2e (admin, e2e-player-user) NO reciben
-  // membership. En 1A da igual (nada lee memberships). En 1B, cuando el resolver de auth lea
-  // memberships, habrá que sembrar la membership de esos usuarios (o reordenar la migración).
+  // (Las memberships de estos usuarios e2e se siembran en el paso 2, porque migrate-multitenant
+  // corre aquí antes de que existan los usuarios.)
   for (const ep of ['init-db', 'migrate-auth', 'migrate-tournaments', 'migrate-multitenant']) {
     const res = await fetch(`${BASE_URL}/api/${ep}`, { method: 'POST' });
     if (!res.ok) throw new Error(`Migración /api/${ep} falló: ${res.status}`);
@@ -94,6 +92,17 @@ export default async function globalSetup() {
   const adminRow = await db.execute("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
   const adminId = adminRow.rows[0]?.id as string | undefined;
   if (!adminId) throw new Error('No hay usuario admin (¿ADMIN_EMAIL no se aplicó en migrate-auth?)');
+
+  // memberships en Lomeros para los usuarios e2e. migrate-multitenant corrió en el paso 1
+  // (antes de sembrar estos usuarios), así que su backfill no los cubrió: los añadimos aquí.
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-admin', adminId, 'lomeros', 'admin', null],
+  });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-player', playerUserId, 'lomeros', 'player', 'pl1'],
+  });
 
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
