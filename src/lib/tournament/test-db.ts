@@ -8,8 +8,15 @@ import { TOURNAMENT_DDL } from './schema-ddl';
 // Tabla mínima de players para que seedPlayers() en tests pueda insertar sin error.
 // FK está OFF, así que no hace falta que existan jugadores reales para el resto de tablas.
 const TEST_STUB_DDL = [
+  `CREATE TABLE IF NOT EXISTS groups (
+    id TEXT PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
   `CREATE TABLE IF NOT EXISTS players (
     id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL DEFAULT 'lomeros',
     name TEXT NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS users (
