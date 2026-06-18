@@ -1,8 +1,13 @@
 import { sqliteTable, text, integer, real, unique } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
-import { LOMEROS_GROUP_ID } from '@/lib/groups/constants';
 
 // ─── GROUPS (tenant raíz) ────────────────────────────────────────────────────
+// Fase 1A: solo se crean las tablas `groups` y `memberships`. La columna
+// `group_id` en las tablas raíz tenant (players/matches/rewards/tournaments) se
+// crea por MIGRACIÓN (física) pero NO se declara en este schema Drizzle hasta el
+// paso 1B: añadirla aquí ahora obligaría a Drizzle a hacer SELECT/INSERT de
+// group_id, y entre el deploy y el curl de migración eso tumbaría las lecturas
+// del núcleo (columna inexistente). En 1B la columna ya existe en prod → sin ventana.
 export const groups = sqliteTable('groups', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   slug: text('slug').notNull().unique(),
@@ -13,8 +18,6 @@ export const groups = sqliteTable('groups', {
 // ─── PLAYERS ─────────────────────────────────────────────────────────────────
 export const players = sqliteTable('players', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
   name: text('name').notNull(),
   nickname: text('nickname'),
   avatarUrl: text('avatar_url'),
@@ -52,8 +55,6 @@ export const memberships = sqliteTable('memberships', {
 // ─── MATCHES ─────────────────────────────────────────────────────────────────
 export const matches = sqliteTable('matches', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
   date: text('date').notNull(), // ISO date string YYYY-MM-DD
   time: text('time'), // "HH:MM" hora local (Europe/Madrid), null en partidos antiguos
   location: text('location'),
@@ -179,8 +180,6 @@ export const tokenLedger = sqliteTable('token_ledger', {
 // ─── REWARDS (catálogo de premios) ───────────────────────────────────────────
 export const rewards = sqliteTable('rewards', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
   title: text('title').notNull(),
   description: text('description'),
   cost: integer('cost').notNull(),
@@ -213,8 +212,6 @@ export const penalties = sqliteTable('penalties', {
 // ─── TOURNAMENTS (torneos puntuales, independientes del ranking) ─────────────
 export const tournaments = sqliteTable('tournaments', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  // TEMPORAL Fase 1: default = Lomeros (red de seguridad). Se elimina el .default en 1B/1C.
-  groupId: text('group_id').notNull().default(LOMEROS_GROUP_ID).references(() => groups.id),
   name: text('name').notNull(),
   date: text('date').notNull(), // ISO date YYYY-MM-DD
   location: text('location'),

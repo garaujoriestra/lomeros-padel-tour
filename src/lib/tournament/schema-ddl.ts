@@ -4,7 +4,6 @@
 export const TOURNAMENT_DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS tournaments (
     id TEXT PRIMARY KEY,
-    group_id TEXT NOT NULL DEFAULT 'lomeros',
     name TEXT NOT NULL,
     date TEXT NOT NULL,
     location TEXT,
