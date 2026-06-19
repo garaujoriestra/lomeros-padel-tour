@@ -56,3 +56,11 @@ export async function getPendingPenalty(playerId: string): Promise<Penalty | und
 export async function fulfillPenalty(penaltyId: string, at: string): Promise<void> {
   await db.update(penalties).set({ status: 'fulfilled', fulfilledAt: at }).where(eq(penalties.id, penaltyId));
 }
+
+// Penalizaciones pendientes de los jugadores del grupo (marcadores de bancarrota de La Timba).
+export async function listPendingPenaltiesInGroup(groupId: string): Promise<{ playerId: string }[]> {
+  return db.select({ playerId: penalties.playerId })
+    .from(penalties)
+    .innerJoin(players, eq(players.id, penalties.playerId))
+    .where(and(eq(players.groupId, groupId), eq(penalties.status, 'pending')));
+}

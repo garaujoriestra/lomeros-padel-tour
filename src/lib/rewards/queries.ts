@@ -14,6 +14,13 @@ export async function getRewardInGroup(groupId: string, id: string): Promise<Rew
   return r;
 }
 
+// Premios ACTIVOS del grupo, por coste (catálogo de canje del jugador).
+export async function listActiveRewardsInGroup(groupId: string): Promise<Reward[]> {
+  return db.select().from(rewards)
+    .where(and(eq(rewards.groupId, groupId), eq(rewards.active, true)))
+    .orderBy(rewards.cost);
+}
+
 export async function createRewardInGroup(
   groupId: string,
   values: { title: string; description: string | null; cost: number },
