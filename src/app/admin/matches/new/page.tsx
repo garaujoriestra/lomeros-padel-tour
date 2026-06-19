@@ -1,12 +1,12 @@
-import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listPadelPlayers } from '@/lib/players/queries';
 import { MatchForm } from '@/components/admin/match-form';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewMatchPage() {
-  const allPlayers = await db.select().from(players).where(eq(players.juegaPadel, true)).orderBy(players.name);
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const allPlayers = await listPadelPlayers(groupId);
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { db } from '@/lib/db';
-import { users, players, pushSubscriptions } from '@/lib/db/schema';
+import { users, pushSubscriptions } from '@/lib/db/schema';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { Bell, BellOff } from 'lucide-react';
 import { BroadcastForm } from '@/components/admin/broadcast-form';
 
@@ -12,8 +14,9 @@ export default async function AdminNotificationsPage() {
   if (!session) redirect('/login?from=/admin/notifications');
   if (session.role !== 'admin') redirect('/');
 
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
   const allUsers = await db.select().from(users);
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const subs = await db.select().from(pushSubscriptions);
 
   const playerName = new Map(allPlayers.map((p) => [p.id, p.name]));

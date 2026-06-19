@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { bets, tokenLedger, rewards, redemptions, penalties } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listActiveRewardsInGroup } from '@/lib/rewards/queries';
 import { RedeemButton } from '@/components/betting/redeem-button';
 import { potEuros } from '@/lib/betting/pot';
 import { BETTING } from '@/lib/betting/config';
@@ -35,6 +37,7 @@ export default async function TokensPage() {
   const player = session.player;
   if (!player) redirect('/me');
 
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
   const [openBets, ledger, catalog, myRedemptions, myPenalties, pot] = await Promise.all([
     db
       .select()
@@ -47,7 +50,7 @@ export default async function TokensPage() {
       .where(eq(tokenLedger.playerId, player.id))
       .orderBy(desc(tokenLedger.createdAt))
       .limit(50),
-    db.select().from(rewards).where(eq(rewards.active, true)).orderBy(rewards.cost),
+    listActiveRewardsInGroup(groupId),
     db
       .select({
         id: redemptions.id,

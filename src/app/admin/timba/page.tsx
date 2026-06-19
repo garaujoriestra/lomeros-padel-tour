@@ -1,14 +1,17 @@
 import { db } from '@/lib/db';
-import { players, penalties, tokenLedger } from '@/lib/db/schema';
+import { penalties, tokenLedger } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { potEuros } from '@/lib/betting/pot';
 import { TimbaEntries, type TimbaPlayerRow } from '@/components/admin/timba-entries';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminTimbaPage() {
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
   const [allPlayers, pendingPen, entries, pot] = await Promise.all([
-    db.select().from(players).orderBy(players.name),
+    listAllPlayersInGroup(groupId),
     db.select().from(penalties).where(eq(penalties.status, 'pending')),
     db.select({ playerId: tokenLedger.playerId, reason: tokenLedger.reason })
       .from(tokenLedger).where(inArray(tokenLedger.reason, ['buyin', 'rebuy'])),

@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { db } from '@/lib/db';
-import { players, matches } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { countPlayersInGroup } from '@/lib/players/queries';
+import { countMatchesInGroup } from '@/lib/matches/queries';
 import { UserPlus, Swords, Users, Bell, BarChart3, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -14,9 +14,10 @@ const quickLinks = [
 ];
 
 export default async function AdminDashboard() {
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
   const [playerCount, matchCount] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(players),
-    db.select({ count: sql<number>`count(*)` }).from(matches),
+    countPlayersInGroup(groupId),
+    countMatchesInGroup(groupId),
   ]);
 
   return (
@@ -28,8 +29,8 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-2 gap-3">
         {([
-          [playerCount[0].count, 'Jugadores'],
-          [matchCount[0].count, 'Partidos jugados'],
+          [playerCount, 'Jugadores'],
+          [matchCount, 'Partidos jugados'],
         ] as [number, string][]).map(([n, label]) => (
           <div key={label} className="lpt-card card-pad">
             <div className="kicker">{label}</div>

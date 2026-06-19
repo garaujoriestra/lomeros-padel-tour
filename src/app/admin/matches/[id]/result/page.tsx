@@ -1,14 +1,15 @@
-import { db } from '@/lib/db';
-import { matches, players } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getMatchInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { ResultForm } from '@/components/admin/result-form';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AddResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [match] = await db.select().from(matches).where(eq(matches.id, id));
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const match = await getMatchInGroup(groupId, id);
   if (!match) notFound();
   if (match.status === 'completed') {
     return (
@@ -27,7 +28,7 @@ export default async function AddResultPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   return (

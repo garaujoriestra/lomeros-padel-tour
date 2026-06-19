@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { updatePlayerInGroup } from '@/lib/players/queries';
 
 export async function PATCH(request: NextRequest) {
   const session = await getSession();
@@ -12,15 +11,12 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json();
   const { nickname, avatarUrl, isLeftHanded } = body;
 
-  const [updated] = await db
-    .update(players)
-    .set({
-      nickname: nickname?.trim() || null,
-      avatarUrl: avatarUrl?.trim() || null,
-      isLeftHanded: !!isLeftHanded,
-    })
-    .where(eq(players.id, session.player.id))
-    .returning();
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const updated = await updatePlayerInGroup(groupId, session.player.id, {
+    nickname: nickname?.trim() || null,
+    avatarUrl: avatarUrl?.trim() || null,
+    isLeftHanded: !!isLeftHanded,
+  });
 
   return NextResponse.json(updated);
 }

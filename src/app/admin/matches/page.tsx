@@ -1,6 +1,6 @@
-import { db } from '@/lib/db';
-import { matches, matchSets, players } from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listMatchesByDate, listMatchSetsInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import Link from 'next/link';
 import { Calendar, MapPin, Plus, RectangleVertical, ClipboardPen } from 'lucide-react';
 import { ScoreGrid, StatusPill, formatMatchDate } from '@/components/lpt/ui';
@@ -11,13 +11,10 @@ export const dynamic = 'force-dynamic';
 const smallBtn = { minHeight: 38, padding: '7px 13px', fontSize: 12.5 } as const;
 
 export default async function MatchesAdminPage() {
-  const allMatches = await db
-    .select()
-    .from(matches)
-    .orderBy(desc(matches.date));
-
-  const allSets = await db.select().from(matchSets);
-  const allPlayers = await db.select().from(players);
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const allMatches = await listMatchesByDate(groupId);
+  const allSets = await listMatchSetsInGroup(groupId);
+  const allPlayers = await listAllPlayersInGroup(groupId);
 
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
   const setsMap: Record<string, typeof allSets> = {};

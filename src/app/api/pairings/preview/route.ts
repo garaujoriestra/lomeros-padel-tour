@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { matches, players, pairStats } from '@/lib/db/schema';
-import { and, inArray, or } from 'drizzle-orm';
+import { pairStats } from '@/lib/db/schema';
+import { and, inArray } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getPlayersInGroup } from '@/lib/players/queries';
+import { listMatchesInvolvingPlayers } from '@/lib/matches/queries';
 import { computeSideStats, type SideStats } from '@/lib/rating/side-stats';
 import { recommendPairings, type PlayerSummary } from '@/lib/rating/recommend-pairs';
 
@@ -27,7 +30,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const found = await db.select().from(players).where(inArray(players.id, ids));
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    const found = await getPlayersInGroup(groupId, ids);
     if (found.length !== 4) {
       return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 400 });
     }
@@ -43,14 +47,7 @@ export async function GET(request: NextRequest) {
     })) as [PlayerSummary, PlayerSummary, PlayerSummary, PlayerSummary];
 
     // Partidos completados que involucran a estos jugadores → side-stats.
-    const involved = await db.select().from(matches).where(
-      or(
-        inArray(matches.team1Player1Id, ids),
-        inArray(matches.team1Player2Id, ids),
-        inArray(matches.team2Player1Id, ids),
-        inArray(matches.team2Player2Id, ids),
-      ),
-    );
+    const involved = await listMatchesInvolvingPlayers(groupId, ids);
     const completed = involved.filter((m) => m.status === 'completed');
 
     const sideStatsByPlayer: Record<string, SideStats> = {};

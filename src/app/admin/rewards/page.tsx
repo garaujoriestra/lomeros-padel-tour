@@ -1,11 +1,12 @@
-import { db } from '@/lib/db';
-import { rewards } from '@/lib/db/schema';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listRewardsInGroup } from '@/lib/rewards/queries';
 import { RewardsManager } from '@/components/admin/rewards-manager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRewardsPage() {
-  const all = await db.select().from(rewards).orderBy(rewards.cost);
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const all = await listRewardsInGroup(groupId);
   return (
     <div className="space-y-6">
       <div>
