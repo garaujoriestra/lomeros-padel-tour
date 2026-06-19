@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
-import { matches, matchSets, players, pairStats, ratingHistory, bets } from '@/lib/db/schema';
+import { matchSets, pairStats, ratingHistory } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { getMatchInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
+import { getBetsWithBettorForMatch } from '@/lib/betting/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,11 +34,12 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const [match] = await db.select().from(matches).where(eq(matches.id, id));
+  const groupId = await getDefaultGroupId();
+  const match = await getMatchInGroup(groupId, id);
   if (!match) {
     return { title: 'Partido no encontrado · LPT' };
   }
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   const t1 = `${pMap[match.team1Player1Id]?.name ?? '?'}/${pMap[match.team1Player2Id]?.name ?? '?'}`;
@@ -153,10 +158,11 @@ function TeamBlock({
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [match] = await db.select().from(matches).where(eq(matches.id, id));
+  const groupId = await getDefaultGroupId();
+  const match = await getMatchInGroup(groupId, id);
   if (!match) notFound();
 
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   const t1p1 = playerMap[match.team1Player1Id];
@@ -208,14 +214,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   let timba: React.ReactNode = null;
   if (bettingOpen) {
     const pools = await currentMatchPools(match);
-    const allBets = (await db
-      .select({
-        id: bets.id, playerId: bets.playerId, market: bets.market,
-        predictedTeam: bets.predictedTeam, predictedScore: bets.predictedScore, amount: bets.amount,
-        playerName: players.name, playerNickname: players.nickname, playerAvatarUrl: players.avatarUrl,
-      })
-      .from(bets).innerJoin(players, eq(players.id, bets.playerId))
-      .where(eq(bets.matchId, match.id))) as PublicBet[];
+    const allBets = (await getBetsWithBettorForMatch(match.id)) as PublicBet[];
 
     const me = session?.player ?? null;
     const team1Ids = [match.team1Player1Id, match.team1Player2Id];

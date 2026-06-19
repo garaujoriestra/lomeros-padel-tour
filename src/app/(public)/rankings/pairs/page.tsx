@@ -1,6 +1,6 @@
-import { db } from '@/lib/db';
-import { pairStats, players } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listPairStatsInGroup } from '@/lib/rating/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import Link from 'next/link';
 import { Users, Info, Zap, ZapOff } from 'lucide-react';
 import { SectionHead, AvatarStack, StatBar } from '@/components/lpt/ui';
@@ -8,13 +8,9 @@ import { SectionHead, AvatarStack, StatBar } from '@/components/lpt/ui';
 export const dynamic = 'force-dynamic';
 
 export default async function PairsRankingPage() {
-  const pairs = await db
-    .select()
-    .from(pairStats)
-    .where(sql`${pairStats.matchesPlayed} >= 1`)
-    .orderBy(desc(pairStats.pairElo));
-
-  const allPlayers = await db.select().from(players);
+  const groupId = await getDefaultGroupId();
+  const pairs = await listPairStatsInGroup(groupId, 1);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   return (

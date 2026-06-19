@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
-import { players, matches, matchSets, ratingHistory, playerAchievements } from '@/lib/db/schema';
-import { desc, sql, eq, inArray } from 'drizzle-orm';
+import { listRankedPlayers, listRecentPlayers, listAllPlayersInGroup, countRankedPlayers, listRecentAchievementsInGroup } from '@/lib/players/queries';
+import { listRecentMatches, listScheduledMatches, countMatchesInGroup, listMatchSetsForMatches } from '@/lib/matches/queries';
+import { listRecentRatingHistoryInGroup } from '@/lib/rating/queries';
 import Link from 'next/link';
 import { Trophy, Calendar, CalendarDays } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
@@ -20,33 +21,28 @@ import { EventCard } from '@/components/tournament/event-card';
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  const groupId = await getDefaultGroupId();
   const [
     topPlayers,
     recentMatchesAll,
     upcomingMatches,
-    [totalMatchesRow],
-    [totalPlayersRow],
+    totalMatches,
+    totalPlayers,
     recentHistory,
     recentNewPlayers,
     recentAchievements,
     eventSummaries,
   ] = await Promise.all([
-    db.select().from(players)
-      .where(sql`${players.matchesPlayed} > 0`)
-      .orderBy(desc(players.eloRating))
-      .limit(20),
-    db.select().from(matches).orderBy(desc(matches.date)).limit(30),
-    db.select().from(matches).where(eq(matches.status, 'scheduled')).orderBy(matches.date).limit(3),
-    db.select({ count: sql<number>`count(*)` }).from(matches),
-    db.select({ count: sql<number>`count(*)` }).from(players).where(sql`${players.matchesPlayed} > 0`),
-    db.select().from(ratingHistory).orderBy(desc(ratingHistory.recordedAt)).limit(100),
-    db.select().from(players).orderBy(desc(players.createdAt)).limit(5),
-    db.select().from(playerAchievements).orderBy(desc(playerAchievements.earnedAt)).limit(20),
-    listEventSummaries(db, await getDefaultGroupId()),
+    listRankedPlayers(groupId, 20),
+    listRecentMatches(groupId, 30),
+    listScheduledMatches(groupId, 3),
+    countMatchesInGroup(groupId),
+    countRankedPlayers(groupId),
+    listRecentRatingHistoryInGroup(groupId, 100),
+    listRecentPlayers(groupId, 5),
+    listRecentAchievementsInGroup(groupId, 20),
+    listEventSummaries(db, groupId),
   ]);
-
-  const totalMatches = totalMatchesRow.count;
-  const totalPlayers = totalPlayersRow.count;
 
   // Eventos públicos (no borradores), "en directo" primero y luego por fecha desc; máx 4.
   const publicEvents = eventSummaries
@@ -60,11 +56,9 @@ export default async function HomePage() {
     .slice(0, 4);
 
   const matchIds = recentMatchesAll.map((m) => m.id);
-  const allSets = matchIds.length > 0
-    ? await db.select().from(matchSets).where(inArray(matchSets.matchId, matchIds))
-    : [];
+  const allSets = await listMatchSetsForMatches(matchIds);
 
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap: Record<string, typeof allPlayers[number]> = {};
   for (const p of allPlayers) playerMap[p.id] = p;
 

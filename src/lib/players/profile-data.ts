@@ -1,13 +1,15 @@
 import { db } from '@/lib/db';
-import { players, matches, ratingHistory, pairStats, playerAchievements, type Player } from '@/lib/db/schema';
+import { matches, ratingHistory, pairStats, playerAchievements, type Player } from '@/lib/db/schema';
 import { eq, or, desc } from 'drizzle-orm';
+import { getPlayerInGroup, listAllPlayersInGroup } from '@/lib/players/queries';
+import { listRatingHistoryInGroup } from '@/lib/rating/queries';
 import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries } from '@/lib/rating/head-to-head';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
 import { findUnplayedPartners } from '@/lib/players/unplayed-partners';
 
-export async function loadPlayerProfile(id: string) {
-  const [player] = await db.select().from(players).where(eq(players.id, id));
+export async function loadPlayerProfile(groupId: string, id: string) {
+  const player = await getPlayerInGroup(groupId, id);
   if (!player) return null;
 
   const playerMatches = await db
@@ -37,10 +39,10 @@ export async function loadPlayerProfile(id: string) {
     .where(or(eq(pairStats.player1Id, id), eq(pairStats.player2Id, id)))
     .orderBy(desc(pairStats.wins));
 
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
-  const globalHistory = await db.select().from(ratingHistory).orderBy(ratingHistory.recordedAt);
+  const globalHistory = await listRatingHistoryInGroup(groupId);
   const allRankEvents = detectRankChanges(globalHistory, allPlayers);
   const playerRankEvents = allRankEvents.filter((e) => e.playerId === id);
 

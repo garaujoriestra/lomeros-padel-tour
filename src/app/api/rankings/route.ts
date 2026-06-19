@@ -1,24 +1,17 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { players, pairStats } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listRankedPlayers } from '@/lib/players/queries';
+import { listPairStatsInGroup } from '@/lib/rating/queries';
 
-// GET /api/rankings - ranking individual + parejas
+// GET /api/rankings - ranking individual + parejas (grupo por defecto)
 export async function GET() {
   try {
-    const individualRanking = await db
-      .select()
-      .from(players)
-      .where(sql`${players.matchesPlayed} > 0`)
-      .orderBy(desc(players.eloRating));
-
-    const pairsRanking = await db
-      .select()
-      .from(pairStats)
-      .where(sql`${pairStats.matchesPlayed} >= 3`)
-      .orderBy(desc(pairStats.pairElo));
-
-    return NextResponse.json({ individual: individualRanking, pairs: pairsRanking });
+    const groupId = await getDefaultGroupId();
+    const [individual, pairs] = await Promise.all([
+      listRankedPlayers(groupId),
+      listPairStatsInGroup(groupId, 3),
+    ]);
+    return NextResponse.json({ individual, pairs });
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }

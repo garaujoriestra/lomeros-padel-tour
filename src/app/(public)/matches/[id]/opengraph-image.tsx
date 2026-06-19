@@ -1,7 +1,10 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
-import { matches, matchSets, players } from '@/lib/db/schema';
+import { matchSets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { getMatchInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { resolveCourtPositions, type PositionedPlayer } from '@/lib/og/court-positions';
 
 function PlayerSlot({
@@ -122,7 +125,8 @@ export const alt = 'Resultado del partido en pista de pádel';
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [match] = await db.select().from(matches).where(eq(matches.id, id));
+  const groupId = await getDefaultGroupId();
+  const match = await getMatchInGroup(groupId, id);
   if (!match) {
     return new ImageResponse(
       (
@@ -146,7 +150,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const allPlayers = await db.select().from(players);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   const fourPlayers = [

@@ -1,14 +1,15 @@
-import { db } from '@/lib/db';
-import { matches, matchSets, players } from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listMatchesByDate, listMatchSetsInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { MatchesList, type MatchListItem } from '@/components/shared/matches-list';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MatchesPage() {
-  const allMatches = await db.select().from(matches).orderBy(desc(matches.date));
-  const allSets = await db.select().from(matchSets);
-  const allPlayers = await db.select().from(players);
+  const groupId = await getDefaultGroupId();
+  const allMatches = await listMatchesByDate(groupId);
+  const allSets = await listMatchSetsInGroup(groupId);
+  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   const setsMap: Record<string, typeof allSets> = {};

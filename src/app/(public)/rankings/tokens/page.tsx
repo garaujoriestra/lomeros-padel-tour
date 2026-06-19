@@ -1,6 +1,6 @@
-import { db } from '@/lib/db';
-import { players, penalties } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listPlayersByTokenBalance } from '@/lib/players/queries';
+import { listPendingPenaltiesInGroup } from '@/lib/betting/queries';
 import { Coins } from 'lucide-react';
 import { SectionHead, LptAvatar, displayName } from '@/components/lpt/ui';
 import { potEuros } from '@/lib/betting/pot';
@@ -8,9 +8,10 @@ import { potEuros } from '@/lib/betting/pot';
 export const dynamic = 'force-dynamic';
 
 export default async function TokensRankingPage() {
+  const groupId = await getDefaultGroupId();
   const [ranked, pendingPenalties, pot] = await Promise.all([
-    db.select().from(players).orderBy(desc(players.tokenBalance), players.name),
-    db.select().from(penalties).where(eq(penalties.status, 'pending')),
+    listPlayersByTokenBalance(groupId),
+    listPendingPenaltiesInGroup(groupId),
     potEuros(),
   ]);
   const bankruptIds = new Set(pendingPenalties.map((p) => p.playerId));

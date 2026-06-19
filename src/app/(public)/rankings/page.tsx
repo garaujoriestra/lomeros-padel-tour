@@ -1,6 +1,6 @@
-import { db } from '@/lib/db';
-import { players, ratingHistory } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listRankedPlayers, listUnrankedPlayers } from '@/lib/players/queries';
+import { listRatingHistoryInGroup } from '@/lib/rating/queries';
 import Link from 'next/link';
 import { Trophy, UserPlus } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
@@ -10,10 +10,11 @@ import { SectionHead, LptAvatar, Delta, Sparkline } from '@/components/lpt/ui';
 export const dynamic = 'force-dynamic';
 
 export default async function RankingsPage() {
+  const groupId = await getDefaultGroupId();
   const [ranked, unranked, history] = await Promise.all([
-    db.select().from(players).where(sql`${players.matchesPlayed} > 0`).orderBy(desc(players.eloRating)),
-    db.select().from(players).where(sql`${players.matchesPlayed} = 0`).orderBy(players.name),
-    db.select().from(ratingHistory).orderBy(ratingHistory.recordedAt),
+    listRankedPlayers(groupId),
+    listUnrankedPlayers(groupId),
+    listRatingHistoryInGroup(groupId),
   ]);
 
   // Historial de Elo por jugador (para sparkline, delta y racha)

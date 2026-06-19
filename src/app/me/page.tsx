@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { loadPlayerProfile } from '@/lib/players/profile-data';
 import { PlayerProfileView } from '@/components/players/player-profile-view';
 import { PushNotificationsToggle } from '@/components/me/push-notifications-toggle';
@@ -28,7 +29,8 @@ export default async function MePage() {
     );
   }
 
-  const data = await loadPlayerProfile(session.player.id);
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const data = await loadPlayerProfile(groupId, session.player.id);
   if (!data) redirect('/');
   return (
     <div className="space-y-6">

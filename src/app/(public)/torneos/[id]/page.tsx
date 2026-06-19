@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
-import { players, tournamentGroups } from '@/lib/db/schema';
-import { inArray, eq, asc } from 'drizzle-orm';
+import { tournamentGroups } from '@/lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
+import { getPlayersInGroup } from '@/lib/players/queries';
 import { notFound } from 'next/navigation';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { getTournamentInGroup } from '@/lib/tournament/queries';
@@ -23,7 +24,7 @@ export default async function PublicTorneoPage({ params }: { params: Promise<{ i
   if (ev.kind !== 'torneo') notFound();
 
   const roster = ev.participantPlayerIds.length
-    ? await db.select({ id: players.id, name: players.name }).from(players).where(inArray(players.id, ev.participantPlayerIds))
+    ? await getPlayersInGroup(groupId, ev.participantPlayerIds)
     : [];
   const pairs = await loadPairs(db, id);
   const ctx = buildDisplayContext(roster, pairs);
