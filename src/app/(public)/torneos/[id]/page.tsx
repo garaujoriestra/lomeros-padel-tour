@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { players, tournamentGroups } from '@/lib/db/schema';
 import { inArray, eq, asc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { getTournamentInGroup } from '@/lib/tournament/queries';
 import { loadEvent } from '@/lib/tournament/event-store';
 import { loadPairs } from '@/lib/tournament/pair-store';
 import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
@@ -14,6 +16,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function PublicTorneoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const groupId = await getDefaultGroupId();
+  if (!(await getTournamentInGroup(groupId, id))) notFound();
   let ev;
   try { ev = await loadEvent(db, id); } catch { notFound(); }
   if (ev.kind !== 'torneo') notFound();
