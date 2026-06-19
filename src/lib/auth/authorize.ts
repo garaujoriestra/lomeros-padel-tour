@@ -7,8 +7,9 @@ export function decideAccess(
   payload: SessionPayload | null,
 ): AccessDecision {
   if (path === '/admin' || path.startsWith('/admin/')) {
-    if (!payload) return 'redirect-login';
-    return payload.role === 'admin' ? 'allow' : 'redirect-home';
+    // El edge solo comprueba que haya sesión; el rol admin lo exige
+    // `admin/layout.tsx` server-side (el JWT ya no lleva role en 1C).
+    return payload ? 'allow' : 'redirect-login';
   }
   if (path === '/me' || path.startsWith('/me/')) {
     return payload ? 'allow' : 'redirect-login';

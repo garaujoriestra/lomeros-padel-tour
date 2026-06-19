@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForIdToken, verifyGoogleIdToken } from '@/lib/auth/google';
 import { getUserByEmail } from '@/lib/auth/users';
 import { signSession } from '@/lib/auth/jwt';
-import type { Role } from '@/lib/auth/jwt';
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/unauthorized', base));
     }
 
-    const token = await signSession({ userId: user.id, role: user.role as Role });
+    const token = await signSession({ userId: user.id });
     // Solo rutas internas: evita open-redirect (incl. protocol-relative //evil.com y /\evil.com).
     const isInternal = !!from && from.startsWith('/') && !from.startsWith('//') && !from.startsWith('/\\');
     const dest = isInternal ? from : '/me';

@@ -4,7 +4,6 @@ export type Role = 'admin' | 'player';
 
 export interface SessionPayload {
   userId: string;
-  role: Role;
   [key: string]: unknown; // requerido por jose JWTPayload
 }
 
@@ -24,10 +23,9 @@ export async function verifySession(
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, key(), { algorithms: ['HS256'] });
-    if (typeof payload.userId !== 'string' || typeof payload.role !== 'string') {
-      return null;
-    }
-    return { userId: payload.userId, role: payload.role as Role };
+    if (typeof payload.userId !== 'string') return null;
+    // El rol ya no vive en el token (1C); si una cookie vieja lo trae, se ignora.
+    return { userId: payload.userId };
   } catch {
     return null;
   }
