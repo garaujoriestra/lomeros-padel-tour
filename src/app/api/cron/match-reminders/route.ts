@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { matches, notificationLog } from '@/lib/db/schema';
+import { notificationLog } from '@/lib/db/schema';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { listScheduledMatches } from '@/lib/matches/queries';
 import { madridDateParts, selectReminders } from '@/lib/push/reminders';
 import { buildReminderNotification } from '@/lib/push/notifications';
 import { sendToUsers, userIdsForPlayers } from '@/lib/push/send';
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
   const wantKind = kindParam === 'eve' ? 'reminder_eve' : 'reminder_day';
 
   const { today, tomorrow } = madridDateParts(new Date());
-  const scheduled = await db.select().from(matches).where(eq(matches.status, 'scheduled'));
+  const groupId = await getDefaultGroupId();
+  const scheduled = await listScheduledMatches(groupId);
   const due = selectReminders(scheduled, today, tomorrow).filter((r) => r.kind === wantKind);
 
   let sent = 0;
