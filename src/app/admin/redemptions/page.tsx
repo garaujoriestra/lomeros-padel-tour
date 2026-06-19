@@ -1,25 +1,12 @@
-import { db } from '@/lib/db';
-import { redemptions, rewards, players } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listRedemptionsAllInGroup } from '@/lib/rewards/queries';
 import { RedemptionsManager } from '@/components/admin/redemptions-manager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRedemptionsPage() {
-  const rows = await db
-    .select({
-      id: redemptions.id,
-      status: redemptions.status,
-      cost: redemptions.cost,
-      requestedAt: redemptions.requestedAt,
-      rewardTitle: rewards.title,
-      playerName: players.name,
-      playerNickname: players.nickname,
-    })
-    .from(redemptions)
-    .innerJoin(rewards, eq(rewards.id, redemptions.rewardId))
-    .innerJoin(players, eq(players.id, redemptions.playerId))
-    .orderBy(desc(redemptions.requestedAt));
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const rows = await listRedemptionsAllInGroup(groupId);
 
   return (
     <div className="space-y-6">

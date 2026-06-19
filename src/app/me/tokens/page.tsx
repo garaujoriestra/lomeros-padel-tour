@@ -2,10 +2,10 @@ import { redirect } from 'next/navigation';
 import { eq, desc, and } from 'drizzle-orm';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { bets, tokenLedger, rewards, redemptions, penalties } from '@/lib/db/schema';
+import { bets, tokenLedger, penalties } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
-import { listActiveRewardsInGroup } from '@/lib/rewards/queries';
+import { listActiveRewardsInGroup, getMyRedemptions } from '@/lib/rewards/queries';
 import { RedeemButton } from '@/components/betting/redeem-button';
 import { potEuros } from '@/lib/betting/pot';
 import { BETTING } from '@/lib/betting/config';
@@ -51,18 +51,7 @@ export default async function TokensPage() {
       .orderBy(desc(tokenLedger.createdAt))
       .limit(50),
     listActiveRewardsInGroup(groupId),
-    db
-      .select({
-        id: redemptions.id,
-        cost: redemptions.cost,
-        status: redemptions.status,
-        requestedAt: redemptions.requestedAt,
-        rewardTitle: rewards.title,
-      })
-      .from(redemptions)
-      .innerJoin(rewards, eq(rewards.id, redemptions.rewardId))
-      .where(eq(redemptions.playerId, player.id))
-      .orderBy(desc(redemptions.requestedAt)),
+    getMyRedemptions(player.id),
     db
       .select()
       .from(penalties)
