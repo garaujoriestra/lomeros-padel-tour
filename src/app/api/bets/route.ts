@@ -1,15 +1,18 @@
 // src/app/api/bets/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { bets, matches, players } from '@/lib/db/schema';
-import { and, eq, desc } from 'drizzle-orm';
+import { bets } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { requireSession } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { getMatchInGroup } from '@/lib/matches/queries';
+import { getBetsWithBettorForMatch, getMyBets, getBetInMarket, deleteBet } from '@/lib/betting/queries';
 import { BETTING } from '@/lib/betting/config';
 import { isBettingOpen } from '@/lib/betting/close-time';
 import { applyTokenMovement, applyTokenMovementTx } from '@/lib/betting/bank';
 import { hasPendingPenalty } from '@/lib/betting/settle';
 
-// GET /api/bets?matchId=… → apuestas (públicas) de un partido, con nombre del apostante
+// GET /api/bets?matchId=… → apuestas (públicas) de un partido del grupo por defecto
 // GET /api/bets?mine=1   → mis apuestas (requiere sesión)
 export async function GET(request: NextRequest) {
   try {
@@ -17,20 +20,11 @@ export async function GET(request: NextRequest) {
     const mine = request.nextUrl.searchParams.get('mine');
 
     if (matchId) {
-      const rows = await db
-        .select({
-          id: bets.id, matchId: bets.matchId, playerId: bets.playerId,
-          market: bets.market, predictedTeam: bets.predictedTeam,
-          predictedScore: bets.predictedScore, amount: bets.amount,
-          odds: bets.odds, status: bets.status, payout: bets.payout,
-          createdAt: bets.createdAt,
-          playerName: players.name, playerNickname: players.nickname,
-          playerAvatarUrl: players.avatarUrl,
-        })
-        .from(bets)
-        .innerJoin(players, eq(players.id, bets.playerId))
-        .where(eq(bets.matchId, matchId))
-        .orderBy(desc(bets.createdAt));
+      // El partido debe ser del grupo por defecto; si no, no se exponen sus apuestas.
+      const groupId = await getDefaultGroupId();
+      const match = await getMatchInGroup(groupId, matchId);
+      if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
+      const rows = await getBetsWithBettorForMatch(matchId);
       return NextResponse.json(rows);
     }
 
@@ -38,9 +32,7 @@ export async function GET(request: NextRequest) {
       const auth = await requireSession();
       if ('response' in auth) return auth.response;
       if (!auth.session.player) return NextResponse.json([]);
-      const rows = await db.select().from(bets)
-        .where(eq(bets.playerId, auth.session.player.id))
-        .orderBy(desc(bets.createdAt));
+      const rows = await getMyBets(auth.session.player.id);
       return NextResponse.json(rows);
     }
 
@@ -62,6 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Tu cuenta no está vinculada a un jugador' }, { status: 403 });
   }
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const body = await request.json();
     const { matchId, market, predictedTeam, predictedScore, amount } = body;
 
@@ -81,7 +74,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [match] = await db.select().from(matches).where(eq(matches.id, matchId));
+    // El partido debe ser del grupo del apostante (no se apuesta a partidos de otro grupo).
+    const match = await getMatchInGroup(groupId, matchId);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     if (!isBettingOpen(match)) {
       return NextResponse.json({ error: 'Las apuestas de este partido están cerradas' }, { status: 400 });
@@ -108,9 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apuesta previa abierta en este mercado (si la hay): se sustituye.
-    const [previous] = await db.select().from(bets).where(and(
-      eq(bets.matchId, matchId), eq(bets.playerId, player.id), eq(bets.market, market),
-    ));
+    const previous = await getBetInMarket(matchId, player.id, market);
     if (previous && previous.status !== 'open') {
       return NextResponse.json({ error: 'Esa apuesta ya está liquidada' }, { status: 400 });
     }
@@ -158,27 +150,26 @@ export async function DELETE(request: NextRequest) {
   const player = auth.session.player;
   if (!player) return NextResponse.json({ error: 'Sin jugador vinculado' }, { status: 403 });
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const matchId = request.nextUrl.searchParams.get('matchId');
     const market = request.nextUrl.searchParams.get('market');
     if (!matchId || (market !== 'winner' && market !== 'exact_score')) {
       return NextResponse.json({ error: 'Falta matchId o market válido' }, { status: 400 });
     }
 
-    const [match] = await db.select().from(matches).where(eq(matches.id, matchId));
+    const match = await getMatchInGroup(groupId, matchId);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     if (!isBettingOpen(match)) {
       return NextResponse.json({ error: 'Las apuestas ya están cerradas' }, { status: 400 });
     }
 
-    const [bet] = await db.select().from(bets).where(and(
-      eq(bets.matchId, matchId), eq(bets.playerId, player.id), eq(bets.market, market),
-    ));
+    const bet = await getBetInMarket(matchId, player.id, market);
     if (!bet || bet.status !== 'open') {
       return NextResponse.json({ error: 'No tienes apuesta abierta en ese mercado' }, { status: 404 });
     }
 
     await applyTokenMovement(player.id, bet.amount, 'bet_cancelled', bet.id);
-    await db.delete(bets).where(eq(bets.id, bet.id));
+    await deleteBet(bet.id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Error al cancelar la apuesta' }, { status: 500 });
