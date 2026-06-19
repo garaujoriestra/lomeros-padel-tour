@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
 import { requireSession } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { buildAvatarKey } from '@/lib/upload/blob-path';
 
 export async function POST(req: NextRequest) {
   // Subida de avatar: la usa el admin (fichas de jugador) y también el propio
@@ -24,8 +26,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'La imagen no puede superar 2MB' }, { status: 400 });
     }
 
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `avatars/${randomUUID()}.${ext}`;
+    const filename = buildAvatarKey(groupId, randomUUID(), ext);
 
     const blob = await put(filename, file, {
       access: 'public',
