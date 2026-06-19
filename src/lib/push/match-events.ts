@@ -34,7 +34,7 @@ export async function notifyMatchResult(match: MatchTeams, result: MatchRatingRe
     const positions = computeResultPositions(allPlayers, result.eloChanges);
 
     for (const ec of result.eloChanges) {
-      const userIds = await userIdsForPlayers([ec.playerId]);
+      const userIds = await userIdsForPlayers(match.groupId, [ec.playerId]);
       if (userIds.length === 0) continue;
       const didWin = winners.includes(ec.playerId);
       await sendToUsers(
@@ -46,7 +46,7 @@ export async function notifyMatchResult(match: MatchTeams, result: MatchRatingRe
     for (const ach of result.newAchievements) {
       const payload = buildAchievementNotification(ach.achievementId);
       if (!payload) continue;
-      const userIds = await userIdsForPlayers([ach.playerId]);
+      const userIds = await userIdsForPlayers(match.groupId, [ach.playerId]);
       if (userIds.length === 0) continue;
       await sendToUsers(userIds, payload);
     }

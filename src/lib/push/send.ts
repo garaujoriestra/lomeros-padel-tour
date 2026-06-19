@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { inArray, eq } from 'drizzle-orm';
+import { inArray, eq, and } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { pushSubscriptions, memberships } from '@/lib/db/schema';
 import type { PushPayload } from './types';
@@ -59,13 +59,13 @@ async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promis
   return sent;
 }
 
-// Returns the userIds linked (vía membership) to any of the given playerIds.
-export async function userIdsForPlayers(playerIds: string[]): Promise<string[]> {
+// Returns the userIds linked (vía membership del grupo) to any of the given playerIds.
+export async function userIdsForPlayers(groupId: string, playerIds: string[]): Promise<string[]> {
   if (playerIds.length === 0) return [];
   const rows = await db
     .select({ id: memberships.userId })
     .from(memberships)
-    .where(inArray(memberships.playerId, playerIds));
+    .where(and(eq(memberships.groupId, groupId), inArray(memberships.playerId, playerIds)));
   return rows.map((r) => r.id);
 }
 
@@ -78,7 +78,18 @@ export async function sendToUsers(userIds: string[], payload: PushPayload): Prom
   await sendToSubscriptions(subs, payload);
 }
 
-export async function sendToAll(payload: PushPayload): Promise<number> {
-  const subs = await db.select().from(pushSubscriptions);
+// Envía a TODOS los miembros del grupo (vía sus suscripciones). Reemplaza a sendToAll,
+// que enviaba sin scoping. Los miembros = users con membership en el grupo.
+export async function sendToGroup(groupId: string, payload: PushPayload): Promise<number> {
+  const memberRows = await db
+    .select({ userId: memberships.userId })
+    .from(memberships)
+    .where(eq(memberships.groupId, groupId));
+  const userIds = memberRows.map((r) => r.userId);
+  if (userIds.length === 0) return 0;
+  const subs = await db
+    .select()
+    .from(pushSubscriptions)
+    .where(inArray(pushSubscriptions.userId, userIds));
   return sendToSubscriptions(subs, payload);
 }

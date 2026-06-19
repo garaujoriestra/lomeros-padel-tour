@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/guard';
-import { sendToAll } from '@/lib/push/send';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { sendToGroup } from '@/lib/push/send';
 
 export const runtime = 'nodejs';
 
-// POST /api/push/broadcast — envía un aviso a todas las suscripciones (solo admin).
+// POST /api/push/broadcast — envía un aviso a los miembros del grupo del admin (solo admin).
 // Body: { title, body, url? }
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
@@ -14,7 +15,8 @@ export async function POST(request: NextRequest) {
     if (!title || !body) {
       return NextResponse.json({ error: 'Título y cuerpo son obligatorios' }, { status: 400 });
     }
-    const sent = await sendToAll({
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    const sent = await sendToGroup(groupId, {
       title: String(title),
       body: String(body),
       url: typeof url === 'string' && url.length > 0 ? url : '/',

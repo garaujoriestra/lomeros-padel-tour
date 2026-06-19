@@ -2,11 +2,12 @@
 import { db } from '@/lib/db';
 import { matches, players } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { sendToAll, sendToUsers, userIdsForPlayers } from './send';
+import { sendToGroup, sendToUsers, userIdsForPlayers } from './send';
 import { buildBetSettledNotification, buildBettingOpenNotification } from './notifications';
 
 export interface ScheduledMatchForPush {
   id: string;
+  groupId: string;
   date: string;
   time: string | null;
   location: string | null;
@@ -16,7 +17,7 @@ export interface ScheduledMatchForPush {
   team2Player2Id: string;
 }
 
-// Avisa a TODOS los suscritos de que un nuevo partido está disponible para
+// Avisa a los miembros DEL GRUPO de que un nuevo partido está disponible para
 // apostar en La Timba. Best-effort: nunca lanza.
 export async function notifyBettingOpen(match: ScheduledMatchForPush): Promise<void> {
   try {
@@ -27,7 +28,8 @@ export async function notifyBettingOpen(match: ScheduledMatchForPush): Promise<v
       return p?.nickname || p?.name || '?';
     };
     const label = `${nameOf(ids[0])}/${nameOf(ids[1])} vs ${nameOf(ids[2])}/${nameOf(ids[3])}`;
-    await sendToAll(
+    await sendToGroup(
+      match.groupId,
       buildBettingOpenNotification(
         label,
         { date: match.date, time: match.time, location: match.location },
@@ -62,7 +64,7 @@ export async function notifyBetSettlements(matchId: string, outcomes: SettledBet
     const label = `${nameOf(ids[0])}/${nameOf(ids[1])} vs ${nameOf(ids[2])}/${nameOf(ids[3])}`;
 
     for (const o of outcomes) {
-      const userIds = await userIdsForPlayers([o.playerId]);
+      const userIds = await userIdsForPlayers(match.groupId, [o.playerId]);
       if (userIds.length === 0) continue;
       await sendToUsers(userIds, buildBetSettledNotification(o.status, o.amount, o.payout, label, matchId));
     }
