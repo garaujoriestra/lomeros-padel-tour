@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { db } from '@/lib/db';
-import { users, pushSubscriptions } from '@/lib/db/schema';
+import { users, memberships, pushSubscriptions } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { Bell, BellOff } from 'lucide-react';
@@ -18,6 +19,15 @@ export default async function AdminNotificationsPage() {
   const allUsers = await db.select().from(users);
   const allPlayers = await listAllPlayersInGroup(groupId);
   const subs = await db.select().from(pushSubscriptions);
+
+  // Enlace user↔ficha para este grupo viene de memberships (1C).
+  const groupMemberships = await db
+    .select({ userId: memberships.userId, playerId: memberships.playerId })
+    .from(memberships)
+    .where(eq(memberships.groupId, groupId));
+  const playerIdByUser = new Map(
+    groupMemberships.filter((m) => m.playerId).map((m) => [m.userId, m.playerId!]),
+  );
 
   const playerName = new Map(allPlayers.map((p) => [p.id, p.name]));
   const subCount = new Map<string, number>();
@@ -36,7 +46,8 @@ export default async function AdminNotificationsPage() {
         <ul className="divide-y divide-line">
           {allUsers.map((u) => {
             const count = subCount.get(u.id) ?? 0;
-            const name = u.playerId ? playerName.get(u.playerId) : null;
+            const linkedPlayerId = playerIdByUser.get(u.id);
+            const name = linkedPlayerId ? playerName.get(linkedPlayerId) : null;
             return (
               <li key={u.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                 <span className="min-w-0">

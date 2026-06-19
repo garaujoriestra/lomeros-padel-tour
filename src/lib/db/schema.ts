@@ -34,11 +34,13 @@ export const players = sqliteTable('players', {
 });
 
 // ─── USERS (cuentas de acceso) ───────────────────────────────────────────────
+// `users` = identidad global pura (email). El rol y el enlace user↔ficha viven en
+// `memberships` (1C). Las columnas físicas `role`/`player_id` quedan inertes en la DB
+// (no se dropean: quitarlas del schema basta para que el código deje de tocarlas, y
+// deja intactos migrate-multitenant/migrate-auth/seed de e2e, que aún las leen).
 export const users = sqliteTable('users', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text('email').notNull().unique(),
-  role: text('role').notNull().default('player'), // 'admin' | 'player'
-  playerId: text('player_id').references(() => players.id, { onDelete: 'set null' }),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
