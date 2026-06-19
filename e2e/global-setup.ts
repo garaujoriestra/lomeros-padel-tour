@@ -212,6 +212,14 @@ export default async function globalSetup() {
     args: ['gt-redemption1', 'gt-pl1', 'gt-reward1', 100, 'pending'],
   });
 
+  // Un torneo (pozo) del "Grupo Test", para no-fuga: Lomeros nunca debe listarlo,
+  // cargarlo, generarlo, editarlo, borrarlo ni registrar resultados en él.
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO tournaments (id, group_id, name, date, kind, format, config, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: ['gt-tournament1', 'grupo-test', 'Torneo GT', '2026-01-01', 'pozo', 'americano', '{}', 'draft'],
+  });
+
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, 'admin', TEST_ENV.AUTH_SECRET)));
