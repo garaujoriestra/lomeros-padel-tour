@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!updated) return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 });
 
-    const result = await upsertPlayerUser(id, email);
+    const result = await upsertPlayerUser(groupId, id, email);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 409 });
     }

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       tokenBalance: 0,
     });
 
-    const result = await upsertPlayerUser(player.id, email);
+    const result = await upsertPlayerUser(groupId, player.id, email);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 409 });
     }
