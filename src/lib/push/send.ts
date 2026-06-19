@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { inArray, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { pushSubscriptions, users } from '@/lib/db/schema';
+import { pushSubscriptions, memberships } from '@/lib/db/schema';
 import type { PushPayload } from './types';
 
 const DEFAULT_ICON = '/icon';
@@ -59,13 +59,13 @@ async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promis
   return sent;
 }
 
-// Returns the userIds linked to any of the given playerIds.
+// Returns the userIds linked (vía membership) to any of the given playerIds.
 export async function userIdsForPlayers(playerIds: string[]): Promise<string[]> {
   if (playerIds.length === 0) return [];
   const rows = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(inArray(users.playerId, playerIds));
+    .select({ id: memberships.userId })
+    .from(memberships)
+    .where(inArray(memberships.playerId, playerIds));
   return rows.map((r) => r.id);
 }
 
