@@ -30,7 +30,7 @@ export function MatchCard({ match, team1, team2, sets = [], href, predictionPct 
     <div className={`lpt-card ${href ? 'clickable' : ''}`} style={{ overflow: 'hidden' }}>
       {match.photoUrl && (
         // En la card la foto es decorativa: franja recortada (cover); la foto completa se ve en el detalle
-        <div className="ph-img" style={{ height: 84, position: 'relative' }}>
+        <div className="ph-img" style={{ height: 140, position: 'relative' }}>
           <Image
             src={match.photoUrl}
             alt=""
