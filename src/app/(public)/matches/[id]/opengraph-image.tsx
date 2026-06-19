@@ -6,6 +6,8 @@ import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { getMatchInGroup } from '@/lib/matches/queries';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { resolveCourtPositions, type PositionedPlayer } from '@/lib/og/court-positions';
+import { getGroupById } from '@/lib/groups/queries';
+import { LOMEROS_GROUP_NAME } from '@/lib/groups/constants';
 
 function PlayerSlot({
   position,
@@ -126,6 +128,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const { id } = await params;
 
   const groupId = await getDefaultGroupId();
+  const brandName = (await getGroupById(groupId))?.name ?? LOMEROS_GROUP_NAME;
   const match = await getMatchInGroup(groupId, id);
   if (!match) {
     return new ImageResponse(
@@ -232,7 +235,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 32 }}>🎾</span>
-            <span>Lomeros Padel Tour</span>
+            <span>{brandName}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#bbf7d0' }}>
             <span>{match.date}</span>
