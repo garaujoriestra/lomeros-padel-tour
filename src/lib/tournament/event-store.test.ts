@@ -36,7 +36,7 @@ describe('event-store', () => {
     const { db, client } = await createTestDb();
     await seedPlayers(client, ['p1', 'p2', 'p3', 'p4']);
 
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'Pozo del jueves', date: '2026-07-01', location: 'Club',
       kind: 'pozo', format: 'americano',
       config: { rounds: 4, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } } as PozoConfig,
@@ -69,20 +69,20 @@ describe('event-store', () => {
         createdBy: null,
         courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
         participantPlayerIds: ['p1', 'p2'],
-      } as Parameters<typeof createEvent>[1];
+      } as Parameters<typeof createEvent>[2];
     }
-    await createEvent(db, baseInput('A', 'pozo', 'americano'));
-    await createEvent(db, baseInput('B', 'torneo', 'single_elim'));
-    const pozos = await listEvents(db, 'pozo');
+    await createEvent(db, 'lomeros', baseInput('A', 'pozo', 'americano'));
+    await createEvent(db, 'lomeros', baseInput('B', 'torneo', 'single_elim'));
+    const pozos = await listEvents(db, 'lomeros', 'pozo');
     expect(pozos.map((e) => e.name)).toEqual(['A']);
-    const torneos = await listEvents(db, 'torneo');
+    const torneos = await listEvents(db, 'lomeros', 'torneo');
     expect(torneos.map((e) => e.name)).toEqual(['B']);
   });
 
   it('updateEvent reemplaza meta, pistas y participantes (no toca kind/format)', async () => {
     const { db, client } = await createTestDb();
     await seedPlayers(client, ['p1', 'p2', 'p3']);
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'X', date: '2026-07-01', location: null, kind: 'pozo', format: 'americano',
       config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
       createdBy: null,
@@ -110,7 +110,7 @@ describe('event-store', () => {
     await seedPlayers(client, ['p1', 'p2', 'p3', 'p4']);
 
     // Evento más antiguo: con partidos (1 completado + 1 pendiente).
-    const older = await createEvent(db, {
+    const older = await createEvent(db, 'lomeros', {
       name: 'Pozo viejo', date: '2026-07-01', location: 'Club', kind: 'pozo', format: 'americano',
       config: { rounds: 2, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
       createdBy: null,
@@ -118,7 +118,7 @@ describe('event-store', () => {
       participantPlayerIds: ['p1', 'p2', 'p3', 'p4'],
     });
     // Evento más reciente: sin partidos generados.
-    const newer = await createEvent(db, {
+    const newer = await createEvent(db, 'lomeros', {
       name: 'Torneo nuevo', date: '2026-08-15', location: null, kind: 'torneo', format: 'single_elim',
       config: { matchFormat: { kind: 'best_of_3' }, thirdPlace: false },
       createdBy: null,
@@ -130,7 +130,7 @@ describe('event-store', () => {
     await client.execute({ sql: 'INSERT INTO tournament_matches (id, tournament_id, round, status) VALUES (?, ?, ?, ?)', args: ['m1', older, 1, 'completed'] });
     await client.execute({ sql: 'INSERT INTO tournament_matches (id, tournament_id, round, status) VALUES (?, ?, ?, ?)', args: ['m2', older, 1, 'pending'] });
 
-    const summaries = await listEventSummaries(db);
+    const summaries = await listEventSummaries(db, 'lomeros');
     // Orden por fecha DESC: el nuevo (agosto) primero.
     expect(summaries.map((s) => s.name)).toEqual(['Torneo nuevo', 'Pozo viejo']);
 
@@ -156,7 +156,7 @@ describe('event-store', () => {
   it('deleteEvent borra el evento y TODOS sus hijos (FK OFF → borrado explícito)', async () => {
     const { db, client } = await createTestDb();
     await seedPlayers(client, ['p1', 'p2', 'p3', 'p4']);
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'A borrar', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
       config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
       createdBy: null,
@@ -165,7 +165,7 @@ describe('event-store', () => {
     });
 
     // Otro evento que NO debe verse afectado por el borrado.
-    const other = await createEvent(db, {
+    const other = await createEvent(db, 'lomeros', {
       name: 'Intacto', date: '2026-07-02', location: null, kind: 'pozo', format: 'americano',
       config: { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
       createdBy: null,

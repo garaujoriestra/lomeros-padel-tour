@@ -19,7 +19,7 @@ describe('pozo-engine dispatch', () => {
     const { db, client } = await createTestDb();
     const players = Array.from({ length: 8 }, (_, i) => `a${i + 1}`);
     await seedPlayers(client, players);
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'A', date: '2026-07-01', location: null, kind: 'pozo', format: 'americano',
       config: CFG, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' },
@@ -39,7 +39,7 @@ describe('pozo-engine dispatch', () => {
     const { db, client } = await createTestDb();
     await seedPlayers(client, ['t1', 't2', 't3', 't4']);
     const torneoCfg: TorneoConfig = { matchFormat: { kind: 'best_of_3' }, thirdPlace: false };
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'T', date: '2026-07-01', location: null, kind: 'torneo', format: 'single_elim',
       config: torneoCfg, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],
@@ -56,7 +56,7 @@ describe('pozo-engine dispatch', () => {
     const { db, client } = await createTestDb();
     const players = Array.from({ length: 8 }, (_, i) => `b${i + 1}`);
     await seedPlayers(client, players);
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'B', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
       config: CFG, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' },

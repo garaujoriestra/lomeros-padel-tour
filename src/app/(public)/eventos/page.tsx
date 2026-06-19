@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { CalendarDays } from 'lucide-react';
 import { SectionHead } from '@/components/lpt/ui';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { listEventSummaries } from '@/lib/tournament/event-store';
 import { eventLiveState } from '@/lib/tournament/event-summary';
 import { EventCard } from '@/components/tournament/event-card';
@@ -8,7 +9,8 @@ import { EventCard } from '@/components/tournament/event-card';
 export const dynamic = 'force-dynamic';
 
 export default async function EventosPage() {
-  const summaries = await listEventSummaries(db);
+  const groupId = await getDefaultGroupId();
+  const summaries = await listEventSummaries(db, groupId);
   // Listado público: solo eventos generados (los borradores son solo de admin).
   const events = summaries.filter((s) => eventLiveState(s) !== 'upcoming');
 

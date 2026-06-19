@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { players, matches, matchSets, ratingHistory, playerAchievements } from '@/lib/db/schema';
 import { desc, sql, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
@@ -41,7 +42,7 @@ export default async function HomePage() {
     db.select().from(ratingHistory).orderBy(desc(ratingHistory.recordedAt)).limit(100),
     db.select().from(players).orderBy(desc(players.createdAt)).limit(5),
     db.select().from(playerAchievements).orderBy(desc(playerAchievements.earnedAt)).limit(20),
-    listEventSummaries(db),
+    listEventSummaries(db, await getDefaultGroupId()),
   ]);
 
   const totalMatches = totalMatchesRow.count;

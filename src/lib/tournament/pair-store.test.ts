@@ -9,7 +9,7 @@ type TestDb = Awaited<ReturnType<typeof createTestDb>>['db'];
 const CFG: PozoConfig = { rounds: 3, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } };
 
 async function makeEvent(db: TestDb) {
-  return createEvent(db, {
+  return createEvent(db, 'lomeros', {
     name: 'P', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
     config: CFG, createdBy: null,
     courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],

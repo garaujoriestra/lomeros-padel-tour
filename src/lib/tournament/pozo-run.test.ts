@@ -21,7 +21,7 @@ async function makePozo(db: TestDb, client: TestClient, nPlayers: number, nCourt
   const courts = Array.from({ length: nCourts }, (_, i) => ({
     label: `Pista ${i + 1}`, sortOrder: i + 1, availableFrom: '17:00', availableTo: '20:00',
   }));
-  const id = await createEvent(db, {
+  const id = await createEvent(db, 'lomeros', {
     name: 'Pozo', date: '2026-07-01', location: null, kind: 'pozo', format: 'americano',
     config: POZO_CFG, createdBy: null, courts, participantPlayerIds: players,
   });

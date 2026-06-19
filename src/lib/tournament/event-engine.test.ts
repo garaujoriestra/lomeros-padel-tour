@@ -16,7 +16,7 @@ describe('event-engine dispatch', () => {
     const players = Array.from({ length: 8 }, (_, i) => `a${i + 1}`);
     await seedPlayers(client, players);
     const cfg: PozoConfig = { rounds: 2, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } };
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'P', date: '2026-07-01', location: null, kind: 'pozo', format: 'americano',
       config: cfg, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' },
@@ -32,7 +32,7 @@ describe('event-engine dispatch', () => {
     const players = Array.from({ length: 8 }, (_, i) => `b${i + 1}`);
     await seedPlayers(client, players);
     const cfg: TorneoConfig = { matchFormat: { kind: 'best_of_3' }, thirdPlace: false };
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'T', date: '2026-07-01', location: null, kind: 'torneo', format: 'single_elim',
       config: cfg, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '23:00' }],

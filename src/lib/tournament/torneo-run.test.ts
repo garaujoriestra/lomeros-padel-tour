@@ -23,7 +23,7 @@ async function makeTorneo(db: TestDb, client: TestClient, nPairs: number, nCourt
   const courts = Array.from({ length: nCourts }, (_, i) => ({
     label: `Pista ${i + 1}`, sortOrder: i + 1, availableFrom: '17:00', availableTo: '23:00',
   }));
-  const id = await createEvent(db, {
+  const id = await createEvent(db, 'lomeros', {
     name: 'Torneo', date: '2026-07-01', location: null, kind: 'torneo', format,
     config, createdBy: null, courts, participantPlayerIds: players,
   });

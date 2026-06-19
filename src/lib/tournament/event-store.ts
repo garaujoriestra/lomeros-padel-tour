@@ -1,4 +1,4 @@
-import { eq, asc, desc, sql } from 'drizzle-orm';
+import { and, eq, asc, desc, sql } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from '@/lib/db/schema';
 import {
@@ -50,10 +50,10 @@ export interface LoadedEvent {
   participantPlayerIds: string[];
 }
 
-export async function createEvent(db: Db, input: CreateEventInput): Promise<string> {
+export async function createEvent(db: Db, groupId: string, input: CreateEventInput): Promise<string> {
   const id = crypto.randomUUID();
   await db.insert(tournaments).values({
-    id, name: input.name, date: input.date, location: input.location ?? null,
+    id, groupId, name: input.name, date: input.date, location: input.location ?? null,
     kind: input.kind, format: input.format, config: JSON.stringify(input.config),
     status: 'draft', createdBy: input.createdBy ?? null,
   });
@@ -96,9 +96,10 @@ export async function loadEvent(db: Db, id: string): Promise<LoadedEvent> {
   };
 }
 
-export async function listEvents(db: Db, kind: EventKind): Promise<LoadedEvent[]> {
+export async function listEvents(db: Db, groupId: string, kind: EventKind): Promise<LoadedEvent[]> {
   const rows = await db.select().from(tournaments)
-    .where(eq(tournaments.kind, kind)).orderBy(asc(tournaments.date));
+    .where(and(eq(tournaments.groupId, groupId), eq(tournaments.kind, kind)))
+    .orderBy(asc(tournaments.date));
   const out: LoadedEvent[] = [];
   // N+1 aceptable: uso exclusivo admin, N = nº de eventos (decenas como mucho).
   for (const r of rows) out.push(await loadEvent(db, r.id));
@@ -121,12 +122,12 @@ export interface EventSummary {
 // Lista TODOS los eventos (cualquier kind) ordenados por fecha DESC (más recientes primero).
 // Sin N+1: una query a `tournaments` + UNA query agrupada a `tournament_matches` para los
 // conteos (total y completados por torneo), y luego mapeo en memoria.
-export async function listEventSummaries(db: Db): Promise<EventSummary[]> {
+export async function listEventSummaries(db: Db, groupId: string): Promise<EventSummary[]> {
   const rows = await db.select({
     id: tournaments.id, name: tournaments.name, date: tournaments.date,
     location: tournaments.location, kind: tournaments.kind, format: tournaments.format,
     status: tournaments.status,
-  }).from(tournaments).orderBy(desc(tournaments.date));
+  }).from(tournaments).where(eq(tournaments.groupId, groupId)).orderBy(desc(tournaments.date));
 
   const counts = await db.select({
     tournamentId: tournamentMatches.tournamentId,

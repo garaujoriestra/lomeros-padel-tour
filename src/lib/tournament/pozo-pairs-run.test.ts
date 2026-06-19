@@ -27,7 +27,7 @@ async function makePairsPozo(db: TestDb, client: TestClient, nPairs: number, nCo
   const courts = Array.from({ length: nCourts }, (_, i) => ({
     label: `Pista ${i + 1}`, sortOrder: i + 1, availableFrom: '17:00', availableTo: '20:00',
   }));
-  const id = await createEvent(db, {
+  const id = await createEvent(db, 'lomeros', {
     name: 'Pozo PF', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
     config: CFG, createdBy: null, courts, participantPlayerIds: players,
   });
@@ -100,7 +100,7 @@ describe('generatePozoPairs', () => {
     const { db, client } = await createTestDb();
     const players = ['p1', 'p2'];
     await seedPlayers(client, players);
-    const id = await createEvent(db, {
+    const id = await createEvent(db, 'lomeros', {
       name: 'X', date: '2026-07-01', location: null, kind: 'pozo', format: 'fixed_pairs',
       config: CFG, createdBy: null,
       courts: [{ label: 'C1', sortOrder: 1, availableFrom: '17:00', availableTo: '20:00' }],

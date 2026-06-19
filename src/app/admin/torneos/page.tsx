@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { listEvents } from '@/lib/tournament/event-store';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TorneosPage() {
-  const torneos = await listEvents(db, 'torneo');
+  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const torneos = await listEvents(db, groupId, 'torneo');
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
