@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { loadEvent } from '@/lib/tournament/event-store';
+import { getTournamentInGroup } from '@/lib/tournament/queries';
 import { replacePairs } from '@/lib/tournament/pair-store';
 import { validatePairsInput } from '@/lib/tournament/validation';
 
@@ -12,6 +14,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if ('response' in auth) return auth.response;
   const { id } = await params;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    if (!(await getTournamentInGroup(groupId, id))) {
+      return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
+    }
     const ev = await loadEvent(db, id);
     if (ev.status !== 'draft') {
       return NextResponse.json({ error: 'El evento ya está generado' }, { status: 409 });

@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { players } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { listPlayersByElo } from '@/lib/players/queries';
 import { loadEvent, updateEvent, deleteEvent } from '@/lib/tournament/event-store';
+import { getTournamentInGroup } from '@/lib/tournament/queries';
 import { validateEventInput } from '@/lib/tournament/validation';
 
-// GET /api/tournaments/[id] — carga un evento por id (admin).
+// GET /api/tournaments/[id] — carga un evento del grupo por id (admin).
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   const { id } = await params;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    if (!(await getTournamentInGroup(groupId, id))) {
+      return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
+    }
     const event = await loadEvent(db, id);
     return NextResponse.json({ event });
   } catch (error) {
@@ -22,14 +28,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// PATCH /api/tournaments/[id] — edita meta + pistas + participantes de un evento.
+// PATCH /api/tournaments/[id] — edita meta + pistas + participantes de un evento del grupo.
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   const { id } = await params;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    if (!(await getTournamentInGroup(groupId, id))) {
+      return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
+    }
     const body = await request.json();
-    const roster = await db.select({ id: players.id }).from(players);
+    const roster = await listPlayersByElo(groupId);
     const v = validateEventInput(body, new Set(roster.map((p) => p.id)));
     if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
     await updateEvent(db, id, {
@@ -46,12 +56,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-// DELETE /api/tournaments/[id] — borra un evento (pozo o torneo) y todos sus hijos (admin).
+// DELETE /api/tournaments/[id] — borra un evento del grupo y todos sus hijos (admin).
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ('response' in auth) return auth.response;
   const { id } = await params;
   try {
+    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    if (!(await getTournamentInGroup(groupId, id))) {
+      return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
+    }
     await deleteEvent(db, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
