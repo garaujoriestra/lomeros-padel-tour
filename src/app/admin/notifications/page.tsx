@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminNotificationsPage() {
   const session = await getSession();
   if (!session) redirect('/login?from=/admin/notifications');
-  if (session.role !== 'admin') redirect('/');
+  if (session.role !== 'admin') redirect('/me');
 
   const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
   const allUsers = await db.select().from(users);
