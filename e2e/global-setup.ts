@@ -99,6 +99,48 @@ export default async function globalSetup() {
     UNIQUE (match_id, player_id, market)
   )`);
 
+  // Las tablas de tokens/premios/penalizaciones/canjes de La Timba tampoco las crea
+  // /api/init-db ni las migraciones del global-setup (en prod se crearon en su propia
+  // migración). El schema drizzle las consulta (DAL de betting/rewards), así que las
+  // creamos aquí (idempotente), reflejando el esquema de producción.
+  await db.execute(`CREATE TABLE IF NOT EXISTS token_ledger (
+    id TEXT PRIMARY KEY,
+    player_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    ref_id TEXT,
+    balance_after INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (reason, ref_id)
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS rewards (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL DEFAULT 'lomeros',
+    title TEXT NOT NULL,
+    description TEXT,
+    cost INTEGER NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS redemptions (
+    id TEXT PRIMARY KEY,
+    player_id TEXT NOT NULL,
+    reward_id TEXT NOT NULL,
+    cost INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
+  )`);
+  await db.execute(`CREATE TABLE IF NOT EXISTS penalties (
+    id TEXT PRIMARY KEY,
+    player_id TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    recharge_amount INTEGER NOT NULL DEFAULT 250,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    fulfilled_at TEXT
+  )`);
+
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
   }
@@ -147,6 +189,27 @@ export default async function globalSetup() {
       (id, group_id, date, team1_player1_id, team1_player2_id, team2_player1_id, team2_player2_id, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     args: ['gt-match1', 'grupo-test', '2026-01-01', 'gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4', 'scheduled'],
+  });
+
+  // Estado de La Timba y premios del "Grupo Test", para no-fuga: una apuesta abierta
+  // de gt-pl1 en su partido, una penalización pendiente suya, un premio de su grupo y
+  // un canje. Lomeros nunca debe ver ni tocar nada de esto.
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO bets (id, match_id, player_id, market, predicted_team, amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    args: ['gt-bet1', 'gt-match1', 'gt-pl1', 'winner', 1, 50, 'open'],
+  });
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO penalties (id, player_id, status) VALUES (?, ?, ?)`,
+    args: ['gt-penalty1', 'gt-pl1', 'pending'],
+  });
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO rewards (id, group_id, title, cost, active) VALUES (?, ?, ?, ?, ?)`,
+    args: ['gt-reward1', 'grupo-test', 'Premio GT', 100, 1],
+  });
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO redemptions (id, player_id, reward_id, cost, status) VALUES (?, ?, ?, ?, ?)`,
+    args: ['gt-redemption1', 'gt-pl1', 'gt-reward1', 100, 'pending'],
   });
 
   // 3) storageStates con cookies de sesión forjadas.
