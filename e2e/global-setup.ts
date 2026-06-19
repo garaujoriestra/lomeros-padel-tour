@@ -141,6 +141,18 @@ export default async function globalSetup() {
     fulfilled_at TEXT
   )`);
 
+  // push_subscriptions: la consulta sendToGroup; sin VAPID el push no entrega pero
+  // la tabla debe existir para que el broadcast no reviente con "no such table".
+  await db.execute(`CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
   }
