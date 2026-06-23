@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { BASE_URL, TEST_ENV } from '../playwright.config';
 import { ensureAuxTables } from '../src/lib/db/bootstrap';
 
-async function sessionStorageState(userId: string, role: 'admin' | 'player', secret: string) {
+async function sessionStorageState(userId: string, secret: string) {
   const token = await new SignJWT({ userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -115,6 +115,6 @@ export default async function globalSetup() {
 
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
-  await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, 'admin', TEST_ENV.AUTH_SECRET)));
-  await writeFile('e2e/.auth/player.json', JSON.stringify(await sessionStorageState(playerUserId, 'player', TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/player.json', JSON.stringify(await sessionStorageState(playerUserId, TEST_ENV.AUTH_SECRET)));
 }

@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
   await ensureAuxTables(client);
 
   // Grupo Demo (id/slug distinto al 'grupo-test' de e2e). SQL raw + INSERT OR IGNORE = idempotente.
+  // SQL raw a tablas raíz A PROPÓSITO: seed cross-group de nivel infra; check:db-access solo ve
+  // Drizzle, no client.execute. Justificado por el doble guard isDevToolingEnabled (403 en prod).
   await client.execute({
     sql: 'INSERT OR IGNORE INTO groups (id, slug, name) VALUES (?, ?, ?)',
     args: [DEMO_GROUP_ID, DEMO_GROUP_ID, 'Grupo Demo'],
