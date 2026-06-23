@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
 import { navLinks, isNavActive } from './nav-links';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
@@ -16,17 +15,18 @@ export interface NavSession {
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const dark = resolvedTheme === 'dark';
+  // El icono se decide por CSS según la clase `.dark` del <html> (la pone el script
+  // bloqueante de next-themes antes del primer pintado), así no hay desajuste de
+  // hidratación y no hace falta un flag `mounted` con setState dentro de un efecto.
   return (
     <button
       className="icon-btn"
       title="Cambiar tema"
       aria-label="Cambiar tema"
-      onClick={() => setTheme(dark ? 'light' : 'dark')}
+      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
     >
-      {mounted ? (dark ? <Sun size={16} /> : <Moon size={16} />) : <Moon size={16} />}
+      <Moon size={16} className="block dark:hidden" />
+      <Sun size={16} className="hidden dark:block" />
     </button>
   );
 }
