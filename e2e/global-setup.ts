@@ -2,9 +2,10 @@ import { createClient } from '@libsql/client';
 import { SignJWT } from 'jose';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { BASE_URL, TEST_ENV } from '../playwright.config';
+import { ensureAuxTables } from '../src/lib/db/bootstrap';
 
 async function sessionStorageState(userId: string, role: 'admin' | 'player', secret: string) {
-  const token = await new SignJWT({ userId, role })
+  const token = await new SignJWT({ userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('30d')
@@ -30,128 +31,8 @@ export default async function globalSetup() {
   // 2) Seed directo en la DB de fichero.
   const db = createClient({ url: TEST_ENV.DB_URL });
 
-  // Las columnas de players añadidas por migraciones posteriores (rasgo zurdo,
-  // fichas de La Timba, juega_padel) no las crea /api/init-db, pero el schema
-  // drizzle las espera: getSession hace `select().from(players)` con la fila
-  // completa. Las añadimos aquí (idempotente) para que la sesión del jugador
-  // cargue sin fallar y se muestre "Tu próximo partido".
-  const playerColumns = [
-    'is_left_handed INTEGER NOT NULL DEFAULT 0',
-    'token_balance INTEGER NOT NULL DEFAULT 0',
-    'juega_padel INTEGER NOT NULL DEFAULT 1',
-  ];
-  for (const col of playerColumns) {
-    try {
-      await db.execute(`ALTER TABLE players ADD COLUMN ${col}`);
-    } catch {
-      // La columna ya existe — seguir.
-    }
-  }
-
-  // Mismo problema con `matches`: /api/init-db crea una versión reducida de la tabla,
-  // pero el schema drizzle (que usa `select().from(matches)` en p.ej. la home pública)
-  // espera columnas añadidas por migraciones posteriores. Las alineamos aquí
-  // (idempotente) para que la home renderice sin "no such column".
-  const matchColumns = [
-    'time TEXT',
-    'team1_player1_side TEXT',
-    'team1_player2_side TEXT',
-    'team2_player1_side TEXT',
-    'team2_player2_side TEXT',
-    'photo_url TEXT',
-  ];
-  for (const col of matchColumns) {
-    try {
-      await db.execute(`ALTER TABLE matches ADD COLUMN ${col}`);
-    } catch {
-      // La columna ya existe — seguir.
-    }
-  }
-
-  // `player_achievements` tampoco la crea /api/init-db, pero el schema drizzle la
-  // consulta (p.ej. la home hace `select().from(playerAchievements)`). La creamos
-  // aquí (idempotente) para que la home pública renderice sin "no such table".
-  await db.execute(`CREATE TABLE IF NOT EXISTS player_achievements (
-    id TEXT PRIMARY KEY,
-    player_id TEXT NOT NULL,
-    achievement_id TEXT NOT NULL,
-    earned_at TEXT NOT NULL,
-    trigger_match_id TEXT
-  )`);
-
-  // La tabla `bets` la crean las migraciones de La Timba (no /api/init-db ni las del
-  // global-setup), pero el detalle de un partido PROGRAMADO la consulta vía
-  // `currentMatchPools` (apuestas abiertas). Sin ella, la página revienta con
-  // "no such table: bets". La creamos aquí (idempotente, `odds` ya nullable como en prod).
-  await db.execute(`CREATE TABLE IF NOT EXISTS bets (
-    id TEXT PRIMARY KEY,
-    match_id TEXT NOT NULL,
-    player_id TEXT NOT NULL,
-    market TEXT NOT NULL,
-    predicted_team INTEGER NOT NULL,
-    predicted_score TEXT,
-    amount INTEGER NOT NULL,
-    odds REAL,
-    status TEXT NOT NULL DEFAULT 'open',
-    payout INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    settled_at TEXT,
-    UNIQUE (match_id, player_id, market)
-  )`);
-
-  // Las tablas de tokens/premios/penalizaciones/canjes de La Timba tampoco las crea
-  // /api/init-db ni las migraciones del global-setup (en prod se crearon en su propia
-  // migración). El schema drizzle las consulta (DAL de betting/rewards), así que las
-  // creamos aquí (idempotente), reflejando el esquema de producción.
-  await db.execute(`CREATE TABLE IF NOT EXISTS token_ledger (
-    id TEXT PRIMARY KEY,
-    player_id TEXT NOT NULL,
-    amount INTEGER NOT NULL,
-    reason TEXT NOT NULL,
-    ref_id TEXT,
-    balance_after INTEGER NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE (reason, ref_id)
-  )`);
-  await db.execute(`CREATE TABLE IF NOT EXISTS rewards (
-    id TEXT PRIMARY KEY,
-    group_id TEXT NOT NULL DEFAULT 'lomeros',
-    title TEXT NOT NULL,
-    description TEXT,
-    cost INTEGER NOT NULL,
-    active INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-  await db.execute(`CREATE TABLE IF NOT EXISTS redemptions (
-    id TEXT PRIMARY KEY,
-    player_id TEXT NOT NULL,
-    reward_id TEXT NOT NULL,
-    cost INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
-    resolved_at TEXT
-  )`);
-  await db.execute(`CREATE TABLE IF NOT EXISTS penalties (
-    id TEXT PRIMARY KEY,
-    player_id TEXT NOT NULL,
-    description TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    recharge_amount INTEGER NOT NULL DEFAULT 250,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    fulfilled_at TEXT
-  )`);
-
-  // push_subscriptions: la consulta sendToGroup; sin VAPID el push no entrega pero
-  // la tabla debe existir para que el broadcast no reviente con "no such table".
-  await db.execute(`CREATE TABLE IF NOT EXISTS push_subscriptions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    endpoint TEXT NOT NULL UNIQUE,
-    p256dh TEXT NOT NULL,
-    auth TEXT NOT NULL,
-    user_agent TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
+  // Tablas/columnas auxiliares que init-db y las migraciones no crean (compartido con seed-staging).
+  await ensureAuxTables(db);
 
   for (let i = 1; i <= 8; i++) {
     await db.execute({ sql: 'INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)', args: [`pl${i}`, `Jugador ${i}`] });
