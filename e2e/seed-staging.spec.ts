@@ -12,6 +12,7 @@ test('seed-staging crea el Grupo Demo y es idempotente', async ({ request }) => 
   // 2ª pasada no rompe.
   const res2 = await request.post('/api/dev/seed-staging');
   expect(res2.status()).toBe(200);
+  expect((await res2.json()).ok).toBe(true);
 
   // Verificación directa en la DB de fichero.
   const db = createClient({ url: TEST_ENV.DB_URL });

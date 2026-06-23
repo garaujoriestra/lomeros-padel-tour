@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
     args: [DEMO_GROUP_ID, DEMO_GROUP_ID, 'Grupo Demo'],
   });
   const demoAdminId = 'demo-admin';
+  // users.role queda en su default 'player' (columna legacy 1C); el rol autoritativo
+  // de admin vive en la membership de abajo.
   await client.execute({
     sql: 'INSERT OR IGNORE INTO users (id, email) VALUES (?, ?)',
     args: [demoAdminId, 'admin@grupo-demo.test'],
