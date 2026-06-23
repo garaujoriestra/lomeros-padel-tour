@@ -5,7 +5,7 @@ import { getUserByEmail } from '@/lib/auth/users';
 import { signSession } from '@/lib/auth/jwt';
 import { isDevToolingEnabled } from '@/lib/auth/dev-login';
 
-// POST /api/auth/dev-login  { email, name? }
+// POST /api/auth/dev-login  { email }
 // Forja una sesión sin pasar por Google. SOLO fuera de producción (guard por VERCEL_ENV).
 // Si el email no existe, crea un usuario "pelado" (sin membership) = estado de onboarding.
 export async function POST(request: NextRequest) {
