@@ -15,7 +15,7 @@ export function DevLoginForm({ users }: { users: Row[] }) {
       body: JSON.stringify({ email: targetEmail }),
     });
     if (res.ok) {
-      window.location.href = '/';
+      window.location.assign('/');
     } else {
       setBusy(false);
       alert('Error en dev-login');
