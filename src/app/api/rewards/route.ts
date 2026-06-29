@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { listRewardsInGroup, createRewardInGroup } from '@/lib/rewards/queries';
 
-// GET /api/rewards — catálogo del grupo por defecto (la UI pública filtra por active)
-export async function GET() {
+// GET /api/rewards?g=<slug> — catálogo del grupo indicado (público; por defecto = Lomeros)
+export async function GET(request: NextRequest) {
   try {
-    const groupId = await getDefaultGroupId();
+    const groupId = (await groupIdFromQuery(request)) ?? (await getDefaultGroupId());
     const all = await listRewardsInGroup(groupId);
     return NextResponse.json(all);
   } catch {
@@ -14,13 +15,17 @@ export async function GET() {
   }
 }
 
-// POST /api/rewards — crear premio (admin)
+// POST /api/rewards — crear premio (admin DEL GRUPO objetivo; grupo en body.g)
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const { title, description, cost } = await request.json();
+    const { title, description, cost } = body;
     if (!title?.trim()) return NextResponse.json({ error: 'El título es obligatorio' }, { status: 400 });
     if (!Number.isInteger(cost) || cost <= 0) {
       return NextResponse.json({ error: 'El coste debe ser un entero positivo' }, { status: 400 });

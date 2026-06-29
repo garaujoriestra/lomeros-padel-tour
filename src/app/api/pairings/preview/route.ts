@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pairStats } from '@/lib/db/schema';
 import { and, inArray } from 'drizzle-orm';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { groupIdFromQuery } from '@/lib/groups/request-group';
 import { getPlayersInGroup } from '@/lib/players/queries';
 import { listMatchesInvolvingPlayers } from '@/lib/matches/queries';
 import { computeSideStats, type SideStats } from '@/lib/rating/side-stats';
@@ -11,13 +11,14 @@ import { recommendPairings, type PlayerSummary } from '@/lib/rating/recommend-pa
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/pairings/preview?ids=p1,p2,p3,p4
+// GET /api/pairings/preview?g=<slug>&ids=p1,p2,p3,p4
 // Devuelve las 3 combinaciones de parejas posibles con esos 4 jugadores
 // (ordenadas por equilibrio de Elo) + el historial de las parejas relevantes.
 // Misma lógica que la página pública del partido, pero on-demand para el formulario de admin.
 export async function GET(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireGroupAdmin(await groupIdFromQuery(request));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
 
   const idsParam = request.nextUrl.searchParams.get('ids') ?? '';
   const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
@@ -30,7 +31,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const found = await getPlayersInGroup(groupId, ids);
     if (found.length !== 4) {
       return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 400 });

@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { updateRewardInGroup, deactivateRewardInGroup } from '@/lib/rewards/queries';
 
-// PUT /api/rewards/[id] — editar premio (admin). Body: { title?, description?, cost?, active? }
+// PUT /api/rewards/[id] — editar premio (admin DEL GRUPO objetivo; grupo en body.g)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
     const fields: { title?: string; description?: string | null; cost?: number; active?: boolean } = {};
     if (typeof body.title === 'string' && body.title.trim()) fields.title = body.title.trim();
     if (body.description !== undefined) fields.description = body.description?.trim() || null;
@@ -27,13 +30,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// DELETE /api/rewards/[id] — desactivar (soft delete; los canjes lo referencian)
-export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+// DELETE /api/rewards/[id]?g=<slug> — desactivar (soft delete; los canjes lo referencian)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireGroupAdmin(await groupIdFromQuery(request));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const updated = await deactivateRewardInGroup(groupId, id);
     if (!updated) return NextResponse.json({ error: 'Premio no encontrado' }, { status: 404 });
     return NextResponse.json({ success: true });
