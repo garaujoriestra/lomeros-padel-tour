@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession, type Session } from '@/lib/auth/session';
+import { getGroupContext, type GroupContext } from '@/lib/auth/group-context';
 
 // Devuelve { session } si el usuario es admin, o { response } con el error a devolver.
 export async function requireAdmin(): Promise<{ session: Session } | { response: NextResponse }> {
@@ -20,4 +21,23 @@ export async function requireSession(): Promise<{ session: Session } | { respons
     return { response: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
   }
   return { session };
+}
+
+// Admin del GRUPO OBJETIVO (no del grupo por defecto). 401 sin sesión; 403 si el usuario
+// no es admin de ese grupo (super_admin es solo-lectura → rechazado en escrituras admin).
+// targetGroupId null/undefined → getGroupContext usa la única membership: comportamiento de
+// Lomeros idéntico mientras los callers no envíen grupo. Reemplaza a requireAdmin en las
+// rutas ya migradas al Paso B.
+export async function requireGroupAdmin(
+  targetGroupId?: string | null,
+): Promise<{ ctx: GroupContext } | { response: NextResponse }> {
+  const session = await getSession();
+  if (!session) {
+    return { response: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+  }
+  const ctx = await getGroupContext(targetGroupId ? { targetGroupId } : {});
+  if (!ctx || ctx.role !== 'admin') {
+    return { response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) };
+  }
+  return { ctx };
 }
