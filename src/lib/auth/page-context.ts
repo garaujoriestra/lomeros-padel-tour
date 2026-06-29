@@ -33,14 +33,14 @@ export const resolvePageContext = cache(async (slug?: string): Promise<PageConte
     basePath = '';
   }
 
-  const ctx = await getGroupContext({ targetGroupId: group!.id });
+  const ctx = await getGroupContext({ targetGroupId: group.id });
   const role = ctx ? ctx.role : null;
   const player =
-    ctx && ctx.playerId ? ((await getPlayerInGroup(group!.id, ctx.playerId)) ?? null) : null;
+    ctx && ctx.playerId ? ((await getPlayerInGroup(group.id, ctx.playerId)) ?? null) : null;
 
   return {
-    groupId: group!.id,
-    group: group!,
+    groupId: group.id,
+    group,
     role,
     player,
     isSuperAdmin: ctx?.isSuperAdmin ?? false,
