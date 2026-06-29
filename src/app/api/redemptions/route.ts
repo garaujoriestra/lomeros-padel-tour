@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireSession, requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin, requireGroupSession } from '@/lib/auth/guard';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import {
   listRedemptionsAllInGroup, getMyRedemptions, getRewardInGroup,
   insertRedemption, deleteRedemption,
@@ -13,50 +13,47 @@ export async function GET(request: NextRequest) {
   try {
     const all = request.nextUrl.searchParams.get('all');
     if (all) {
-      const auth = await requireAdmin();
+      const auth = await requireGroupAdmin(await groupIdFromQuery(request));
       if ('response' in auth) return auth.response;
-      const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-      const rows = await listRedemptionsAllInGroup(groupId);
+      const rows = await listRedemptionsAllInGroup(auth.ctx.groupId);
       return NextResponse.json(rows);
     }
-
-    const auth = await requireSession();
+    const auth = await requireGroupSession(await groupIdFromQuery(request));
     if ('response' in auth) return auth.response;
-    if (!auth.session.player) return NextResponse.json([]);
-    const rows = await getMyRedemptions(auth.session.player.id);
+    if (!auth.ctx.playerId) return NextResponse.json([]);
+    const rows = await getMyRedemptions(auth.ctx.playerId);
     return NextResponse.json(rows);
   } catch {
     return NextResponse.json({ error: 'Error al obtener canjes' }, { status: 500 });
   }
 }
 
-// POST /api/redemptions — canjear. Body: { rewardId }
+// POST /api/redemptions — canjear. Body: { g?, rewardId }
 export async function POST(request: NextRequest) {
-  const auth = await requireSession();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  const auth = await requireGroupSession(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
-  const player = auth.session.player;
-  if (!player) return NextResponse.json({ error: 'Sin jugador vinculado' }, { status: 403 });
+  const playerId = auth.ctx.playerId;
+  if (!playerId) return NextResponse.json({ error: 'Sin jugador vinculado' }, { status: 403 });
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const { rewardId } = await request.json();
+    const groupId = auth.ctx.groupId;
+    const { rewardId } = body;
     const reward = await getRewardInGroup(groupId, rewardId);
     if (!reward || !reward.active) {
       return NextResponse.json({ error: 'Premio no disponible' }, { status: 404 });
     }
-    if (await hasPendingPenalty(player.id)) {
+    if (await hasPendingPenalty(playerId)) {
       return NextResponse.json({ error: 'Estás en bancarrota: cumple tu penalización antes' }, { status: 403 });
     }
-
-    const redemption = await insertRedemption(player.id, reward.id, reward.cost);
-
+    const redemption = await insertRedemption(playerId, reward.id, reward.cost);
     try {
-      await applyTokenMovement(player.id, -reward.cost, 'redemption', redemption.id);
+      await applyTokenMovement(playerId, -reward.cost, 'redemption', redemption.id);
     } catch {
       await deleteRedemption(redemption.id);
       return NextResponse.json({ error: 'No tienes saldo suficiente' }, { status: 400 });
     }
-
-    await detectBankruptcies([player.id]);
+    await detectBankruptcies([playerId]);
     return NextResponse.json(redemption, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Error al canjear' }, { status: 500 });

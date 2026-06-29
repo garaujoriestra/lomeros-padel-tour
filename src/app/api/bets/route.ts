@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { bets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireSession } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupSession } from '@/lib/auth/guard';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { getMatchInGroup } from '@/lib/matches/queries';
 import { getBetsWithBettorForMatch, getMyBets, getBetInMarket, deleteBet } from '@/lib/betting/queries';
 import { BETTING } from '@/lib/betting/config';
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
     const mine = request.nextUrl.searchParams.get('mine');
 
     if (matchId) {
-      // El partido debe ser del grupo por defecto; si no, no se exponen sus apuestas.
-      const groupId = await getDefaultGroupId();
+      // El partido debe ser del grupo indicado (o por defecto); si no, no se exponen sus apuestas.
+      const groupId = (await groupIdFromQuery(request)) ?? (await getDefaultGroupId());
       const match = await getMatchInGroup(groupId, matchId);
       if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
       const rows = await getBetsWithBettorForMatch(matchId);
@@ -29,10 +30,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (mine) {
-      const auth = await requireSession();
+      const auth = await requireGroupSession(await groupIdFromQuery(request));
       if ('response' in auth) return auth.response;
-      if (!auth.session.player) return NextResponse.json([]);
-      const rows = await getMyBets(auth.session.player.id);
+      if (!auth.ctx.playerId) return NextResponse.json([]);
+      const rows = await getMyBets(auth.ctx.playerId);
       return NextResponse.json(rows);
     }
 
@@ -43,19 +44,20 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/bets
-// Body: { matchId, market: 'winner'|'exact_score', predictedTeam: 1|2,
+// Body: { g?, matchId, market: 'winner'|'exact_score', predictedTeam: 1|2,
 //         predictedScore?: '2-0'|'2-1', amount }
 // Pari-mutuel: solo se registra la selección + cantidad (sin cuota congelada).
 export async function POST(request: NextRequest) {
-  const auth = await requireSession();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  const auth = await requireGroupSession(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
-  const player = auth.session.player;
-  if (!player) {
+  const playerId = auth.ctx.playerId;
+  if (!playerId) {
     return NextResponse.json({ error: 'Tu cuenta no está vinculada a un jugador' }, { status: 403 });
   }
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
+    const groupId = auth.ctx.groupId;
     const { matchId, market, predictedTeam, predictedScore, amount } = body;
 
     if (market !== 'winner' && market !== 'exact_score') {
@@ -82,8 +84,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-apuesta: si el jugador juega el partido, solo «ganador» a su pareja.
-    const inTeam1 = [match.team1Player1Id, match.team1Player2Id].includes(player.id);
-    const inTeam2 = [match.team2Player1Id, match.team2Player2Id].includes(player.id);
+    const inTeam1 = [match.team1Player1Id, match.team1Player2Id].includes(playerId);
+    const inTeam2 = [match.team2Player1Id, match.team2Player2Id].includes(playerId);
     if (inTeam1 || inTeam2) {
       const ownTeam = inTeam1 ? 1 : 2;
       if (market !== 'winner' || predictedTeam !== ownTeam) {
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (await hasPendingPenalty(player.id)) {
+    if (await hasPendingPenalty(playerId)) {
       return NextResponse.json(
         { error: 'Estás en bancarrota: cumple tu penalización para volver a apostar' },
         { status: 403 },
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apuesta previa abierta en este mercado (si la hay): se sustituye.
-    const previous = await getBetInMarket(matchId, player.id, market);
+    const previous = await getBetInMarket(matchId, playerId, market);
     if (previous && previous.status !== 'open') {
       return NextResponse.json({ error: 'Esa apuesta ya está liquidada' }, { status: 400 });
     }
@@ -112,13 +114,13 @@ export async function POST(request: NextRequest) {
     // descuentan fichas sin que quede registrada la apuesta.
     const { bet, balance } = await db.transaction(async (tx) => {
       if (previous) {
-        await applyTokenMovementTx(tx, player.id, previous.amount, 'bet_cancelled', previous.id);
+        await applyTokenMovementTx(tx, playerId, previous.amount, 'bet_cancelled', previous.id);
         await tx.delete(bets).where(eq(bets.id, previous.id));
       }
-      const balance = await applyTokenMovementTx(tx, player.id, -amount, 'bet_placed');
+      const balance = await applyTokenMovementTx(tx, playerId, -amount, 'bet_placed');
       const [bet] = await tx.insert(bets).values({
         matchId,
-        playerId: player.id,
+        playerId,
         market,
         predictedTeam,
         predictedScore: market === 'exact_score' ? predictedScore : null,
@@ -145,12 +147,12 @@ export async function POST(request: NextRequest) {
 
 // DELETE /api/bets?matchId=…&market=… — cancela mi apuesta abierta
 export async function DELETE(request: NextRequest) {
-  const auth = await requireSession();
+  const auth = await requireGroupSession(await groupIdFromQuery(request));
   if ('response' in auth) return auth.response;
-  const player = auth.session.player;
-  if (!player) return NextResponse.json({ error: 'Sin jugador vinculado' }, { status: 403 });
+  const playerId = auth.ctx.playerId;
+  if (!playerId) return NextResponse.json({ error: 'Sin jugador vinculado' }, { status: 403 });
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+    const groupId = auth.ctx.groupId;
     const matchId = request.nextUrl.searchParams.get('matchId');
     const market = request.nextUrl.searchParams.get('market');
     if (!matchId || (market !== 'winner' && market !== 'exact_score')) {
@@ -163,12 +165,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Las apuestas ya están cerradas' }, { status: 400 });
     }
 
-    const bet = await getBetInMarket(matchId, player.id, market);
+    const bet = await getBetInMarket(matchId, playerId, market);
     if (!bet || bet.status !== 'open') {
       return NextResponse.json({ error: 'No tienes apuesta abierta en ese mercado' }, { status: 404 });
     }
 
-    await applyTokenMovement(player.id, bet.amount, 'bet_cancelled', bet.id);
+    await applyTokenMovement(playerId, bet.amount, 'bet_cancelled', bet.id);
     await deleteBet(bet.id);
     return NextResponse.json({ success: true });
   } catch {

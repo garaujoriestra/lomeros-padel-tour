@@ -78,9 +78,24 @@ export default async function globalSetup() {
     args: ['mb-gt-admin', gtAdminUserId, 'grupo-test', 'admin', null],
   });
 
+  // Usuario JUGADOR del "Grupo Test" (membership player ligada a gt-pl1). Para probar
+  // flujos de jugador (bets/redemptions/me) group-aware en grupo-test.
+  // El usuario se crea aquí; la membership se inserta DESPUÉS de gt-pl1 (FK).
+  const gtPlayerUserId = 'e2e-gt-player-user';
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
+    args: [gtPlayerUserId, 'gt-player@test.com', 'player'],
+  });
+
   await db.execute({
     sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
     args: ['gt-pl1', 'grupo-test', 'Jugador GT'],
+  });
+
+  // Membership gt-player después de gt-pl1 (FK player_id → players.id).
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-gt-player', gtPlayerUserId, 'grupo-test', 'player', 'gt-pl1'],
   });
 
   // 3 jugadores más del grupo de test + un partido programado suyo, para no-fuga de partidos.
@@ -131,4 +146,5 @@ export default async function globalSetup() {
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/player.json', JSON.stringify(await sessionStorageState(playerUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/gt-admin.json', JSON.stringify(await sessionStorageState(gtAdminUserId, TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/gt-player.json', JSON.stringify(await sessionStorageState(gtPlayerUserId, TEST_ENV.AUTH_SECRET)));
 }
