@@ -18,7 +18,26 @@
 - **Crear** `src/lib/groups/resolve-slug.test.ts` — unit de la parte pura (`isValidGroupSlug`, `RESERVED_SLUGS`).
 - **Crear** `src/app/g/[slug]/page.tsx` — landing pública del grupo: resuelve slug, `notFound()` si inválido, `permanentRedirect('/')` si es el grupo por defecto, renderiza nombre + roster del grupo.
 - **Crear** `e2e/slug-routing.spec.ts` — e2e del segmento (200 con datos del grupo, 404 inválido/reservado, 308 lomeros→raíz).
-- **No se modifica ningún fichero existente.** (Garantía de no-rotura de Lomeros.)
+- **Modificar (aditivo, justificado)** `src/proxy.ts` — ver "Nota de desviación" abajo.
+
+> **Nota de desviación (durante la implementación):** la intención original era *no tocar ningún fichero existente*.
+> Hubo que **relajarla solo para `src/proxy.ts`** por un gotcha real de Next 16: el `src/app/loading.tsx` raíz crea
+> un Suspense boundary que envuelve `/g/[slug]`; una vez empieza el streaming, el HTTP 200 ya está comprometido y
+> `notFound()`/`permanentRedirect()` a nivel de página no pueden fijar 404/308. Por eso el chequeo de existencia del
+> slug y el redirect canónico se interceptan en el proxy **antes** del streaming (patrón recomendado por la propia
+> doc de Next, `loading.md` §Status Codes). Es seguro para Lomeros: en Next 16 el proxy corre en **runtime Node.js
+> por defecto** (la doc `proxy.md` lo fija y prohíbe cambiarlo), así que importar `@/lib/db` ahí no rompe el edge; y
+> el cambio es aditivo (la lógica de `/admin` y `/me` queda intacta, solo se añade una rama `/g/:slug` antes). El
+> spec §4 ya anticipaba añadir `/g/:slug` al matcher del proxy.
+
+### Limitaciones conocidas / follow-ups (no bloquean Paso A)
+
+- **404 "pelado":** un slug inexistente/reservado devuelve `new Response(null, { status: 404 })` (status correcto,
+  pero página en blanco sin el not-found con estilo). Aceptable para Paso A (un grupo que no existe no tiene marca
+  que aplicar). Follow-up: rewrite a un not-found con estilo manteniendo el 404.
+- **Unificar el check de grupo-por-defecto:** el proxy compara `group.slug === DEFAULT_GROUP_SLUG` (env) y la página
+  `group.id === getDefaultGroupId()` (DB). Equivalentes hoy; unificar cuando el proxy tenga contexto de grupo (Paso C).
+- **Matcher:** `/g/:slug` (un solo segmento) en Paso A; se ampliará deliberadamente cuando Paso C meta sub-rutas autenticadas.
 
 ---
 

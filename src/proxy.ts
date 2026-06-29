@@ -20,6 +20,7 @@ export async function proxy(request: NextRequest) {
     if (!group) {
       return new Response(null, { status: 404 });
     }
+    // TODO(Paso C): unificar con getDefaultGroupId() cuando el proxy tenga contexto de grupo (hoy compara por slug de env; la página compara por id de DB).
     if (group.slug === DEFAULT_GROUP_SLUG) {
       return NextResponse.redirect(new URL('/', request.url), 308);
     }
@@ -41,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/me/:path*', '/g/:slug*'],
+  matcher: ['/admin/:path*', '/me/:path*', '/g/:slug'],
 };

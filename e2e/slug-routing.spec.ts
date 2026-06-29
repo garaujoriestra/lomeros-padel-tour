@@ -18,7 +18,10 @@ test.describe('slug routing · /g/[slug] (Paso A)', () => {
     expect(res?.status()).toBe(404);
   });
 
-  test('/g/lomeros redirige a la raíz (canónico único)', async ({ page }) => {
+  test('/g/lomeros redirige 308 a la raíz (canónico único)', async ({ page, request }) => {
+    const res = await request.get('/g/lomeros', { maxRedirects: 0 });
+    expect(res.status()).toBe(308);
+    expect(new URL(res.headers()['location'], 'http://localhost:3100').pathname).toBe('/');
     await page.goto('/g/lomeros');
     expect(new URL(page.url()).pathname).toBe('/');
   });
