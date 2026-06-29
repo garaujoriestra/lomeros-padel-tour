@@ -65,6 +65,19 @@ export default async function globalSetup() {
     sql: 'INSERT OR IGNORE INTO groups (id, slug, name) VALUES (?, ?, ?)',
     args: ['grupo-test', 'grupo-test', 'Grupo Test'],
   });
+
+  // Usuario admin del "Grupo Test" (membership admin en grupo-test). Para probar que un
+  // admin de su propio grupo SÍ puede escribir en él, y que un admin de Lomeros NO.
+  const gtAdminUserId = 'e2e-gt-admin-user';
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
+    args: [gtAdminUserId, 'gt-admin@test.com', 'player'],
+  });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-gt-admin', gtAdminUserId, 'grupo-test', 'admin', null],
+  });
+
   await db.execute({
     sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
     args: ['gt-pl1', 'grupo-test', 'Jugador GT'],
@@ -117,4 +130,5 @@ export default async function globalSetup() {
   await mkdir('e2e/.auth', { recursive: true });
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/player.json', JSON.stringify(await sessionStorageState(playerUserId, TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/gt-admin.json', JSON.stringify(await sessionStorageState(gtAdminUserId, TEST_ENV.AUTH_SECRET)));
 }
