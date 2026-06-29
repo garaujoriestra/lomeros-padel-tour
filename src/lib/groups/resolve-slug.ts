@@ -4,13 +4,14 @@ import { groups } from '@/lib/db/schema';
 import type { GroupRow } from './queries';
 
 // Segmentos de primer nivel que colisionarían con rutas reales de la app: un slug
-// de grupo NUNCA puede ser uno de estos. Mantener en sync con src/app/ (y con
-// src/app/(public)/). La validación al ELEGIR slug (onboarding) es de Tarea 2; aquí
-// solo se usa para rechazar en el resolutor.
+// de grupo NUNCA puede ser uno de estos. Solo se listan segmentos con forma de slug
+// válida — los que llevan '_' o '.' (p. ej. _next, manifest.webmanifest) ya los
+// rechaza SLUG_RE antes de consultar este set. Mantener en sync con src/app/ y
+// src/app/(public)/.
 export const RESERVED_SLUGS = new Set<string>([
-  'g', 'api', '_next', 'me', 'admin', 'login', 'logout', 'dev-login',
+  'g', 'api', 'admin', 'me', 'login', 'logout', 'dev-login',
   'offline', 'unauthorized', 'matches', 'players', 'pozos', 'torneos',
-  'rankings', 'eventos', 'icon', 'apple-icon', 'manifest.webmanifest',
+  'rankings', 'eventos', 'info', 'icon', 'apple-icon',
 ]);
 
 // Forma válida de slug: minúsculas, dígitos y guiones internos (sin guiones en los
