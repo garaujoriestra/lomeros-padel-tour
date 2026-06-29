@@ -61,4 +61,13 @@ describe('resolvePageContext', () => {
     expect(ctx.role).toBeNull();
     expect(ctx.player).toBeNull();
   });
+
+  it('slug del grupo por defecto → basePath vacío (para que el layout redirija a la raíz)', async () => {
+    getGroupBySlug.mockResolvedValue(LOM);
+    getDefaultGroupId.mockResolvedValue('lomeros');
+    getGroupContext.mockResolvedValue(null);
+    const ctx = await resolvePageContext('lomeros');
+    expect(ctx.groupId).toBe('lomeros');
+    expect(ctx.basePath).toBe('');
+  });
 });
