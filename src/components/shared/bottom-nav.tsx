@@ -18,16 +18,18 @@ const RIGHT = [
   { href: '/rankings/pairs', label: 'Parejas', icon: Users },
 ];
 
-export function BottomNav() {
+export function BottomNav({ basePath = '' }: { basePath?: string }) {
   const pathname = usePathname();
-  const timbaActive = pathname === '/rankings/tokens';
+  const timbaHref = `${basePath}/rankings/tokens`;
+  const timbaActive = isNavActive(timbaHref, pathname);
 
   const item = (href: string, label: string, Icon: typeof House) => {
-    const active = isNavActive(href, pathname);
+    const prefixedHref = `${basePath}${href === '/' ? '' : href}` || '/';
+    const active = isNavActive(prefixedHref, pathname);
     return (
       <Link
         key={href}
-        href={href}
+        href={prefixedHref}
         aria-current={active ? 'page' : undefined}
         className={`bn-item ${active ? 'active' : ''}`}
       >
@@ -43,7 +45,7 @@ export function BottomNav() {
 
       {/* La Timba — acción destacada (ficha que sobresale de la barra) */}
       <Link
-        href="/rankings/tokens"
+        href={timbaHref}
         aria-current={timbaActive ? 'page' : undefined}
         className={`bn-item bn-timba ${timbaActive ? 'active' : ''}`}
       >

@@ -25,7 +25,10 @@ export const resolvePageContext = cache(async (slug?: string): Promise<PageConte
   if (slug) {
     group = await getGroupBySlug(slug);
     if (!group) notFound();
-    basePath = `/g/${slug}`;
+    const defaultId = await getDefaultGroupId();
+    // El grupo por defecto es canónico en la raíz; su slug bajo /g/ se trata
+    // como si no tuviera basePath propio (el layout lo redirige a '/').
+    basePath = group.id === defaultId ? '' : `/g/${slug}`;
   } else {
     const id = await getDefaultGroupId();
     group = await getGroupById(id);

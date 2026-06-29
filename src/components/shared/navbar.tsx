@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
-import { navLinks, isNavActive } from './nav-links';
+import { navLinks, isNavActive, type NavLink } from './nav-links';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 import Crest from './crest';
 
@@ -31,32 +31,37 @@ function ThemeToggle() {
   );
 }
 
-export function Navbar({ session = null }: { session?: NavSession | null }) {
+export function Navbar({
+  session = null,
+  basePath = '',
+  links = navLinks,
+}: { session?: NavSession | null; basePath?: string; links?: NavLink[] }) {
   const pathname = usePathname();
   const router = useRouter();
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/');
+    router.push(basePath || '/');
     router.refresh();
   }
 
   return (
     <header className={`topbar ${session ? 'with-session' : ''}`} aria-label="Barra superior">
       <div className="topbar-inner">
-        <Link href="/" className="brand" aria-label="Inicio">
+        <Link href={basePath || '/'} className="brand" aria-label="Inicio">
           <Crest size={34} className="brand-crest" title="Lomeros Padel Tour" wordmark={false} />
           <span className="brand-name">Lomeros Padel Tour</span>
         </Link>
 
         <nav className="nav-tabs" aria-label="Navegación principal">
-          {navLinks.map((link) => {
+          {links.map((link) => {
             const Icon = link.icon;
+            const href = `${basePath}${link.href === '/' ? '' : link.href}` || '/';
             return (
               <Link
                 key={link.href}
-                href={link.href}
-                className={`nav-tab ${isNavActive(link.href, pathname) ? 'active' : ''}`}
+                href={href}
+                className={`nav-tab ${isNavActive(href, pathname) ? 'active' : ''}`}
               >
                 <Icon size={15} strokeWidth={2.2} /> {link.label}
               </Link>
@@ -69,7 +74,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
           {session ? (
             <>
               {session.role === 'admin' && (
-                <Link href="/admin" className="icon-btn" title="Admin" aria-label="Admin">
+                <Link href={`${basePath}/admin`} className="icon-btn" title="Admin" aria-label="Admin">
                   <Settings size={16} />
                 </Link>
               )}
@@ -77,7 +82,7 @@ export function Navbar({ session = null }: { session?: NavSession | null }) {
                 <LogOut size={16} />
               </button>
               {session.player && (
-                <Link href="/me" title="Mi perfil" aria-label="Mi perfil" style={{ borderRadius: 99, display: 'inline-flex' }}>
+                <Link href={`${basePath}/me`} title="Mi perfil" aria-label="Mi perfil" style={{ borderRadius: 99, display: 'inline-flex' }}>
                   <LptAvatar player={session.player} size={34} />
                 </Link>
               )}
