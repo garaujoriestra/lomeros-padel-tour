@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { NewMatch } from '@/lib/db/schema';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import {
   getMatchInGroup,
   getMatchSetsForMatch,
@@ -15,11 +16,11 @@ import { notifyMatchResult } from '@/lib/push/match-events';
 import { settleMatchBets, refundOpenBets, reverseSettlement } from '@/lib/betting/settle';
 import { notifyBetSettlements } from '@/lib/push/bet-events';
 
-// GET /api/matches/[id] (público)
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET /api/matches/[id]?g=<slug> (público; grupo por defecto = Lomeros)
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const groupId = await getDefaultGroupId();
+    const groupId = (await groupIdFromQuery(request)) ?? (await getDefaultGroupId());
     const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
     const sets = await getMatchSetsForMatch(id);
@@ -29,13 +30,13 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   }
 }
 
-// DELETE /api/matches/[id] (admin)
-export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+// DELETE /api/matches/[id]?g=<slug> (admin del grupo objetivo)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireGroupAdmin(await groupIdFromQuery(request));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     const match = await getMatchInGroup(groupId, id);
     if (match) {
       if (match.status === 'completed') {
@@ -52,14 +53,17 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-// PUT /api/matches/[id] — add result to a scheduled match (admin)
+// PUT /api/matches/[id] — add result to a scheduled match (admin del grupo objetivo; grupo en body.g)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
     const {
       sets,
       team1Player1Id,

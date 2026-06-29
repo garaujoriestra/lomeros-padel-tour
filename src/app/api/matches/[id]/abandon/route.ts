@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { groupIdFromValue } from '@/lib/groups/request-group';
 import { getMatchInGroup, updateMatchInGroup } from '@/lib/matches/queries';
 import { refundOpenBets } from '@/lib/betting/settle';
 import { notifyBetSettlements } from '@/lib/push/bet-events';
 
-// POST /api/matches/[id]/abandon (admin)
-// Marca un partido programado como no disputado por lesión. Body: { injuredPlayerId }.
+// POST /api/matches/[id]/abandon (admin del grupo objetivo; grupo en body.g)
+// Marca un partido programado como no disputado por lesión. Body: { g, injuredPlayerId }.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await req.json();
     const { injuredPlayerId } = body as { injuredPlayerId?: string };
 
     if (!injuredPlayerId) {

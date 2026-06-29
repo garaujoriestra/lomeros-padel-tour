@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { listMatchesByDate, createMatchInGroup, insertMatchSets } from '@/lib/matches/queries';
 import { getPlayersInGroup } from '@/lib/players/queries';
 import { notifyMatchResult } from '@/lib/push/match-events';
 import { notifyBettingOpen } from '@/lib/push/bet-events';
 
-// GET /api/matches (público; grupo por defecto)
-export async function GET() {
+// GET /api/matches?g=<slug> (público; grupo por defecto = Lomeros)
+export async function GET(request: NextRequest) {
   try {
-    const groupId = await getDefaultGroupId();
+    const groupId = (await groupIdFromQuery(request)) ?? (await getDefaultGroupId());
     const all = await listMatchesByDate(groupId);
     return NextResponse.json(all);
   } catch {
@@ -19,15 +20,18 @@ export async function GET() {
   }
 }
 
-// POST /api/matches (admin)
+// POST /api/matches (admin DEL GRUPO objetivo; grupo en body.g)
 //   - With sets  → status='completed', calculates winner, triggers Elo
 //   - Without sets → status='scheduled', winnerTeam=null, no Elo yet
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
     const {
       date,
       time,

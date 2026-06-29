@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { coerceSide } from '@/lib/rating/side-stats';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { groupIdFromValue } from '@/lib/groups/request-group';
 import { updateMatchInGroup } from '@/lib/matches/queries';
 
-// PATCH /api/matches/[id]/sides — update only the side columns (admin)
+// PATCH /api/matches/[id]/sides — update only the side columns (admin del grupo objetivo; grupo en body.g)
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
     const { team1Player1Side, team1Player2Side, team2Player1Side, team2Player2Side } = body;
 
     const updated = await updateMatchInGroup(groupId, id, {
