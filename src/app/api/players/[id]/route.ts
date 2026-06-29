@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { upsertPlayerUser } from '@/lib/auth/users';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { getPlayerInGroup, updatePlayerInGroup, deletePlayerInGroup } from '@/lib/players/queries';
 
-// GET /api/players/[id] (público; grupo por defecto)
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET /api/players/[id]?g=<slug> (público; grupo por defecto = Lomeros)
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const groupId = await getDefaultGroupId();
+    const groupId = (await groupIdFromQuery(request)) ?? (await getDefaultGroupId());
     const player = await getPlayerInGroup(groupId, id);
     if (!player) return NextResponse.json({ error: 'Jugador no encontrado' }, { status: 404 });
     return NextResponse.json(player);
@@ -17,16 +18,18 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   }
 }
 
-// PUT /api/players/[id] (admin)
+// PUT /api/players/[id] (admin del grupo objetivo; grupo en body.g)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
+
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    const body = await request.json();
     const { name, nickname, avatarUrl, isLeftHanded, juegaPadel, email } = body;
-
     if (!name?.trim()) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
     }
@@ -54,13 +57,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// DELETE /api/players/[id] (admin)
-export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+// DELETE /api/players/[id]?g=<slug> (admin del grupo objetivo)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireGroupAdmin(await groupIdFromQuery(request));
   if ('response' in auth) return auth.response;
+  const groupId = auth.ctx.groupId;
   try {
     const { id } = await params;
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
     await deletePlayerInGroup(groupId, id);
     return NextResponse.json({ success: true });
   } catch {
