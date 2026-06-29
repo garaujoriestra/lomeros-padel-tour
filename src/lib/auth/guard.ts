@@ -41,3 +41,21 @@ export async function requireGroupAdmin(
   }
   return { ctx };
 }
+
+// Miembro (cualquier rol) o super_admin del GRUPO OBJETIVO. 401 sin sesión; 403 sin acceso
+// a ese grupo. Devuelve el contexto (incl. ctx.playerId = ficha del usuario EN ESE grupo,
+// null si super_admin o sin ficha). Las rutas de jugador usan ctx.playerId en vez de
+// session.player (horneado al grupo por defecto).
+export async function requireGroupSession(
+  targetGroupId?: string | null,
+): Promise<{ ctx: GroupContext } | { response: NextResponse }> {
+  const session = await getSession();
+  if (!session) {
+    return { response: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+  }
+  const ctx = await getGroupContext(targetGroupId ? { targetGroupId } : {});
+  if (!ctx) {
+    return { response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) };
+  }
+  return { ctx };
+}
