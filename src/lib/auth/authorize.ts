@@ -14,5 +14,10 @@ export function decideAccess(
   if (path === '/me' || path.startsWith('/me/')) {
     return payload ? 'allow' : 'redirect-login';
   }
+  // Paso 2: /g/<slug>/me (y sub-rutas) exigen sesión, igual que /me en raíz.
+  // La landing pública /g/<slug> (sin /me) no entra aquí.
+  if (/^\/g\/[^/]+\/me(?:\/|$)/.test(path)) {
+    return payload ? 'allow' : 'redirect-login';
+  }
   return 'allow';
 }
