@@ -19,5 +19,10 @@ export function decideAccess(
   if (/^\/g\/[^/]+\/me(?:\/|$)/.test(path)) {
     return payload ? 'allow' : 'redirect-login';
   }
+  // Paso 3: /g/<slug>/admin (y sub-rutas) exigen sesión, igual que /admin en raíz.
+  // El rol admin DEL GRUPO lo exige g/[slug]/admin/layout.tsx server-side.
+  if (/^\/g\/[^/]+\/admin(?:\/|$)/.test(path)) {
+    return payload ? 'allow' : 'redirect-login';
+  }
   return 'allow';
 }

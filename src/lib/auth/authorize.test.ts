@@ -31,4 +31,11 @@ describe('decideAccess', () => {
   it('no gatea la landing pública del grupo /g/<slug>', () => {
     expect(decideAccess('/g/grupo-test', null)).toBe('allow');
   });
+
+  it('gatea /g/<slug>/admin solo por sesión (el rol lo exige el layout del grupo)', () => {
+    expect(decideAccess('/g/grupo-test/admin', null)).toBe('redirect-login');
+    expect(decideAccess('/g/grupo-test/admin', { userId: 'u' })).toBe('allow');
+    expect(decideAccess('/g/grupo-test/admin/players', null)).toBe('redirect-login');
+    expect(decideAccess('/g/grupo-test/admin/matches', { userId: 'u' })).toBe('allow');
+  });
 });
