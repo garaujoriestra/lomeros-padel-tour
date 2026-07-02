@@ -15,14 +15,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-export function DeletePlayerButton({ id, name }: { id: string; name: string }) {
+export function DeletePlayerButton({ id, name, g }: { id: string; name: string; g?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
     setLoading(true);
-    const res = await fetch(`/api/players/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/players/${id}${g ? `?g=${encodeURIComponent(g)}` : ''}`, { method: 'DELETE' });
     if (res.ok) {
       toast.success(`${name} eliminado`);
       setOpen(false);
