@@ -15,14 +15,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-export function DeleteMatchButton({ id }: { id: string }) {
+export function DeleteMatchButton({ id, g }: { id: string; g?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
     setLoading(true);
-    const res = await fetch(`/api/matches/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/matches/${id}${g ? `?g=${encodeURIComponent(g)}` : ''}`, { method: 'DELETE' });
     if (res.ok) {
       toast.success('Partido eliminado');
       setOpen(false);
