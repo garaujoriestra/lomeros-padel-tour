@@ -56,6 +56,15 @@ export async function insertMatchSets(
   }
 }
 
+// Sustituye los sets de un partido (corrección de un resultado ya registrado).
+export async function replaceMatchSets(
+  matchId: string,
+  sets: { setNumber: number; team1Games: number; team2Games: number }[],
+): Promise<void> {
+  await db.delete(matchSets).where(eq(matchSets.matchId, matchId));
+  await insertMatchSets(matchId, sets);
+}
+
 // Partidos recientes del grupo, por fecha desc (feed de la home).
 export async function listRecentMatches(groupId: string, limit: number): Promise<Match[]> {
   return db.select().from(matches).where(eq(matches.groupId, groupId))

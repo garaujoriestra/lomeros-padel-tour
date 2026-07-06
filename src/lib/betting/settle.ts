@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { bets, players, penalties } from '@/lib/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { matchSetsScore, isBankrupt } from './settle-logic';
+import { matchSetsScore, isBankrupt, resettleExactPool } from './settle-logic';
 import { settlePool, type PoolBet } from './parimutuel';
 import { applyTokenMovement, hasLedgerEntry } from './bank';
 import { type SetsScore } from './config';
@@ -87,6 +87,55 @@ export async function reverseSettlement(matchId: string): Promise<void> {
     await db.update(bets).set({ status: 'open', payout: 0, settledAt: null }).where(eq(bets.id, bet.id));
   }
   await detectBankruptcies([...new Set(settled.map((b) => b.playerId))]);
+}
+
+// Re-liquida el mercado exact_score tras corregir los juegos de un partido
+// completado (el ganador no cambia, así que el mercado winner no se toca).
+// Aplica el delta neto por apuesta como 'adjustment' (refId null): la unicidad
+// (reason, refId) del ledger impide repetir los asientos de una liquidación
+// normal tras una reversión, y el delta neto sobrevive a ediciones repetidas.
+export async function resettleExactScoreBets(
+  matchId: string,
+  winnerTeam: 1 | 2,
+  sets: { team1Games: number; team2Games: number }[],
+): Promise<SettledBetForPush[]> {
+  const settled = await db.select().from(bets)
+    .where(and(eq(bets.matchId, matchId), inArray(bets.status, ['won', 'lost', 'refunded'])));
+
+  // Cartel anulado (cambio de parejas al registrar): TODO el partido quedó
+  // reembolsado. Esas apuestas son nulas y la corrección no debe resucitarlas.
+  if (!settled.some((b) => b.status === 'won' || b.status === 'lost')) return [];
+
+  const exact = settled.filter((b) => b.market === 'exact_score');
+  if (exact.length === 0) return [];
+
+  const score = matchSetsScore(sets, winnerTeam);
+  const outcomes = resettleExactPool(
+    exact.map((b) => ({
+      id: b.id, playerId: b.playerId, status: b.status as 'won' | 'lost' | 'refunded',
+      amount: b.amount, payout: b.payout,
+      predictedTeam: b.predictedTeam, predictedScore: b.predictedScore,
+    })),
+    winnerTeam, score,
+  );
+
+  const results: SettledBetForPush[] = [];
+  for (const o of outcomes) {
+    if (!o.changed && o.delta === 0) continue;
+    if (o.delta !== 0) {
+      await applyTokenMovement(o.playerId, o.delta, 'adjustment', null, { allowNegative: true });
+    }
+    await db.update(bets)
+      .set({ status: o.newStatus, payout: o.newPayout, settledAt: now() })
+      .where(eq(bets.id, o.betId));
+    if (o.changed) {
+      const bet = exact.find((b) => b.id === o.betId)!;
+      results.push({ playerId: o.playerId, status: o.newStatus, amount: bet.amount, payout: o.newPayout });
+    }
+  }
+
+  await detectBankruptcies([...new Set(results.map((r) => r.playerId))]);
+  return results;
 }
 
 // Crea penalización pendiente para quien quede en bancarrota (si no tiene ya una).

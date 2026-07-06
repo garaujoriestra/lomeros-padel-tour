@@ -184,6 +184,18 @@ export async function processMatchRatings(match: MatchInput): Promise<MatchRatin
   };
 }
 
+// Recalcula los logros ligados a un partido tras corregir sus juegos: borra los
+// otorgados con trigger en este partido y re-detecta. Los logros de rosco (6-0)
+// dependen de los juegos; el ganador no cambia en una corrección, así que las
+// rachas y los logros de otros partidos no se ven afectados.
+export async function reapplyAchievementsForMatch(
+  matchId: string,
+  groupId: string,
+): Promise<{ playerId: string; achievementId: string }[]> {
+  await db.delete(playerAchievements).where(eq(playerAchievements.triggerMatchId, matchId));
+  return applyAchievementsForMatch(matchId, groupId);
+}
+
 async function applyAchievementsForMatch(
   matchId: string,
   groupId: string,
