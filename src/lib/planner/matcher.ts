@@ -50,8 +50,8 @@ export function findDayCoincidences(
       out.push({
         startMin: w,
         endMin: w + windowMin,
-        courtNames: okCourts.map((c) => c.name),
-        playerNames: avail.map((p) => p.name),
+        courtNames: [...new Set(okCourts.map((c) => c.name))],
+        playerNames: [...new Set(avail.map((p) => p.name))],
       });
     }
     lastActiveStart = w;

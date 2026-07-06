@@ -65,4 +65,43 @@ describe('findDayCoincidences', () => {
       { startMin: 1200, endMin: 1290, courtNames: ['pista'], playerNames: ['a', 'b', 'c', 'd'] },
     ]);
   });
+
+  it('dos pistas de dueños distintos se unen en el tramo fusionado', () => {
+    // Pista X efectiva 20:00–21:30 (dueño a); pista Y efectiva 20:30–22:00 (dueño b).
+    const players = [
+      p('a', S(1200, 3)), p('b', S(1230, 3)),
+      p('c', S(1200, 4)), p('d', S(1200, 4)), p('e', S(1200, 4)),
+    ];
+    const out = findDayCoincidences(players, [
+      court('X', 'a', S(1200, 4)),
+      court('Y', 'b', S(1200, 4)),
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].startMin).toBe(1200);
+    expect(out[0].endMin).toBe(1320);
+    expect(out[0].courtNames).toEqual(['X', 'Y']);
+  });
+
+  it('hueco inactivo entre ventanas activas → dos tramos aunque se solapen en horario', () => {
+    // W(20:00) activa con a,b,c,d; W(20:30) inactiva (solo 3); W(21:00) activa con a,b,c,e.
+    const players = [
+      p('a', S(1200, 5)), p('b', S(1200, 5)), p('c', S(1200, 5)),
+      p('d', S(1200, 3)),  // solo hasta 21:30 → cubre W(20:00), no W(20:30) ni W(21:00)
+      p('e', S(1260, 3)),  // desde 21:00 → cubre W(21:00), no antes
+    ];
+    const out = findDayCoincidences(players, [court('pista', 'a', S(1200, 5))]);
+    expect(out).toEqual([
+      { startMin: 1200, endMin: 1290, courtNames: ['pista'], playerNames: ['a', 'b', 'c', 'd'] },
+      { startMin: 1260, endMin: 1350, courtNames: ['pista'], playerNames: ['a', 'b', 'c', 'e'] },
+    ]);
+  });
+
+  it('detecta la última ventana del día (22:30–24:00)', () => {
+    const players = ['a', 'b', 'c', 'd'].map((id) => p(id, S(1350, 3)));
+    const out = findDayCoincidences(players, [court('pista', 'a', S(1350, 3))]);
+    expect(out).toEqual([{
+      startMin: 1350, endMin: 1440,
+      courtNames: ['pista'], playerNames: ['a', 'b', 'c', 'd'],
+    }]);
+  });
 });
