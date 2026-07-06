@@ -14,9 +14,9 @@ describe('ensureAuxTables', () => {
 
     const t = await client.execute(
       "SELECT name FROM sqlite_master WHERE type='table' AND name IN " +
-        "('bets','token_ledger','rewards','redemptions','penalties','push_subscriptions','player_achievements')",
+        "('bets','token_ledger','rewards','redemptions','penalties','push_subscriptions','player_achievements','courts','planner_slots')",
     );
-    expect(t.rows.length).toBe(7);
+    expect(t.rows.length).toBe(9);
 
     const cols = await client.execute('PRAGMA table_info(players)');
     const names = cols.rows.map((r) => r.name as string);

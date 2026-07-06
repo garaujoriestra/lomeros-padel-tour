@@ -287,6 +287,31 @@ export const tournamentMatches = sqliteTable('tournament_matches', {
   winner: text('winner'), // 'A' | 'B' | null
 });
 
+// ─── PLANNER (planificador semanal) ──────────────────────────────────────────
+// Pista propia de un jugador (una por jugador; solo su dueño la gestiona).
+export const courts = sqliteTable('courts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  groupId: text('group_id').notNull().references(() => groups.id),
+  ownerPlayerId: text('owner_player_id').notNull().unique().references(() => players.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
+// Disponibilidad de UN día de una semana para un sujeto (jugador o pista).
+// `slots` = JSON con los minutos de inicio pintados, orden ascendente
+// (p. ej. "[1200,1230,1260,1290]" = 20:00–22:00). Semana = fecha de su lunes.
+export const plannerSlots = sqliteTable('planner_slots', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  groupId: text('group_id').notNull().references(() => groups.id),
+  weekStart: text('week_start').notNull(), // lunes YYYY-MM-DD
+  day: integer('day').notNull(),           // 0=lunes … 6=domingo
+  subjectType: text('subject_type').notNull(), // 'player' | 'court'
+  subjectId: text('subject_id').notNull(),     // players.id o courts.id según subjectType
+  slots: text('slots').notNull(),
+}, (t) => ([
+  unique().on(t.weekStart, t.day, t.subjectType, t.subjectId),
+]));
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -325,3 +350,7 @@ export type Group = typeof groups.$inferSelect;
 export type NewGroup = typeof groups.$inferInsert;
 export type Membership = typeof memberships.$inferSelect;
 export type NewMembership = typeof memberships.$inferInsert;
+export type Court = typeof courts.$inferSelect;
+export type NewCourt = typeof courts.$inferInsert;
+export type PlannerSlotRow = typeof plannerSlots.$inferSelect;
+export type NewPlannerSlot = typeof plannerSlots.$inferInsert;
