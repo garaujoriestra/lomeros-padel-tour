@@ -1,10 +1,15 @@
 const TZ = 'Europe/Madrid';
 
 // Fecha de "hoy" (YYYY-MM-DD) en Europe/Madrid; el servidor corre en UTC.
+// formatToParts (y no un locale con formato YYYY-MM-DD) para no depender de
+// datos CLDR: mismo idioma que tzOffsetMs en betting/close-time.ts.
 export function madridTodayIso(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(now); // en-CA → YYYY-MM-DD
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(now).map((p) => [p.type, p.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 // Suma días a una fecha ISO. Aritmética en UTC puro: sin efectos de TZ ni DST.

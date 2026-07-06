@@ -47,4 +47,8 @@ describe('madridTodayIso', () => {
     expect(madridTodayIso(new Date('2026-07-06T23:30:00Z'))).toBe('2026-07-07');
     expect(madridTodayIso(new Date('2026-07-06T10:00:00Z'))).toBe('2026-07-06');
   });
+  it('maneja también el horario de invierno (CET, UTC+1)', () => {
+    expect(madridTodayIso(new Date('2026-01-01T23:30:00Z'))).toBe('2026-01-02');
+    expect(madridTodayIso(new Date('2026-01-01T22:30:00Z'))).toBe('2026-01-01');
+  });
 });
