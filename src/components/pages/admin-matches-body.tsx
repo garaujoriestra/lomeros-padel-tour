@@ -1,7 +1,7 @@
 import { listMatchesByDate, listMatchSetsInGroup } from '@/lib/matches/queries';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import Link from 'next/link';
-import { Calendar, MapPin, Plus, RectangleVertical, ClipboardPen } from 'lucide-react';
+import { Calendar, MapPin, Plus, RectangleVertical, ClipboardPen, Pencil } from 'lucide-react';
 import { ScoreGrid, StatusPill, formatMatchDate } from '@/components/lpt/ui';
 import { DeleteMatchButton } from '@/app/admin/matches/delete-match-button';
 import type { PageContext } from '@/lib/auth/page-context';
@@ -112,6 +112,11 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
                       {meta(match)}
                       <div className="flex items-center gap-2">
                         {isInjury && <StatusPill status="injury_aborted" />}
+                        {isRoot && !isInjury && (
+                          <Link href={`/admin/matches/${match.id}/edit`} className="lpt-btn" style={smallBtn}>
+                            <Pencil size={14} /> Editar
+                          </Link>
+                        )}
                         {isRoot && (
                           <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
                             <RectangleVertical size={14} /> Lados
