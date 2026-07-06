@@ -63,6 +63,8 @@ export async function upsertDaySlots(
   await db.insert(plannerSlots)
     .values({ groupId, weekStart, day, subjectType, subjectId, slots: JSON.stringify(slots) })
     .onConflictDoUpdate({
+      // El UNIQUE físico no incluye group_id a propósito: subject_id es un UUID
+      // global (players.id / courts.id), así que ya identifica una única fila.
       target: [plannerSlots.weekStart, plannerSlots.day, plannerSlots.subjectType, plannerSlots.subjectId],
       set: { slots: JSON.stringify(slots) },
     });

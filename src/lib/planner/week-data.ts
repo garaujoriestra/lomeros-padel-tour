@@ -14,6 +14,18 @@ export interface WeekView {
 
 const emptyWeek = () => Array.from({ length: 7 }, () => [] as number[]);
 
+// Parse defensivo del JSON de slots: una fila corrupta (solo alcanzable por SQL
+// directo, nunca por la API validada) se degrada a día vacío en vez de tumbar
+// la vista de toda la semana. Precedente: tournament/pozo-view.ts.
+function parseSlots(raw: string): number[] {
+  try {
+    const val = JSON.parse(raw);
+    if (Array.isArray(val) && val.every((n) => Number.isInteger(n))) return val;
+  } catch { /* JSON inválido */ }
+  console.error('planner: fila de slots corrupta ignorada:', raw);
+  return [];
+}
+
 // Vista completa de la semana de un grupo: disponibilidades, pistas y
 // coincidencias calculadas en servidor. Única fuente para página y API.
 export async function loadWeekView(groupId: string, weekStart: string): Promise<WeekView> {
@@ -27,9 +39,10 @@ export async function loadWeekView(groupId: string, weekStart: string): Promise<
   const playerDays = new Map<string, number[][]>();
   const courtDays = new Map<string, number[][]>();
   for (const row of slotRows) {
+    if (row.day < 0 || row.day > 6) continue; // fila corrupta: no rompe el contrato byDay[0..6]
     const map = row.subjectType === 'player' ? playerDays : courtDays;
     if (!map.has(row.subjectId)) map.set(row.subjectId, emptyWeek());
-    map.get(row.subjectId)![row.day] = JSON.parse(row.slots);
+    map.get(row.subjectId)![row.day] = parseSlots(row.slots);
   }
 
   // Jugadores con alguna disponibilidad (ignora filas de jugadores borrados del grupo).
