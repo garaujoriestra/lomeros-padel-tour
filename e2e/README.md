@@ -33,3 +33,6 @@ migraciones que no expone `/api/init-db` y `getSession` carga la fila completa.
 - **admin-blocks**: añadir y guardar un bloque en el editor.
 - **admin-result**: registrar un resultado y ver el marcador + clasificación.
 - **public-view**: parrilla pública de solo lectura y "tu próximo partido".
+- **planner**: disponibilidad semanal pintable, validación de bloques (≥1,5h), alta de
+  pista propia, coincidencias (4 jugadores + pista∩dueño), authz de API entre grupos,
+  paridad `/g/[slug]/planificador`.
