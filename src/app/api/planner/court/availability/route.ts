@@ -17,11 +17,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Tu cuenta no está vinculada a un jugador' }, { status: 403 });
   }
   try {
-    const court = await getCourtByOwner(auth.ctx.groupId, playerId);
-    if (!court) return NextResponse.json({ error: 'No tienes pista declarada' }, { status: 404 });
     const { week, day, slots } = body;
     const err = writePayloadError(week, day, slots, madridTodayIso());
     if (err) return NextResponse.json({ error: err }, { status: 400 });
+    const court = await getCourtByOwner(auth.ctx.groupId, playerId);
+    if (!court) return NextResponse.json({ error: 'No tienes pista declarada' }, { status: 404 });
     await upsertDaySlots(auth.ctx.groupId, week, day, 'court', court.id, slots);
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
     const court = await createCourt(auth.ctx.groupId, playerId, name);
     return NextResponse.json({ court }, { status: 201 });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    // Carrera de doble alta: el UNIQUE físico de owner_player_id la corta; se
+    // mapea al mismo 409 que la comprobación previa.
+    if (msg.includes('UNIQUE')) {
+      return NextResponse.json({ error: 'Ya tienes una pista declarada' }, { status: 409 });
+    }
     console.error(error);
     return NextResponse.json({ error: 'Error al crear la pista' }, { status: 500 });
   }
