@@ -1,4 +1,5 @@
-import { Trophy, Calendar, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Trophy, Calendar, Users, CalendarCheck } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
 import { SectionHead } from '@/components/lpt/ui';
@@ -38,6 +39,10 @@ export async function GroupHomeBody({
       <p className="small muted" style={{ margin: '0 0 24px' }}>
         {allPlayers.length} {allPlayers.length === 1 ? 'jugador' : 'jugadores'}
       </p>
+
+      <Link href={`${basePath}/planificador`} className="sec-link" style={{ marginBottom: 20 }}>
+        <CalendarCheck size={16} /> Planificador semanal →
+      </Link>
 
       {topPlayers.length >= 3 && (
         <section className="section">

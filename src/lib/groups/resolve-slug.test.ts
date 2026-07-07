@@ -22,7 +22,7 @@ describe('isValidGroupSlug', () => {
   });
 
   it('rechaza segmentos reservados que colisionan con rutas reales', () => {
-    for (const r of ['g', 'api', 'admin', 'me', 'login']) {
+    for (const r of ['g', 'api', 'admin', 'me', 'login', 'planificador']) {
       expect(RESERVED_SLUGS.has(r)).toBe(true);
       expect(isValidGroupSlug(r)).toBe(false);
     }

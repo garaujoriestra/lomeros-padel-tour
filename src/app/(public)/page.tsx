@@ -4,7 +4,7 @@ import { listRankedPlayers, listRecentPlayers, listAllPlayersInGroup, countRanke
 import { listRecentMatches, listScheduledMatches, countMatchesInGroup, listMatchSetsForMatches } from '@/lib/matches/queries';
 import { listRecentRatingHistoryInGroup } from '@/lib/rating/queries';
 import Link from 'next/link';
-import { Trophy, Calendar, CalendarDays } from 'lucide-react';
+import { Trophy, Calendar, CalendarDays, CalendarCheck } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
 import { ActivityFeed } from '@/components/shared/activity-feed';
@@ -170,6 +170,12 @@ export default async function HomePage() {
               </div>
             </section>
           )}
+
+          {/* ── PLANIFICADOR ── Enlace siempre visible: en móvil (navbar colapsada,
+              BottomNav curada sin planner) es la única vía de descubrimiento. */}
+          <Link href="/planificador" className="sec-link" style={{ marginBottom: 20 }}>
+            <CalendarCheck size={16} /> Planificador semanal →
+          </Link>
         </div>
 
         {/* ── ACTIVIDAD ── */}

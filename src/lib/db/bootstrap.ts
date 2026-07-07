@@ -102,4 +102,24 @@ export async function ensureAuxTables(client: Client): Promise<void> {
     user_agent TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
+
+  // Planificador semanal (v1): pista por jugador + disponibilidad por slots de 30 min.
+  await client.execute(`CREATE TABLE IF NOT EXISTS courts (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL DEFAULT 'lomeros',
+    owner_player_id TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await client.execute(`CREATE TABLE IF NOT EXISTS planner_slots (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL DEFAULT 'lomeros',
+    week_start TEXT NOT NULL,
+    day INTEGER NOT NULL,
+    subject_type TEXT NOT NULL,
+    subject_id TEXT NOT NULL,
+    slots TEXT NOT NULL,
+    UNIQUE (week_start, day, subject_type, subject_id)
+  )`);
 }

@@ -1,4 +1,4 @@
-import { House, Trophy, Users, Swords, Info, Coins, CalendarDays, type LucideIcon } from 'lucide-react';
+import { House, Trophy, Users, Swords, Info, Coins, CalendarDays, CalendarCheck, type LucideIcon } from 'lucide-react';
 
 export interface NavLink {
   href: string;
@@ -12,6 +12,7 @@ export const navLinks: NavLink[] = [
   { href: '/rankings/pairs', label: 'Parejas', icon: Users },
   { href: '/matches', label: 'Partidos', icon: Swords },
   { href: '/eventos', label: 'Eventos', icon: CalendarDays },
+  { href: '/planificador', label: 'Planificador', icon: CalendarCheck },
   { href: '/rankings/tokens', label: 'La Timba', icon: Coins },
   { href: '/info', label: 'Info', icon: Info },
 ];
