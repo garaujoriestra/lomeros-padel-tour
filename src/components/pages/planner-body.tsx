@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { AvailabilityGrid } from '@/components/planner/availability-grid';
-import { CourtSection } from '@/components/planner/court-section';
-import { Coincidences } from '@/components/planner/coincidences';
+import { WeekSummary } from '@/components/planner/week-summary';
 import { loadWeekView } from '@/lib/planner/week-data';
+import { allSlotStarts } from '@/lib/planner/slots';
+import { summarizeDay } from '@/lib/planner/summary';
 import { editableWeeks, madridTodayIso } from '@/lib/planner/weeks';
 import type { PageContext } from '@/lib/auth/page-context';
 
@@ -10,8 +11,8 @@ const emptyWeek = () => Array.from({ length: 7 }, () => [] as number[]);
 
 // Cuerpo compartido de /planificador (raíz) y /g/[slug]/planificador.
 // - Sin ficha en el grupo → bienvenida (el edge ya exigió sesión).
-// - Con ficha → coincidencias + mi disponibilidad + mi pista, de la semana
-//   actual o la siguiente (?week=<lunes-siguiente>).
+// - Con ficha → mi disponibilidad, de la semana actual o la siguiente
+//   (?week=<lunes-siguiente>). (v1.1: sin pistas ni coincidencias.)
 export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekParam?: string }) {
   const { player, groupId, basePath } = ctx;
   const gSlug = basePath === '' ? undefined : ctx.group.slug;
@@ -40,8 +41,17 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
   const view = await loadWeekView(groupId, week);
 
   const mine = view.players.find((p) => p.id === player.id)?.byDay ?? emptyWeek();
-  const myCourt = view.courts.find((c) => c.ownerId === player.id) ?? null;
   const base = `${basePath}/planificador`;
+
+  const starts = allSlotStarts();
+  // Mapa de calor: cuántos OTROS pueden en cada celda (mi propia celda ya se ve al pintarla).
+  const others = view.players.filter((p) => p.id !== player.id);
+  const counts = Array.from({ length: 7 }, (_, day) =>
+    starts.map((min) => others.filter((p) => p.byDay[day].includes(min)).length),
+  );
+  const summary = view.dates.map((_, day) =>
+    summarizeDay(view.players.map((p) => ({ id: p.id, name: p.name, slots: p.byDay[day] }))),
+  );
 
   return (
     <div className="space-y-6">
@@ -59,8 +69,6 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
         </div>
       </div>
 
-      <Coincidences view={view} />
-
       <section className="section">
         <AvailabilityGrid
           key={`me-${week}`}
@@ -70,19 +78,11 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
           week={week}
           g={gSlug}
           endpoint="/api/planner/availability"
+          counts={counts}
         />
       </section>
 
-      <section className="section">
-        <CourtSection
-          key={`court-${week}`}
-          court={myCourt ? { id: myCourt.id, name: myCourt.name } : null}
-          dates={view.dates}
-          initialByDay={myCourt?.byDay ?? emptyWeek()}
-          week={week}
-          g={gSlug}
-        />
-      </section>
+      <WeekSummary dates={view.dates} summary={summary} />
     </div>
   );
 }

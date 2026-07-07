@@ -1,6 +1,5 @@
 import { listAllPlayersInGroup } from '@/lib/players/queries';
-import { getWeekSlots, listCourtsInGroup } from './queries';
-import { findDayCoincidences, type Coincidence } from './matcher';
+import { getWeekSlots } from './queries';
 import { weekDates } from './weeks';
 
 export interface WeekView {
@@ -8,8 +7,6 @@ export interface WeekView {
   dates: string[]; // 7 fechas ISO, L→D
   // byDay: índice 0=lunes … 6=domingo → slots pintados ese día
   players: { id: string; name: string; byDay: number[][] }[];
-  courts: { id: string; name: string; ownerId: string; ownerName: string; byDay: number[][] }[];
-  coincidences: (Coincidence & { day: number })[];
 }
 
 const emptyWeek = () => Array.from({ length: 7 }, () => [] as number[]);
@@ -26,44 +23,31 @@ function parseSlots(raw: string): number[] {
   return [];
 }
 
-// Vista completa de la semana de un grupo: disponibilidades, pistas y
-// coincidencias calculadas en servidor. Única fuente para página y API.
+// Vista completa de la semana de un grupo: la disponibilidad pintada por cada
+// jugador. Única fuente para página y API. (v1.1: sin pistas ni coincidencias —
+// el partido se cuadra por fuera; las filas legacy de pista se ignoran.)
 export async function loadWeekView(groupId: string, weekStart: string): Promise<WeekView> {
-  const [roster, courtRows, slotRows] = await Promise.all([
+  const [roster, slotRows] = await Promise.all([
     listAllPlayersInGroup(groupId),
-    listCourtsInGroup(groupId),
     getWeekSlots(groupId, weekStart),
   ]);
   const nameOf = new Map(roster.map((p) => [p.id, p.nickname ?? p.name]));
 
   const playerDays = new Map<string, number[][]>();
-  const courtDays = new Map<string, number[][]>();
   for (const row of slotRows) {
+    if (row.subjectType !== 'player') continue; // filas legacy de pista: ignoradas
     if (row.day < 0 || row.day > 6) continue; // fila corrupta: no rompe el contrato byDay[0..6]
-    const map = row.subjectType === 'player' ? playerDays : courtDays;
-    if (!map.has(row.subjectId)) map.set(row.subjectId, emptyWeek());
-    map.get(row.subjectId)![row.day] = parseSlots(row.slots);
+    if (!playerDays.has(row.subjectId)) playerDays.set(row.subjectId, emptyWeek());
+    playerDays.get(row.subjectId)![row.day] = parseSlots(row.slots);
   }
 
   // Jugadores con alguna disponibilidad (ignora filas de jugadores borrados del grupo).
-  const playersView = [...playerDays.entries()]
+  // Orden determinista (por nombre visible): el orden de filas de SQLite no es
+  // un contrato, y la lista «quién puede» y sus tests lo necesitan estable.
+  const players = [...playerDays.entries()]
     .filter(([id]) => nameOf.has(id))
-    .map(([id, byDay]) => ({ id, name: nameOf.get(id)!, byDay }));
+    .map(([id, byDay]) => ({ id, name: nameOf.get(id)!, byDay }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
-  const courtsView = courtRows.map((c) => ({
-    id: c.id,
-    name: c.name,
-    ownerId: c.ownerPlayerId,
-    ownerName: c.ownerName,
-    byDay: courtDays.get(c.id) ?? emptyWeek(),
-  }));
-
-  const coincidences = Array.from({ length: 7 }, (_, day) =>
-    findDayCoincidences(
-      playersView.map((p) => ({ id: p.id, name: p.name, slots: p.byDay[day] })),
-      courtsView.map((c) => ({ id: c.id, name: c.name, ownerId: c.ownerId, slots: c.byDay[day] })),
-    ).map((c) => ({ ...c, day })),
-  ).flat();
-
-  return { weekStart, dates: weekDates(weekStart), players: playersView, courts: courtsView, coincidences };
+  return { weekStart, dates: weekDates(weekStart), players };
 }

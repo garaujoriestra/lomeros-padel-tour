@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatMin, isValidSlotList, slotsToRanges } from './slots';
+import { allSlotStarts, formatMin, isValidSlotList, slotsToRanges } from './slots';
 
 describe('isValidSlotList', () => {
   it('acepta lista vacía (sin disponibilidad) y bloques de ≥3 slots', () => {
@@ -39,5 +39,14 @@ describe('slotsToRanges', () => {
       { startMin: 1200, endMin: 1290 },
     ]);
     expect(slotsToRanges([])).toEqual([]);
+  });
+});
+
+describe('allSlotStarts', () => {
+  it('32 celdas de 08:00 a 23:30', () => {
+    const starts = allSlotStarts();
+    expect(starts).toHaveLength(32);
+    expect(starts[0]).toBe(480);
+    expect(starts[31]).toBe(1410);
   });
 });

@@ -24,6 +24,13 @@ export function formatMin(min: number): string {
   return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 }
 
+// Minutos de inicio de todas las celdas del día (08:00 … 23:30).
+export function allSlotStarts(): number[] {
+  const out: number[] = [];
+  for (let s = PLANNER.dayStartMin; s + PLANNER.slotMinutes <= PLANNER.dayEndMin; s += PLANNER.slotMinutes) out.push(s);
+  return out;
+}
+
 // Bloques maximales [inicio, fin) de una lista ORDENADA de slots.
 export function slotsToRanges(slots: number[]): { startMin: number; endMin: number }[] {
   const out: { startMin: number; endMin: number }[] = [];

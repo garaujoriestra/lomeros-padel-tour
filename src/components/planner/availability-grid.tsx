@@ -4,17 +4,10 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PLANNER } from '@/lib/planner/config';
-import { formatMin } from '@/lib/planner/slots';
+import { allSlotStarts, formatMin } from '@/lib/planner/slots';
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
-function allSlotStarts(): number[] {
-  const out: number[] = [];
-  for (let s = PLANNER.dayStartMin; s + PLANNER.slotMinutes <= PLANNER.dayEndMin; s += PLANNER.slotMinutes) {
-    out.push(s);
-  }
-  return out;
-}
+const DRAG_THRESHOLD_PX = 12; // un tap con micro-deslizamiento no debe pintar la celda vecina
 
 // Celdas en bloques de menos de minBlockSlots consecutivas (inválidas para guardar).
 function invalidCells(day: Set<number>): Set<number> {
@@ -43,22 +36,30 @@ export function AvailabilityGrid({
   week,
   g,
   endpoint,
+  counts,
 }: {
   title: string;
   dates: string[];      // 7 fechas ISO L→D (cabecera)
   initial: number[][];  // slots por día 0..6
   week: string;         // lunes YYYY-MM-DD
   g?: string;           // slug del grupo (solo bajo /g/[slug])
-  endpoint: '/api/planner/availability' | '/api/planner/court/availability';
+  endpoint: '/api/planner/availability';
+  counts: number[][];   // counts[day][row] = cuántos OTROS pueden en ese slot (mapa de calor)
 }) {
   const router = useRouter();
   const [byDay, setByDay] = useState<Set<number>[]>(() => initial.map((d) => new Set(d)));
   const [dirty, setDirty] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const paintMode = useRef<'paint' | 'erase' | null>(null);
+  const dragFrom = useRef<{ x: number; y: number } | null>(null);
+  const dragging = useRef(false);
 
   useEffect(() => {
-    const stop = () => { paintMode.current = null; };
+    const stop = () => {
+      paintMode.current = null;
+      dragFrom.current = null;
+      dragging.current = false;
+    };
     window.addEventListener('pointerup', stop);
     window.addEventListener('pointercancel', stop);
     return () => {
@@ -72,6 +73,7 @@ export function AvailabilityGrid({
   const hasInvalid = badByDay.some((b) => b.size > 0);
 
   function applyCell(day: number, min: number, mode: 'paint' | 'erase') {
+    if (byDay[day].has(min) === (mode === 'paint')) return; // ya está así: evita renders por pointermove
     setByDay((prev) => {
       const next = prev.map((s, i) => (i === day ? new Set(s) : s));
       if (mode === 'paint') next[day].add(min);
@@ -84,13 +86,22 @@ export function AvailabilityGrid({
   function startPaint(e: React.PointerEvent, day: number, min: number) {
     // Sin captura de puntero: el drag debe disparar pointerenter en otras celdas.
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    dragFrom.current = { x: e.clientX, y: e.clientY };
+    dragging.current = false;
     const mode = byDay[day].has(min) ? 'erase' : 'paint';
     paintMode.current = mode;
     applyCell(day, min, mode);
   }
 
-  function continuePaint(day: number, min: number) {
-    if (paintMode.current) applyCell(day, min, paintMode.current);
+  // Solo pinta por arrastre si el puntero se ha movido de verdad (umbral): un tap
+  // que resbala 1-2px ya no selecciona la celda de al lado.
+  function continuePaint(e: React.PointerEvent, day: number, min: number) {
+    if (!paintMode.current || !dragFrom.current) return;
+    if (!dragging.current) {
+      if (Math.hypot(e.clientX - dragFrom.current.x, e.clientY - dragFrom.current.y) < DRAG_THRESHOLD_PX) return;
+      dragging.current = true;
+    }
+    applyCell(day, min, paintMode.current);
   }
 
   async function save() {
@@ -151,14 +162,19 @@ export function AvailabilityGrid({
             {DAY_LABELS[i]} {Number(d.slice(8))}
           </div>
         ))}
-        {starts.map((min) => (
+        {starts.map((min, row) => (
           <Fragment key={min}>
-            <div className="small muted" style={{ fontSize: 11, textAlign: 'right', paddingRight: 6, lineHeight: '22px' }}>
+            <div className="small muted" style={{ fontSize: 11, textAlign: 'right', paddingRight: 6, lineHeight: '28px' }}>
               {formatMin(min)}
             </div>
             {dates.map((_, day) => {
               const on = byDay[day].has(min);
               const bad = badByDay[day].has(min);
+              const n = counts[day]?.[row] ?? 0;
+              // Mapa de calor: cuanta más gente puede en ese slot, más intenso el fondo.
+              const heat = n > 0
+                ? `color-mix(in oklab, var(--win) ${Math.min(12 + n * 10, 45)}%, transparent)`
+                : 'transparent';
               return (
                 <button
                   key={day}
@@ -170,16 +186,22 @@ export function AvailabilityGrid({
                   // Pintado solo con puntero (tap/drag): sin ruta de teclado a propósito —
                   // una cuadrícula de 32×7 celdas no es operable razonablemente por teclado.
                   onPointerDown={(e) => { e.preventDefault(); startPaint(e, day, min); }}
-                  onPointerEnter={() => continuePaint(day, min)}
+                  onPointerEnter={(e) => continuePaint(e, day, min)}
+                  onPointerMove={(e) => continuePaint(e, day, min)}
                   style={{
-                    height: 22,
+                    height: 28,
                     borderRadius: 4,
                     border: '1px solid color-mix(in oklab, currentcolor 14%, transparent)',
-                    background: on ? (bad ? 'var(--loss)' : 'var(--win)') : 'transparent',
+                    background: on ? (bad ? 'var(--loss)' : 'var(--win)') : heat,
                     cursor: 'pointer',
                     padding: 0,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: on ? '#fff' : 'inherit',
                   }}
-                />
+                >
+                  {n > 0 ? n : ''}
+                </button>
               );
             })}
           </Fragment>
