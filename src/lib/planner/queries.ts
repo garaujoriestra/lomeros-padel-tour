@@ -2,13 +2,15 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { plannerSlots, type PlannerSlotRow } from '@/lib/db/schema';
 
-// Todas las filas de disponibilidad (jugadores y pistas) de una semana del grupo.
+// Todas las filas de disponibilidad de una semana del grupo (v1.1: solo jugadores;
+// filas legacy de pista se ignoran en week-data).
 export async function getWeekSlots(groupId: string, weekStart: string): Promise<PlannerSlotRow[]> {
   return db.select().from(plannerSlots)
     .where(and(eq(plannerSlots.groupId, groupId), eq(plannerSlots.weekStart, weekStart)));
 }
 
-// Upsert de los slots de UN día para un sujeto (jugador o pista). slots=[] borra la fila.
+// Upsert de los slots de UN día para un sujeto (subjectType 'court' es legado
+// inerte; solo se escribe 'player'). slots=[] borra la fila.
 export async function upsertDaySlots(
   groupId: string,
   weekStart: string,

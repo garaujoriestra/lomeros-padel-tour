@@ -5,7 +5,7 @@ import { loadWeekView } from '@/lib/planner/week-data';
 import { isEditableWeek, madridTodayIso, mondayOf } from '@/lib/planner/weeks';
 
 // GET /api/planner?week=YYYY-MM-DD&g=slug → vista completa de la semana del grupo:
-// disponibilidades de todos, pistas y coincidencias calculadas en servidor.
+// la disponibilidad pintada por cada jugador.
 // Sin ?week → semana actual.
 export async function GET(request: NextRequest) {
   const auth = await requireGroupSession(await groupIdFromQuery(request));

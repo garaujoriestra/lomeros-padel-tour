@@ -103,7 +103,7 @@ export async function ensureAuxTables(client: Client): Promise<void> {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
-  // Planificador semanal (v1): pista por jugador + disponibilidad por slots de 30 min.
+  // Planificador semanal: disponibilidad por slots de 30 min (courts es legado inerte de v1).
   await client.execute(`CREATE TABLE IF NOT EXISTS courts (
     id TEXT PRIMARY KEY,
     group_id TEXT NOT NULL DEFAULT 'lomeros',

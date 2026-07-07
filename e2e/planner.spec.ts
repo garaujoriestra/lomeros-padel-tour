@@ -42,10 +42,10 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
   test('«Quién puede esta semana» muestra el miércoles partido por composición', async ({ page }) => {
     await page.goto('/planificador');
     await expect(page.getByRole('heading', { name: 'Planificador semanal' })).toBeVisible();
-    await expect(page.getByText('Quién puede esta semana')).toBeVisible();
-    await expect(page.getByText(/Miércoles \d+/)).toBeVisible();
-    await expect(page.getByText('20:00–21:30 · Jugador 2, Jugador 3, Jugador 4')).toBeVisible();
-    await expect(page.getByText('21:30–22:00 · Jugador 2, Jugador 3')).toBeVisible();
+    await expect(page.getByText('Quién puede esta semana').first()).toBeVisible();
+    await expect(page.getByText(/Miércoles \d+/).first()).toBeVisible();
+    await expect(page.getByText('20:00–21:30 · Jugador 2, Jugador 3, Jugador 4').first()).toBeVisible();
+    await expect(page.getByText('21:30–22:00 · Jugador 2, Jugador 3').first()).toBeVisible();
   });
 
   test('mapa de calor: cuenta de otros disponibles por celda', async ({ page }) => {
@@ -63,14 +63,50 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     await expect(page.locator('button[data-day="4"][data-min="1200"]').first()).toHaveAttribute('aria-pressed', 'false');
   });
 
+  test('micro-deslizamiento (<12px) no pinta la celda vecina; arrastre real sí', async ({ page }) => {
+    await page.goto('/planificador');
+    // Micro-slide: down cerca del borde inferior de una celda del jueves y move de
+    // 6px que ENTRA en la celda vecina (dispara pointerenter) pero queda bajo el
+    // umbral de 12px → solo la celda inicial acaba pintada. (No se guarda nada:
+    // el goto del siguiente test resetea el estado.)
+    const cell = page.locator('button[data-day="3"][data-min="1320"]').first();
+    // page.mouse no hace auto-scroll (a diferencia de .click()): la fila de las
+    // 22:00 queda bajo el pliegue del viewport y hay que traerla a la vista.
+    await cell.scrollIntoViewIfNeeded();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height - 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height + 4, { steps: 3 });
+    await page.mouse.up();
+    await expect(cell).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('button[data-day="3"][data-min="1350"]').first())
+      .toHaveAttribute('aria-pressed', 'false');
+    // Arrastre real: down en 22:30 (celda sin pintar; empezar en la ya pintada
+    // entraría en modo borrar) y move >12px pasando por los centros de las dos
+    // siguientes → las tres acaban pintadas.
+    const from = page.locator('button[data-day="3"][data-min="1350"]').first();
+    const fromBox = (await from.boundingBox())!;
+    const x = fromBox.x + fromBox.width / 2;
+    await page.mouse.move(x, fromBox.y + fromBox.height / 2);
+    await page.mouse.down();
+    const to = page.locator('button[data-day="3"][data-min="1410"]').first();
+    const toBox = (await to.boundingBox())!;
+    await page.mouse.move(x, toBox.y + toBox.height / 2, { steps: 10 });
+    await page.mouse.up();
+    for (const min of [1350, 1380, 1410]) {
+      await expect(page.locator(`button[data-day="3"][data-min="${min}"]`).first())
+        .toHaveAttribute('aria-pressed', 'true');
+    }
+  });
+
   test('pintar y guardar viernes aparece en «Quién puede» y persiste al recargar', async ({ page }) => {
     await page.goto('/planificador');
     for (const min of [1200, 1230, 1260]) {
       await page.locator(`button[data-day="4"][data-min="${min}"]`).first().click();
     }
     await page.getByRole('button', { name: 'Guardar' }).first().click();
-    await expect(page.getByText('20:00–21:30 · Jugador 1')).toBeVisible();
-    await expect(page.getByText(/Viernes \d+/)).toBeVisible();
+    await expect(page.getByText('20:00–21:30 · Jugador 1').first()).toBeVisible();
+    await expect(page.getByText(/Viernes \d+/).first()).toBeVisible();
 
     await page.goto('/planificador');
     for (const min of [1200, 1230, 1260]) {
@@ -84,7 +120,7 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     // Dos celdas sueltas el sábado (day=5) → aviso y botón deshabilitado.
     await page.locator('button[data-day="5"][data-min="1200"]').first().click();
     await page.locator('button[data-day="5"][data-min="1230"]').first().click();
-    await expect(page.getByText('Los bloques deben ser de mínimo 1,5h')).toBeVisible();
+    await expect(page.getByText('Los bloques deben ser de mínimo 1,5h').first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeDisabled();
     // Completar el bloque a 3 → se puede guardar.
     await page.locator('button[data-day="5"][data-min="1260"]').first().click();
@@ -127,7 +163,7 @@ test.describe('planner · paridad /g/[slug]', () => {
     const res = await page.goto('/g/grupo-test/planificador');
     expect(res?.status()).toBe(200);
     await expect(page.getByRole('heading', { name: 'Planificador semanal' })).toBeVisible();
-    await expect(page.getByText('Mi disponibilidad')).toBeVisible();
+    await expect(page.getByText('Mi disponibilidad').first()).toBeVisible();
     await context.close();
   });
 
@@ -136,7 +172,7 @@ test.describe('planner · paridad /g/[slug]', () => {
     const page = await context.newPage();
     const res = await page.goto('/g/grupo-test/planificador');
     expect(res?.status()).toBe(200);
-    await expect(page.getByText(/no está vinculada a un jugador de este grupo/i)).toBeVisible();
+    await expect(page.getByText(/no está vinculada a un jugador de este grupo/i).first()).toBeVisible();
     await expect(page.getByText('Mi disponibilidad')).toHaveCount(0);
     await context.close();
   });

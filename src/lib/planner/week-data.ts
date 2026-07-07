@@ -42,9 +42,12 @@ export async function loadWeekView(groupId: string, weekStart: string): Promise<
   }
 
   // Jugadores con alguna disponibilidad (ignora filas de jugadores borrados del grupo).
+  // Orden determinista (por nombre visible): el orden de filas de SQLite no es
+  // un contrato, y la lista «quién puede» y sus tests lo necesitan estable.
   const players = [...playerDays.entries()]
     .filter(([id]) => nameOf.has(id))
-    .map(([id, byDay]) => ({ id, name: nameOf.get(id)!, byDay }));
+    .map(([id, byDay]) => ({ id, name: nameOf.get(id)!, byDay }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   return { weekStart, dates: weekDates(weekStart), players };
 }
