@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AvailabilityGrid } from '@/components/planner/availability-grid';
 import { loadWeekView } from '@/lib/planner/week-data';
+import { allSlotStarts } from '@/lib/planner/slots';
 import { editableWeeks, madridTodayIso } from '@/lib/planner/weeks';
 import type { PageContext } from '@/lib/auth/page-context';
 
@@ -40,6 +41,13 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
   const mine = view.players.find((p) => p.id === player.id)?.byDay ?? emptyWeek();
   const base = `${basePath}/planificador`;
 
+  const starts = allSlotStarts();
+  // Mapa de calor: cuántos OTROS pueden en cada celda (mi propia celda ya se ve al pintarla).
+  const others = view.players.filter((p) => p.id !== player.id);
+  const counts = Array.from({ length: 7 }, (_, day) =>
+    starts.map((min) => others.filter((p) => p.byDay[day].includes(min)).length),
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -65,6 +73,7 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
           week={week}
           g={gSlug}
           endpoint="/api/planner/availability"
+          counts={counts}
         />
       </section>
     </div>
