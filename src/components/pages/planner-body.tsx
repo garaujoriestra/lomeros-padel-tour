@@ -34,6 +34,8 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
   }
 
   const [current, next] = editableWeeks(madridTodayIso());
+  // A diferencia del GET de la API (400 si no es lunes), la página corrige en
+  // silencio cualquier ?week= inválido a la semana actual: mejor que una página de error.
   const week = weekParam === next ? next : current;
   const view = await loadWeekView(groupId, week);
 
