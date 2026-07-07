@@ -28,18 +28,22 @@ export function CourtSection({
     const clean = name.trim();
     if (!clean) { toast.error('Ponle un nombre a la pista'); return; }
     setBusy(true);
-    const res = await fetch('/api/planner/court', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ g, name: clean }),
-    });
-    setBusy(false);
-    if (res.ok) {
+    try {
+      const res = await fetch('/api/planner/court', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ g, name: clean }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? 'Error al guardar la pista');
+      }
       toast.success(method === 'POST' ? 'Pista declarada' : 'Nombre actualizado');
       router.refresh();
-    } else {
-      const data = await res.json().catch(() => null);
-      toast.error(data?.error ?? 'Error al guardar la pista');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al guardar la pista');
+    } finally {
+      setBusy(false);
     }
   }
 

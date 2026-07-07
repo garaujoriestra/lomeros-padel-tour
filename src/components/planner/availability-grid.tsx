@@ -60,7 +60,11 @@ export function AvailabilityGrid({
   useEffect(() => {
     const stop = () => { paintMode.current = null; };
     window.addEventListener('pointerup', stop);
-    return () => window.removeEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+    return () => {
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+    };
   }, []);
 
   const starts = useMemo(allSlotStarts, []);
@@ -128,7 +132,7 @@ export function AvailabilityGrid({
         </button>
       </div>
       {hasInvalid && (
-        <p className="small" style={{ color: '#ef4444', margin: '0 0 8px' }}>
+        <p className="small" style={{ color: 'var(--loss)', margin: '0 0 8px' }}>
           Los bloques deben ser de mínimo 1,5h (3 casillas seguidas).
         </p>
       )}
@@ -163,13 +167,15 @@ export function AvailabilityGrid({
                   aria-label={`${DAY_LABELS[day]} ${formatMin(min)}`}
                   data-day={day}
                   data-min={min}
+                  // Pintado solo con puntero (tap/drag): sin ruta de teclado a propósito —
+                  // una cuadrícula de 32×7 celdas no es operable razonablemente por teclado.
                   onPointerDown={(e) => { e.preventDefault(); startPaint(e, day, min); }}
                   onPointerEnter={() => continuePaint(day, min)}
                   style={{
                     height: 22,
                     borderRadius: 4,
                     border: '1px solid color-mix(in oklab, currentcolor 14%, transparent)',
-                    background: on ? (bad ? '#ef4444' : '#22c55e') : 'transparent',
+                    background: on ? (bad ? 'var(--loss)' : 'var(--win)') : 'transparent',
                     cursor: 'pointer',
                     padding: 0,
                   }}
