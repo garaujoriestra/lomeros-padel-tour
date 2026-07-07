@@ -24,5 +24,12 @@ export function decideAccess(
   if (/^\/g\/[^/]+\/admin(?:\/|$)/.test(path)) {
     return payload ? 'allow' : 'redirect-login';
   }
+  if (path === '/planificador' || path.startsWith('/planificador/')) {
+    return payload ? 'allow' : 'redirect-login';
+  }
+  // /g/<slug>/planificador exige sesión, igual que la raíz.
+  if (/^\/g\/[^/]+\/planificador(?:\/|$)/.test(path)) {
+    return payload ? 'allow' : 'redirect-login';
+  }
   return 'allow';
 }

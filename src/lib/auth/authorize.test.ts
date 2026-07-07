@@ -38,4 +38,11 @@ describe('decideAccess', () => {
     expect(decideAccess('/g/grupo-test/admin/players', null)).toBe('redirect-login');
     expect(decideAccess('/g/grupo-test/admin/matches', { userId: 'u' })).toBe('allow');
   });
+
+  it('/planificador exige sesión (raíz y bajo grupo)', () => {
+    expect(decideAccess('/planificador', null)).toBe('redirect-login');
+    expect(decideAccess('/g/grupo-test/planificador', null)).toBe('redirect-login');
+    expect(decideAccess('/planificador', { userId: 'u' })).toBe('allow');
+    expect(decideAccess('/g/grupo-test/planificador', { userId: 'u' })).toBe('allow');
+  });
 });

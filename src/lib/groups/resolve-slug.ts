@@ -11,7 +11,7 @@ import type { GroupRow } from './queries';
 export const RESERVED_SLUGS = new Set<string>([
   'g', 'api', 'admin', 'me', 'login', 'logout', 'dev-login',
   'offline', 'unauthorized', 'matches', 'players', 'pozos', 'torneos',
-  'rankings', 'eventos', 'info', 'icon', 'apple-icon',
+  'rankings', 'eventos', 'info', 'icon', 'apple-icon', 'planificador',
 ]);
 
 // Forma válida de slug: minúsculas, dígitos y guiones internos (sin guiones en los
