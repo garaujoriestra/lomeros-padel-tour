@@ -4,7 +4,6 @@ import { TEST_ENV } from '../playwright.config';
 import { madridTodayIso, mondayOf } from '../src/lib/planner/weeks';
 
 const WEEK = mondayOf(madridTodayIso());
-const S2000 = [1200, 1230, 1260, 1290]; // 20:00–22:00
 
 // El recordatorio de notificaciones push es un modal a pantalla completa que se
 // abre de forma asíncrona (tras registrar el service worker) y tapa la cuadrícula.
@@ -16,27 +15,16 @@ test.beforeEach(async ({ page }) => {
 
 test.beforeAll(async () => {
   const db = createClient({ url: TEST_ENV.DB_URL });
-  // Pista de pl2 en Lomeros.
-  await db.execute({
-    sql: 'INSERT OR IGNORE INTO courts (id, group_id, owner_player_id, name) VALUES (?, ?, ?, ?)',
-    args: ['court-pl2', 'lomeros', 'pl2', 'Urb. Los Olivos'],
-  });
-  const put = (day: number, type: string, id: string, slots: number[]) => db.execute({
+  const put = (day: number, id: string, slots: number[]) => db.execute({
     sql: `INSERT OR REPLACE INTO planner_slots (id, group_id, week_start, day, subject_type, subject_id, slots)
           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    args: [`ps-${type}-${id}-${day}`, 'lomeros', WEEK, day, type, id, JSON.stringify(slots)],
+    args: [`ps-player-${id}-${day}`, 'lomeros', WEEK, day, 'player', id, JSON.stringify(slots)],
   });
-  // Miércoles (day 2): SOLO 3 jugadores + pista efectiva → falta 1 para partido.
-  await put(2, 'player', 'pl2', S2000);
-  await put(2, 'player', 'pl3', S2000);
-  await put(2, 'player', 'pl4', S2000);
-  await put(2, 'court', 'court-pl2', S2000);
-  // Jueves (day 3): 4 jugadores pero la dueña de la pista (pl2) NO está → sin partido.
-  await put(3, 'player', 'pl3', S2000);
-  await put(3, 'player', 'pl4', S2000);
-  await put(3, 'player', 'pl5', S2000);
-  await put(3, 'player', 'pl6', S2000);
-  await put(3, 'court', 'court-pl2', S2000);
+  // Miércoles (day 2): pl2 y pl3 20:00–22:00, pl4 solo hasta las 21:30 → el tramo
+  // se parte donde pl4 deja de estar.
+  await put(2, 'pl2', [1200, 1230, 1260, 1290]);
+  await put(2, 'pl3', [1200, 1230, 1260, 1290]);
+  await put(2, 'pl4', [1200, 1230, 1260]);
 });
 
 test.describe('planner · gating de sesión', () => {
@@ -46,54 +34,61 @@ test.describe('planner · gating de sesión', () => {
   });
 });
 
+// Nota: las celdas se localizan con .first() porque Next (dev) puede mantener la
+// página anterior en un <div hidden> durante la navegación y duplicar los botones.
 test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
   test.use({ storageState: 'e2e/.auth/player.json' });
 
-  test('sin 4º jugador no hay coincidencia; al pintar y guardar, aparece', async ({ page }) => {
+  test('«Quién puede esta semana» muestra el miércoles partido por composición', async ({ page }) => {
     await page.goto('/planificador');
     await expect(page.getByRole('heading', { name: 'Planificador semanal' })).toBeVisible();
-    // Estado inicial: miércoles tiene 3 jugadores → sin coincidencias.
-    await expect(page.getByText('Aún no hay tramos con partido posible')).toBeVisible();
-
-    // pl1 pinta miércoles 20:00–22:00 (4 celdas, day=2).
-    for (const min of S2000) {
-      await page.locator(`button[data-day="2"][data-min="${min}"]`).click();
-    }
-    await page.getByRole('button', { name: 'Guardar' }).first().click();
-
-    // Coincidencia del miércoles: tramo + pista + 4 disponibles (incluye a Jugador 1).
-    await expect(page.getByText(/Miércoles \d+ · 20:00–22:00/)).toBeVisible();
-    await expect(page.getByText(/Pista: Urb\. Los Olivos/)).toBeVisible();
-    await expect(page.getByText(/4 disponibles:.*Jugador 1/)).toBeVisible();
-    // El jueves NO aparece: 4 jugadores pero la dueña de la pista no está.
-    await expect(page.getByText(/Jueves \d+ ·/)).toHaveCount(0);
+    await expect(page.getByText('Quién puede esta semana')).toBeVisible();
+    await expect(page.getByText(/Miércoles \d+/)).toBeVisible();
+    await expect(page.getByText('20:00–21:30 · Jugador 2, Jugador 3, Jugador 4')).toBeVisible();
+    await expect(page.getByText('21:30–22:00 · Jugador 2, Jugador 3')).toBeVisible();
   });
 
-  test('la disponibilidad pintada persiste al recargar', async ({ page }) => {
+  test('mapa de calor: cuenta de otros disponibles por celda', async ({ page }) => {
     await page.goto('/planificador');
-    for (const min of S2000) {
-      await expect(page.locator(`button[data-day="2"][data-min="${min}"]`).first())
+    await expect(page.locator('button[data-day="2"][data-min="1200"]').first()).toHaveText('3');
+    await expect(page.locator('button[data-day="2"][data-min="1290"]').first()).toHaveText('2');
+  });
+
+  test('un tap pinta EXACTAMENTE una celda (bug de arrastre corregido)', async ({ page }) => {
+    await page.goto('/planificador');
+    await page.locator('button[data-day="3"][data-min="1200"]').first().click();
+    await expect(page.locator('button[data-day="3"][data-min="1200"]').first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('button[data-day="3"][data-min="1230"]').first()).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('button[data-day="2"][data-min="1200"]').first()).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('button[data-day="4"][data-min="1200"]').first()).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('pintar y guardar viernes aparece en «Quién puede» y persiste al recargar', async ({ page }) => {
+    await page.goto('/planificador');
+    for (const min of [1200, 1230, 1260]) {
+      await page.locator(`button[data-day="4"][data-min="${min}"]`).first().click();
+    }
+    await page.getByRole('button', { name: 'Guardar' }).first().click();
+    await expect(page.getByText('20:00–21:30 · Jugador 1')).toBeVisible();
+    await expect(page.getByText(/Viernes \d+/)).toBeVisible();
+
+    await page.goto('/planificador');
+    for (const min of [1200, 1230, 1260]) {
+      await expect(page.locator(`button[data-day="4"][data-min="${min}"]`).first())
         .toHaveAttribute('aria-pressed', 'true');
     }
   });
 
   test('bloques de <3 casillas bloquean el guardado', async ({ page }) => {
     await page.goto('/planificador');
-    // Dos celdas sueltas el viernes (day=4) → aviso y botón deshabilitado.
-    await page.locator('button[data-day="4"][data-min="1200"]').click();
-    await page.locator('button[data-day="4"][data-min="1230"]').click();
+    // Dos celdas sueltas el sábado (day=5) → aviso y botón deshabilitado.
+    await page.locator('button[data-day="5"][data-min="1200"]').first().click();
+    await page.locator('button[data-day="5"][data-min="1230"]').first().click();
     await expect(page.getByText('Los bloques deben ser de mínimo 1,5h')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeDisabled();
     // Completar el bloque a 3 → se puede guardar.
-    await page.locator('button[data-day="4"][data-min="1260"]').click();
+    await page.locator('button[data-day="5"][data-min="1260"]').first().click();
     await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeEnabled();
-  });
-
-  test('declarar mi pista y ver su cuadrícula', async ({ page }) => {
-    await page.goto('/planificador');
-    await page.getByPlaceholder(/Nombre de la pista/).fill('Pista de Jugador 1');
-    await page.getByRole('button', { name: 'Tengo pista' }).click();
-    await expect(page.getByText('Mi pista · Pista de Jugador 1')).toBeVisible();
   });
 
   test('no-fuga: el planificador de Lomeros no muestra datos de grupo-test', async ({ page }) => {

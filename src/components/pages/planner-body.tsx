@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { AvailabilityGrid } from '@/components/planner/availability-grid';
+import { WeekSummary } from '@/components/planner/week-summary';
 import { loadWeekView } from '@/lib/planner/week-data';
 import { allSlotStarts } from '@/lib/planner/slots';
+import { summarizeDay } from '@/lib/planner/summary';
 import { editableWeeks, madridTodayIso } from '@/lib/planner/weeks';
 import type { PageContext } from '@/lib/auth/page-context';
 
@@ -47,6 +49,9 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
   const counts = Array.from({ length: 7 }, (_, day) =>
     starts.map((min) => others.filter((p) => p.byDay[day].includes(min)).length),
   );
+  const summary = view.dates.map((_, day) =>
+    summarizeDay(view.players.map((p) => ({ id: p.id, name: p.name, slots: p.byDay[day] }))),
+  );
 
   return (
     <div className="space-y-6">
@@ -76,6 +81,8 @@ export async function PlannerBody({ ctx, weekParam }: { ctx: PageContext; weekPa
           counts={counts}
         />
       </section>
+
+      <WeekSummary dates={view.dates} summary={summary} />
     </div>
   );
 }

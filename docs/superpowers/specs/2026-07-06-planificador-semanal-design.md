@@ -112,3 +112,17 @@ Función pura en `src/lib/planner/` con tests unitarios.
 - Proponer partido desde una coincidencia y confirmar plazas → partido programado.
 - Plantilla semanal recurrente o «copiar semana anterior» si rellenar de cero
   resulta pesado en la práctica.
+
+## Revisión v1.1 (2026-07-07) — feedback de uso real
+
+Tras probarlo en producción, se simplifica:
+
+- **Fuera la pista**: se gestiona por fuera de la app. Se eliminan la sección «Mi pista»,
+  las rutas de API de pista y el matcher; las tablas quedan inertes (sin migración destructiva).
+- **Fuera las coincidencias con umbral (≥4 + pista)**: no hay que esperar a 4 apuntados.
+  La gente publica su disponibilidad, el resto la ve, y el partido se cuadra por fuera.
+- **Nueva visibilidad del grupo**: la cuadrícula propia muestra un mapa de calor (nº de
+  otros que pueden por celda) y debajo una lista «Quién puede esta semana» por día, con
+  tramos partidos donde cambia la composición y los nombres.
+- **Fix de pintado**: un tap pinta exactamente una celda (umbral de arrastre de 12px);
+  celdas más altas (28px).
