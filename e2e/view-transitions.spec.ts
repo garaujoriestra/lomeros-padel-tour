@@ -70,10 +70,9 @@ test.describe('View Transitions · navegación sin regresión', () => {
 });
 
 test.describe('View Transitions · reduced motion', () => {
-  test.use({ reducedMotion: 'reduce' });
-
   test('con prefers-reduced-motion la navegación sigue funcionando', async ({ page }) => {
     const errors = trackPageErrors(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await page.getByRole('link', { name: /Ranking$/ }).first().click();
     await expect(page).toHaveURL(/\/rankings$/);
