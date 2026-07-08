@@ -522,3 +522,75 @@
   .profile-elo { width: 100%; text-align: left !important; display: flex; align-items: baseline; gap: 12px; }
   .profile-elo > div:last-child { flex-direction: row !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   View Transitions  ·  recetas de la skill vercel-react-view-transitions.
+   Emparejado con `experimental.viewTransition` (next.config.ts) y los
+   <ViewTransition> del árbol. No editar a mano las animaciones: traen el
+   motion-blur del morph, el timing escalonado y el reduced-motion correctos.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --duration-exit: 150ms;
+  --duration-enter: 210ms;
+  --duration-move: 400ms;
+}
+
+@keyframes vt-fade {
+  from { filter: blur(3px); opacity: 0; }
+  to { filter: blur(0); opacity: 1; }
+}
+@keyframes vt-slide {
+  from { translate: var(--slide-offset); }
+  to { translate: 0; }
+}
+
+/* Navegación direccional (jerárquica: lista → detalle → atrás) */
+::view-transition-old(.nav-forward) {
+  --slide-offset: -60px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 60px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 60px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -60px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide;
+}
+
+/* Morph de elemento compartido (avatar de la lista → ficha del jugador) */
+::view-transition-group(.morph) { animation-duration: var(--duration-move); }
+::view-transition-image-pair(.morph) { animation-name: vt-via-blur; }
+@keyframes vt-via-blur { 30% { filter: blur(3px); } }
+
+/* Aislar el chrome persistente (topbar + bottomnav): que NO se arrastre con el
+   contenido en cada navegación. Ambos usan backdrop-filter, así que se oculta
+   el snapshot viejo para evitar el flash del blur (workaround de la skill). */
+::view-transition-old(lpt-topbar),
+::view-transition-old(lpt-bottomnav) { display: none; }
+::view-transition-new(lpt-topbar),
+::view-transition-new(lpt-bottomnav) { animation: none; }
+::view-transition-group(lpt-topbar),
+::view-transition-group(lpt-bottomnav) { z-index: 100; }
+
+/* Respeta la preferencia de menos movimiento: sin animación de transición */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

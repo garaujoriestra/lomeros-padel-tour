@@ -63,7 +63,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
       <div className="hero section" style={{ padding: 'calc(26px * var(--sp))' }}>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative' }}>
-            <LptAvatar player={player} size={84} />
+            <LptAvatar player={player} size={84} vtName={`pl-${player.id}`} />
             {rank != null && (
               <span
                 className="display"

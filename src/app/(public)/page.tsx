@@ -17,6 +17,7 @@ import { buildPodiumGroups } from '@/lib/rankings/podium-groups';
 import { listEventSummaries } from '@/lib/tournament/event-store';
 import { eventLiveState } from '@/lib/tournament/event-summary';
 import { EventCard } from '@/components/tournament/event-card';
+import { DirectionalTransition } from '@/components/shared/view-transitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +88,8 @@ export default async function HomePage() {
   const season = new Date().getFullYear();
 
   return (
-    <>
+    <DirectionalTransition>
+      <div>
       {/* ── HERO ── */}
       <div className="hero section">
         <HeroLines />
@@ -191,6 +193,7 @@ export default async function HomePage() {
           </p>
         </div>
       )}
-    </>
+      </div>
+    </DirectionalTransition>
   );
 }

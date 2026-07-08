@@ -40,6 +40,7 @@ function Step({ group, rank, first, barHeight }: { group: RankGroup<PodiumPlayer
     >
       <Link
         href={single ? `/players/${p.id}` : '/rankings'}
+        transitionTypes={single ? ['nav-forward'] : undefined}
         style={{
           padding: `calc(${first ? 22 : 14}px * var(--sp)) 10px calc(12px * var(--sp))`,
           display: 'flex',

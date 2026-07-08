@@ -6,6 +6,7 @@ import { Trophy, UserPlus } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { buildPodiumGroups, assignCompetitionRanks } from '@/lib/rankings/podium-groups';
 import { SectionHead, LptAvatar, Delta, Sparkline } from '@/components/lpt/ui';
+import { DirectionalTransition } from '@/components/shared/view-transitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,8 @@ export default async function RankingsPage() {
   const rankedWithRanks = assignCompetitionRanks(podiumPlayers);
 
   return (
-    <>
+    <DirectionalTransition>
+      <div>
       <section className="section">
         <SectionHead icon={Trophy} title="Ranking individual" />
         {ranked.length === 0 ? (
@@ -72,10 +74,10 @@ export default async function RankingsPage() {
               const h = histByPlayer[player.id];
               const streak = h ? streakOf(h.changes) : null;
               return (
-                <Link key={player.id} href={`/players/${player.id}`} className="rank-row" style={{ display: 'flex' }}>
+                <Link key={player.id} href={`/players/${player.id}`} transitionTypes={['nav-forward']} className="rank-row" style={{ display: 'flex' }}>
                   <span className={`rank-pos ${player.rank <= 3 ? 'top' : ''}`}>{player.rank}</span>
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
-                    <LptAvatar player={player} size={34} />
+                    <LptAvatar player={player} size={34} vtName={`pl-${player.id}`} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {player.nickname || player.name}
@@ -116,8 +118,8 @@ export default async function RankingsPage() {
           <SectionHead icon={UserPlus} title="Aún sin partidos" />
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {unranked.map((p) => (
-              <Link key={p.id} href={`/players/${p.id}`} className="lpt-card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px' }}>
-                <LptAvatar player={p} size={30} />
+              <Link key={p.id} href={`/players/${p.id}`} transitionTypes={['nav-forward']} className="lpt-card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px' }}>
+                <LptAvatar player={p} size={30} vtName={`pl-${p.id}`} />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 13.5 }}>{p.nickname || p.name}</div>
                   <div className="small muted" style={{ fontSize: 11 }}>Debuta pronto · Elo 1500</div>
@@ -132,6 +134,7 @@ export default async function RankingsPage() {
         <Link href="/rankings/pairs" className="sec-link">👥 Ranking de parejas →</Link>
         <Link href="/rankings/tokens" className="sec-link">🪙 Clasificación de La Timba →</Link>
       </section>
-    </>
+      </div>
+    </DirectionalTransition>
   );
 }

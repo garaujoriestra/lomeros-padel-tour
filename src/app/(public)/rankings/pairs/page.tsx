@@ -4,6 +4,7 @@ import { listAllPlayersInGroup } from '@/lib/players/queries';
 import Link from 'next/link';
 import { Users, Info, Zap, ZapOff } from 'lucide-react';
 import { SectionHead, AvatarStack, StatBar } from '@/components/lpt/ui';
+import { DirectionalTransition } from '@/components/shared/view-transitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,8 @@ export default async function PairsRankingPage() {
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   return (
-    <>
+    <DirectionalTransition>
+      <div>
       <section className="section">
         <SectionHead icon={Users} title="Ranking de parejas" />
         <p className="muted" style={{ margin: '0 0 18px', fontSize: 13.5, maxWidth: '58ch' }}>
@@ -78,6 +80,7 @@ export default async function PairsRankingPage() {
           </p>
         </div>
       )}
-    </>
+      </div>
+    </DirectionalTransition>
   );
 }
