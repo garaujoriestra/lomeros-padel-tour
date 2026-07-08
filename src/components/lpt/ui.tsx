@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ViewTransition } from 'react';
 import { PlayerAvatar } from '@/components/shared/player-avatar';
 import { Calendar, Check, Bandage, Trophy, ChevronRight, type LucideIcon } from 'lucide-react';
 
@@ -31,9 +32,15 @@ export function avatarColor(name: string) {
 }
 
 /* ── Avatar ── */
-export function LptAvatar({ player, size = 36, className }: { player: LptPlayer | undefined; size?: number; className?: string }) {
+/**
+ * `vtName` activa el morph de elemento compartido (View Transitions): mismo
+ * `name` en la fila de la lista y en la ficha → el avatar «vuela» al navegar.
+ * Debe ser único por página: no lo pongas en dos avatares del mismo jugador
+ * montados a la vez (p. ej. podio + lista) o el morph se rompe.
+ */
+export function LptAvatar({ player, size = 36, className, vtName }: { player: LptPlayer | undefined; size?: number; className?: string; vtName?: string }) {
   if (!player) return null;
-  return (
+  const avatar = (
     <div
       className={`lpt-avatar ${className ?? ''}`}
       style={{ width: size, height: size, fontSize: size * 0.36, background: avatarColor(player.name) }}
@@ -46,6 +53,13 @@ export function LptAvatar({ player, size = 36, className }: { player: LptPlayer 
         sizes={`${size * 2}px`}
       />
     </div>
+  );
+  return vtName ? (
+    <ViewTransition name={vtName} share="morph" default="none">
+      {avatar}
+    </ViewTransition>
+  ) : (
+    avatar
   );
 }
 

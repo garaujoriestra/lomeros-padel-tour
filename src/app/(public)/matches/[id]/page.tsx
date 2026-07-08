@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { ArrowLeft, Calendar, MapPin, Users, Bandage } from 'lucide-react';
 import { expectedScore, projectDoublesElo, type EloProjection } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
+import { DirectionalTransition } from '@/components/shared/view-transitions';
 import { getSession } from '@/lib/auth/session';
 import { currentMatchPools } from '@/lib/betting/match-odds';
 import { bettingClosesAt, isBettingOpen } from '@/lib/betting/close-time';
@@ -113,6 +114,7 @@ function TeamBlock({
           <Link
             key={pid}
             href={`/players/${pid}`}
+            transitionTypes={['nav-forward']}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -243,8 +245,9 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <>
-      <Link href="/matches" className="sec-link" style={{ marginBottom: 14, display: 'inline-flex' }}>
+    <DirectionalTransition>
+      <div>
+      <Link href="/matches" transitionTypes={['nav-back']} className="sec-link" style={{ marginBottom: 14, display: 'inline-flex' }}>
         <ArrowLeft size={14} /> Partidos
       </Link>
 
@@ -340,7 +343,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               if (!p) return null;
               const d = Math.round(rh.eloChange);
               return (
-                <Link key={rh.playerId} href={`/players/${rh.playerId}`} className={`lpt-badge ${d >= 0 ? 'win' : 'loss'}`}>
+                <Link key={rh.playerId} href={`/players/${rh.playerId}`} transitionTypes={['nav-forward']} className={`lpt-badge ${d >= 0 ? 'win' : 'loss'}`}>
                   {displayName(p)} {d >= 0 ? '+' : ''}{d}
                 </Link>
               );
@@ -390,6 +393,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           </div>
         </section>
       )}
-    </>
+      </div>
+    </DirectionalTransition>
   );
 }

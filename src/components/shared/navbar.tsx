@@ -46,7 +46,11 @@ export function Navbar({
   }
 
   return (
-    <header className={`topbar ${session ? 'with-session' : ''}`} aria-label="Barra superior">
+    <header
+      className={`topbar ${session ? 'with-session' : ''}`}
+      aria-label="Barra superior"
+      style={{ viewTransitionName: 'lpt-topbar' }}
+    >
       <div className="topbar-inner">
         <Link href={basePath || '/'} className="brand" aria-label="Inicio">
           <Crest size={34} className="brand-crest" title="Lomeros Padel Tour" wordmark={false} />

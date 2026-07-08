@@ -2,6 +2,7 @@ import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { listMatchesByDate, listMatchSetsInGroup } from '@/lib/matches/queries';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { MatchesList, type MatchListItem } from '@/components/shared/matches-list';
+import { DirectionalTransition } from '@/components/shared/view-transitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,5 +40,9 @@ export default async function MatchesPage() {
     sets: (setsMap[m.id] ?? []).map((s) => ({ team1Games: s.team1Games, team2Games: s.team2Games })),
   }));
 
-  return <MatchesList items={items} />;
+  return (
+    <DirectionalTransition>
+      <MatchesList items={items} />
+    </DirectionalTransition>
+  );
 }

@@ -40,7 +40,7 @@ export function BottomNav({ basePath = '' }: { basePath?: string }) {
   };
 
   return (
-    <nav className="bottomnav" aria-label="Navegación inferior">
+    <nav className="bottomnav" aria-label="Navegación inferior" style={{ viewTransitionName: 'lpt-bottomnav' }}>
       {LEFT.map((l) => item(l.href, l.label, l.icon))}
 
       {/* La Timba — acción destacada (ficha que sobresale de la barra) */}

@@ -76,7 +76,7 @@ export function MatchCard({ match, team1, team2, sets = [], href, predictionPct 
   );
 
   return href ? (
-    <Link href={href} className="block">
+    <Link href={href} transitionTypes={['nav-forward']} className="block">
       {card}
     </Link>
   ) : (
