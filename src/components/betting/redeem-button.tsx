@@ -70,20 +70,20 @@ export function RedeemButton({
           />
         }
       >
-        Canjear · {cost} tk
+        Canjear · {cost} fichas
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>¿Canjear este premio?</DialogTitle>
           <DialogDescription>
-            Se descontarán <strong>{cost} tokens</strong> de tu saldo. El canje queda pendiente
+            Se descontarán <strong>{cost} fichas</strong> de tu saldo. El canje queda pendiente
             hasta que el admin lo valide.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
           <Button onClick={redeem} disabled={loading}>
-            {loading ? 'Canjeando...' : `Sí, canjear ${cost} tk`}
+            {loading ? 'Canjeando...' : `Sí, canjear ${cost} fichas`}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -11,7 +11,7 @@ export default async function AdminRewardsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="sec-title">🎁 Premios de La Timba</h1>
-        <p className="muted text-sm mt-1.5">Catálogo de premios canjeables por tokens</p>
+        <p className="muted text-sm mt-1.5">Catálogo de premios canjeables por fichas</p>
       </div>
       <RewardsManager rewards={all} />
     </div>

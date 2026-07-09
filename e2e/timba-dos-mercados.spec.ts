@@ -41,10 +41,13 @@ test.describe('timba · dos mercados (jugador pl1, Lomeros)', () => {
   test('un espectador apuesta a Ganador y a Marcador a la vez en el mismo partido', async ({ page }) => {
     await page.goto(`/matches/${SPEC_MATCH}`);
 
-    // Los dos slips están visibles a la vez, cada uno con su propio botón.
+    // El slip de Ganador está abierto; el de Marcador va colapsado tras un
+    // toggle (revelado progresivo: una decisión cada vez).
     const winnerBtn = page.getByRole('button', { name: /Apostar al ganador/i });
-    const marcadorBtn = page.getByRole('button', { name: /Apostar al marcador/i });
+    const marcadorBtn = page.getByRole('button', { name: /Apostar al marcador ·/i });
     await expect(winnerBtn).toBeVisible();
+    await expect(marcadorBtn).toHaveCount(0);
+    await page.locator('[data-testid="bet-marcador-toggle"]:visible').click();
     await expect(marcadorBtn).toBeVisible();
 
     // Next (dev) deja una copia OCULTA del árbol (`<div hidden>`); los queries por
@@ -76,5 +79,7 @@ test.describe('timba · dos mercados (jugador pl1, Lomeros)', () => {
     await page.goto(`/matches/${PLAY_MATCH}`);
     await expect(page.getByRole('button', { name: /Apostar al ganador/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Apostar al marcador/i })).toHaveCount(0);
+    // Ni siquiera el toggle de marcador: los jugadores no tienen ese mercado.
+    await expect(page.locator('[data-testid="bet-marcador-toggle"]:visible')).toHaveCount(0);
   });
 });

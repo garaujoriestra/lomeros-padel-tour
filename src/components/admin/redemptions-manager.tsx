@@ -32,7 +32,7 @@ export function RedemptionsManager({ redemptions }: { redemptions: RedemptionRow
       toast.success(
         status === 'fulfilled'
           ? 'Canje marcado como entregado'
-          : 'Canje cancelado y tokens devueltos'
+          : 'Canje cancelado y fichas devueltas'
       );
       router.refresh();
     } catch (e) {
@@ -65,7 +65,7 @@ export function RedemptionsManager({ redemptions }: { redemptions: RedemptionRow
                   </span>
                   <span className="text-sm text-ink-3"> → </span>
                   <span className="text-sm">{r.rewardTitle}</span>
-                  <span className="text-xs text-ink-3 ml-1.5">({r.cost} tk)</span>
+                  <span className="text-xs text-ink-3 ml-1.5">({r.cost} fichas)</span>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button

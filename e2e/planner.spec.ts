@@ -115,6 +115,27 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     }
   });
 
+  test('leyenda visible y regla de 1,5h enseñada de antemano', async ({ page }) => {
+    await page.goto('/planificador');
+    await expect(page.getByText('Tú puedes').first()).toBeVisible();
+    await expect(page.getByText('Otros pueden (el nº dice cuántos)').first()).toBeVisible();
+    await expect(page.getByText(/mínimo 1,5h/).first()).toBeVisible();
+  });
+
+  test('navegar con cambios sin guardar pide confirmación (y no destruye el pintado)', async ({ page }) => {
+    await page.goto('/planificador');
+    await page.locator('button[data-day="6"][data-min="1290"]').first().click();
+    // El botón refleja el estado sucio.
+    await expect(page.getByRole('button', { name: /Guardar \(1 día\)/ }).first()).toBeVisible();
+    // Tap en el conmutador de semana → diálogo propio, sin navegar.
+    await page.getByRole('link', { name: 'Próxima' }).first().click();
+    await expect(page.getByRole('alertdialog', { name: 'Cambios sin guardar' })).toBeVisible();
+    await page.getByRole('button', { name: 'Seguir editando' }).click();
+    // Seguimos en la misma semana y la celda sigue pintada.
+    await expect(page.locator('button[data-day="6"][data-min="1290"]').first())
+      .toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('bloques de <3 casillas bloquean el guardado', async ({ page }) => {
     await page.goto('/planificador');
     // Dos celdas sueltas el sábado (day=5) → aviso y botón deshabilitado.
@@ -139,7 +160,9 @@ test.describe('planner · táctil (PWA móvil)', () => {
   test('un tap táctil pinta/borra la celda; un gesto de scroll no pinta nada', async ({ page }) => {
     await page.goto('/planificador');
     // Domingo (day=6): día que ningún otro test usa. (No se guarda nada.)
-    const cell = page.locator('button[data-day="6"][data-min="1200"]').first();
+    // :visible: en dev Next puede dejar una copia oculta del árbol (<div hidden>)
+    // y un .first() crudo casaría esa copia (que además se desmonta en vuelo).
+    const cell = page.locator('button[data-day="6"][data-min="1200"]:visible').first();
     await cell.scrollIntoViewIfNeeded();
 
     // Tap → pinta. Segundo tap → borra.

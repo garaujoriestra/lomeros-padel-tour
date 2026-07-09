@@ -36,14 +36,14 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
             let delta: string;
             let color: string;
             if (r.status === 'won') {
-              delta = `🎉 +${r.payout} tk`;
+              delta = `🎉 +${r.payout} fichas`;
               color = 'var(--win)';
             } else if (r.status === 'lost') {
-              delta = `💸 -${r.amount} tk`;
+              delta = `💸 -${r.amount} fichas`;
               color = 'var(--loss)';
             } else {
               // refunded: tokens devueltos
-              delta = `↩️ +${r.amount} tk`;
+              delta = `↩️ +${r.amount} fichas`;
               color = 'var(--ink-3)';
             }
             return (
