@@ -19,7 +19,7 @@ export default async function TorneosPage() {
         <Link href="/admin/torneos/new"><Button>Nuevo torneo</Button></Link>
       </div>
       {torneos.length === 0 ? (
-        <p className="text-sm text-ink-3">Aún no hay torneos.</p>
+        <p className="text-sm text-ink-3">Aún no hay torneos. Crea el primero con «Nuevo torneo».</p>
       ) : (
         <ul className="space-y-2">
           {torneos.map((t) => (

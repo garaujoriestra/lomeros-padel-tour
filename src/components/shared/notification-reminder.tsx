@@ -105,7 +105,13 @@ export function NotificationReminder() {
       <div
         className="lpt-card card-pad"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 380, textAlign: 'center' }}
+        style={{
+          width: '100%',
+          maxWidth: 380,
+          textAlign: 'center',
+          // El panel entra con scale+fade (no solo el backdrop): nada aparece de golpe.
+          animation: 'popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
       >
         <div style={{ fontSize: 40, lineHeight: 1 }} aria-hidden="true">
           🔔

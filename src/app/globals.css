@@ -213,7 +213,8 @@
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .icon-btn {
   width: 36px; height: 36px; border-radius: var(--r-pill); display: grid; place-items: center;
-  color: var(--ink-3); border: 1px solid var(--line); transition: all 0.15s; background: var(--surface);
+  color: var(--ink-3); border: 1px solid var(--line); background: var(--surface);
+  transition: color 0.15s, border-color 0.15s, transform 0.15s;
   cursor: pointer;
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--line-strong); transform: translateY(-1px); }
@@ -311,12 +312,24 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 13.5px; font-weight: 700; letter-spacing: 0.02em;
   padding: 10px 18px; border-radius: var(--r-pill); min-height: 44px;
-  transition: all 0.15s ease; border: 1px solid var(--line);
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid var(--line);
   background: var(--surface); color: var(--ink); cursor: pointer;
 }
 .lpt-btn:hover { border-color: var(--line-strong); transform: translateY(-1px); }
 .lpt-btn.primary { background: var(--acc); color: var(--on-acc); border-color: transparent; }
 .dark .lpt-btn.primary:hover { box-shadow: var(--glow) color-mix(in oklab, var(--acc) 40%, transparent); }
+
+/* ── Feedback de pulsación reutilizable (botones ad-hoc fuera de .lpt-btn) ── */
+.press { transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease, filter 0.15s ease; }
+.press:active:not(:disabled) { transform: scale(0.97); }
+
+/* ── Focus visible coherente en los componentes propios ── */
+.lpt-btn:focus-visible, .icon-btn:focus-visible, .seg button:focus-visible,
+.bn-item:focus-visible, .press:focus-visible, .sec-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 
 /* ── Barras de stats ── */
 .stat-bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; position: relative; }
@@ -411,7 +424,7 @@
 
 /* ── Segmented (filtros) ── */
 .seg { display: inline-flex; gap: 3px; background: var(--surface-2); border-radius: var(--r-pill); padding: 3px; border: 1px solid var(--line); }
-.seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: all 0.15s; cursor: pointer; }
+.seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: color 0.15s, background 0.15s, box-shadow 0.15s; cursor: pointer; }
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); }
 
 /* ── Tooltip simple del chart ── */
@@ -434,6 +447,7 @@
 .stagger > *:nth-child(7) { animation-delay: 0.32s; }
 .stagger > *:nth-child(8) { animation-delay: 0.37s; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes chartDraw { to { stroke-dashoffset: 0; } }
 
 /* ════════════ Loader de marca entre pantallas ════════════ */
@@ -488,7 +502,7 @@
   .icon-btn { width: 40px; height: 40px; }
   .topbar-inner { padding: 0 14px; gap: 12px; }
   .sec-title { font-size: 23px; }
-  .seg button { padding: 8px 13px; }
+  .seg button { padding: 8px 13px; min-height: 44px; }
   .elo-num { font-size: 22px; }
   .score-row { grid-template-columns: 1fr repeat(var(--nsets, 3), 30px); }
   .set-cell { font-size: 18px; }

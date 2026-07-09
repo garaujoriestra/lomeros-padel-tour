@@ -9,6 +9,8 @@ export function CountUp({ value, className, style }: { value: number; className?
   useEffect(() => {
     if (started.current || !ref.current) return;
     started.current = true;
+    // Con reduced-motion el número se muestra directamente en su valor final.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const t0 = performance.now();
     const dur = 800;
     const tick = (t: number) => {

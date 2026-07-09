@@ -19,7 +19,7 @@ export default async function PozosPage() {
         <Link href="/admin/pozos/new"><Button>Nuevo pozo</Button></Link>
       </div>
       {pozos.length === 0 ? (
-        <p className="text-sm text-ink-3">Aún no hay pozos.</p>
+        <p className="text-sm text-ink-3">Aún no hay pozos. Crea el primero con «Nuevo pozo».</p>
       ) : (
         <ul className="space-y-2">
           {pozos.map((p) => (

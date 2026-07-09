@@ -157,6 +157,7 @@ export function BettingCard(props: BettingCardProps) {
                     <button
                       key={t} type="button"
                       disabled={!selectable}
+                      className="press"
                       onClick={() => selectable && setWinnerTeam(t as 1 | 2)}
                       style={{
                         flex: 1, minWidth: 0, textAlign: 'left', padding: '11px 12px', borderRadius: 12,
@@ -177,11 +178,12 @@ export function BettingCard(props: BettingCardProps) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Input type="number" min={props.minBet} max={props.maxBet} step={1} value={winnerAmount}
+                  inputMode="numeric" enterKeyHint="done"
                   onChange={(e) => setWinnerAmount(Number(e.target.value))} style={{ maxWidth: 110 }}
                   aria-label="Fichas a apostar al ganador" data-testid="bet-winner-amount" />
                 <span className="small muted" style={{ fontWeight: 600 }}>fichas ({props.minBet}–{props.maxBet})</span>
               </div>
-              <button type="button" data-testid="bet-winner-submit"
+              <button type="button" data-testid="bet-winner-submit" className="press"
                 onClick={() => placeBet('winner', winnerTeam, undefined, winnerAmount)} disabled={!canBet(winnerAmount)}
                 style={submitStyle(canBet(winnerAmount))}>
                 Apostar al ganador · {teamLabel(winnerTeam)}
@@ -200,23 +202,24 @@ export function BettingCard(props: BettingCardProps) {
                 <div style={slipTitleStyle}>Marcador exacto</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {[1, 2].map((t) => (
-                    <button key={t} type="button" onClick={() => setMarcadorTeam(t as 1 | 2)} style={toggleStyle(marcadorTeam === t)}>
+                    <button key={t} type="button" className="press" onClick={() => setMarcadorTeam(t as 1 | 2)} style={toggleStyle(marcadorTeam === t)}>
                       {teamLabel(t)}
                     </button>
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {SCORES.map((s) => (
-                    <button key={s} type="button" onClick={() => setMarcadorScore(s)} style={toggleStyle(marcadorScore === s)}>{s}</button>
+                    <button key={s} type="button" className="press" onClick={() => setMarcadorScore(s)} style={toggleStyle(marcadorScore === s)}>{s}</button>
                   ))}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Input type="number" min={props.minBet} max={props.maxBet} step={1} value={marcadorAmount}
+                    inputMode="numeric" enterKeyHint="done"
                     onChange={(e) => setMarcadorAmount(Number(e.target.value))} style={{ maxWidth: 110 }}
                     aria-label="Fichas a apostar al marcador" data-testid="bet-marcador-amount" />
                   <span className="small muted" style={{ fontWeight: 600 }}>fichas ({props.minBet}–{props.maxBet})</span>
                 </div>
-                <button type="button" data-testid="bet-marcador-submit"
+                <button type="button" data-testid="bet-marcador-submit" className="press"
                   onClick={() => placeBet('exact_score', marcadorTeam, marcadorScore, marcadorAmount)} disabled={!canBet(marcadorAmount)}
                   style={submitStyle(canBet(marcadorAmount))}>
                   Apostar al marcador · {teamLabel(marcadorTeam)} {marcadorScore}
@@ -252,6 +255,7 @@ export function BettingCard(props: BettingCardProps) {
                 </span>
                 <button
                   type="button"
+                  className="press"
                   onClick={() => cancelBet(b.market as 'winner' | 'exact_score')}
                   disabled={loading}
                   style={{

@@ -37,6 +37,22 @@ export default function OfflinePage() {
       <p style={{ fontSize: 14, opacity: 0.7, margin: 0, maxWidth: 280 }}>
         No hay conexión a internet. Vuelve a intentarlo cuando recuperes la red.
       </p>
+      {/* href="" recarga la navegación actual: el SW reintenta la red. Sin JS. */}
+      <a
+        href=""
+        style={{
+          marginTop: 10,
+          padding: '10px 22px',
+          borderRadius: 999,
+          background: '#c8f03c',
+          color: '#0c1715',
+          fontWeight: 700,
+          fontSize: 14,
+          textDecoration: 'none',
+        }}
+      >
+        Reintentar
+      </a>
     </div>
   );
 }

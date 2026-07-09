@@ -74,6 +74,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
           <Input
             id="reward-cost"
             type="number"
+            inputMode="numeric"
             min={1}
             value={cost}
             onChange={(e) => setCost(Number(e.target.value))}

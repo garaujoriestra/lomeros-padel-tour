@@ -53,12 +53,16 @@ export function AvailabilityGrid({
   const paintMode = useRef<'paint' | 'erase' | null>(null);
   const dragFrom = useRef<{ x: number; y: number } | null>(null);
   const dragging = useRef(false);
+  // Táctil: el toggle se decide en pointerup (tap confirmado); si el gesto
+  // deriva en scroll, el navegador emite pointercancel y no se pinta nada.
+  const touchPending = useRef<{ day: number; min: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const stop = () => {
       paintMode.current = null;
       dragFrom.current = null;
       dragging.current = false;
+      touchPending.current = null;
     };
     window.addEventListener('pointerup', stop);
     window.addEventListener('pointercancel', stop);
@@ -84,6 +88,12 @@ export function AvailabilityGrid({
   }
 
   function startPaint(e: React.PointerEvent, day: number, min: number) {
+    // Táctil: no pintar aún — con touch-action:pan-y el dedo puede estar
+    // empezando un scroll. Se registra la celda y se resuelve en pointerup.
+    if (e.pointerType === 'touch') {
+      touchPending.current = { day, min, x: e.clientX, y: e.clientY };
+      return;
+    }
     // Sin captura de puntero: el drag debe disparar pointerenter en otras celdas.
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     dragFrom.current = { x: e.clientX, y: e.clientY };
@@ -94,14 +104,34 @@ export function AvailabilityGrid({
   }
 
   // Solo pinta por arrastre si el puntero se ha movido de verdad (umbral): un tap
-  // que resbala 1-2px ya no selecciona la celda de al lado.
+  // que resbala 1-2px ya no selecciona la celda de al lado. Solo ratón/lápiz.
   function continuePaint(e: React.PointerEvent, day: number, min: number) {
+    if (e.pointerType === 'touch') {
+      // Si el dedo se mueve más del umbral es un scroll: descarta el tap.
+      if (
+        touchPending.current &&
+        Math.hypot(e.clientX - touchPending.current.x, e.clientY - touchPending.current.y) >= DRAG_THRESHOLD_PX
+      ) {
+        touchPending.current = null;
+      }
+      return;
+    }
     if (!paintMode.current || !dragFrom.current) return;
     if (!dragging.current) {
       if (Math.hypot(e.clientX - dragFrom.current.x, e.clientY - dragFrom.current.y) < DRAG_THRESHOLD_PX) return;
       dragging.current = true;
     }
     applyCell(day, min, paintMode.current);
+  }
+
+  // Tap táctil confirmado: el dedo levantó sin moverse → toggle de la celda.
+  function endTouchTap(e: React.PointerEvent, day: number, min: number) {
+    if (e.pointerType !== 'touch') return;
+    const p = touchPending.current;
+    touchPending.current = null;
+    if (!p || p.day !== day || p.min !== min) return;
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) >= DRAG_THRESHOLD_PX) return;
+    applyCell(day, min, byDay[day].has(min) ? 'erase' : 'paint');
   }
 
   async function save() {
@@ -152,7 +182,10 @@ export function AvailabilityGrid({
           display: 'grid',
           gridTemplateColumns: '52px repeat(7, 1fr)',
           gap: 2,
-          touchAction: 'none',
+          // pan-y: el scroll vertical de la página sigue funcionando sobre la
+          // cuadrícula (en móvil ocupa toda la pantalla y bloquearlo la hacía
+          // imposible de recorrer). En táctil se pinta con tap, no con drag.
+          touchAction: 'pan-y',
           userSelect: 'none',
         }}
       >
@@ -188,6 +221,7 @@ export function AvailabilityGrid({
                   onPointerDown={(e) => { e.preventDefault(); startPaint(e, day, min); }}
                   onPointerEnter={(e) => continuePaint(e, day, min)}
                   onPointerMove={(e) => continuePaint(e, day, min)}
+                  onPointerUp={(e) => endTouchTap(e, day, min)}
                   style={{
                     height: 28,
                     borderRadius: 4,

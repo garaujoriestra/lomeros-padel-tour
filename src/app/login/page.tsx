@@ -10,7 +10,7 @@ export default async function LoginPage({
   const loginHref = from ? `/api/auth/login?from=${encodeURIComponent(from)}` : '/api/auth/login';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--hero-bg)' }}>
+    <div className="min-h-dvh flex items-center justify-center p-4" style={{ background: 'var(--hero-bg)' }}>
       <div className="lpt-card card-pad w-full max-w-sm" style={{ textAlign: 'center' }}>
         <div style={{ width: 44, margin: '6px auto 12px' }}>
           <Crest size={44} title="Lomeros Padel Tour" />

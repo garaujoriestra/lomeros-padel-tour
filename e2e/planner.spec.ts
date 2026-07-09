@@ -133,6 +133,34 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
   });
 });
 
+test.describe('planner · táctil (PWA móvil)', () => {
+  test.use({ storageState: 'e2e/.auth/player.json', hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  test('un tap táctil pinta/borra la celda; un gesto de scroll no pinta nada', async ({ page }) => {
+    await page.goto('/planificador');
+    // Domingo (day=6): día que ningún otro test usa. (No se guarda nada.)
+    const cell = page.locator('button[data-day="6"][data-min="1200"]').first();
+    await cell.scrollIntoViewIfNeeded();
+
+    // Tap → pinta. Segundo tap → borra.
+    await cell.tap();
+    await expect(cell).toHaveAttribute('aria-pressed', 'true');
+    await cell.tap();
+    await expect(cell).toHaveAttribute('aria-pressed', 'false');
+
+    // Gesto de scroll: pointerdown táctil + move vertical > umbral + up → la
+    // celda NO se pinta (antes, con touch-action:none y pintado en pointerdown,
+    // cualquier intento de scroll pintaba la cuadrícula).
+    const box = (await cell.boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await cell.dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true, clientX: x, clientY: y });
+    await cell.dispatchEvent('pointermove', { pointerType: 'touch', isPrimary: true, clientX: x, clientY: y + 40 });
+    await cell.dispatchEvent('pointerup', { pointerType: 'touch', isPrimary: true, clientX: x, clientY: y + 40 });
+    await expect(cell).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
 test.describe('planner · authz de API (miembro de otro grupo)', () => {
   test.use({ storageState: 'e2e/.auth/gt-player.json' });
 

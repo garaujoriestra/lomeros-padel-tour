@@ -20,6 +20,9 @@ const TABS = [
 
 export function MatchesList({ items }: { items: MatchListItem[] }) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('todos');
+  // El stagger solo debe correr en la carga inicial: al cambiar de pestaña las
+  // cards se re-montan y sin esto la cascada de entrada se repite en cada tap.
+  const [entered, setEntered] = useState(false);
 
   const upcoming = items.filter((i) => i.match.status === 'scheduled');
   const played = items.filter((i) => i.match.status !== 'scheduled');
@@ -27,7 +30,7 @@ export function MatchesList({ items }: { items: MatchListItem[] }) {
   const showPlayed = tab !== 'proximos' ? played : [];
 
   const grid = (list: MatchListItem[]) => (
-    <div className="grid-2 stagger" style={{ marginTop: 14 }}>
+    <div className={entered ? 'grid-2' : 'grid-2 stagger'} style={{ marginTop: 14 }}>
       {list.map(({ match, team1, team2, sets }) => (
         <MatchCard key={match.id} match={match} team1={team1} team2={team2} sets={sets} href={`/matches/${match.id}`} />
       ))}
@@ -44,7 +47,7 @@ export function MatchesList({ items }: { items: MatchListItem[] }) {
         <div className="sec-rule" />
         <div className="seg">
           {TABS.map(([k, label]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => { setEntered(true); setTab(k); }}>
               {label}
             </button>
           ))}

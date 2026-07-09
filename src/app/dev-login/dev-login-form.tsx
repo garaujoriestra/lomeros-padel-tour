@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 type Row = { userId: string; email: string; role: string | null; groupName: string | null };
 
@@ -18,7 +19,7 @@ export function DevLoginForm({ users }: { users: Row[] }) {
       window.location.assign('/');
     } else {
       setBusy(false);
-      alert('Error en dev-login');
+      toast.error('Error en dev-login');
     }
   }
 

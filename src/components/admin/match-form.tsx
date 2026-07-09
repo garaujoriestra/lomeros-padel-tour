@@ -210,9 +210,9 @@ export function MatchForm({ players }: MatchFormProps) {
         <button
           type="button"
           onClick={() => setMode('scheduled')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
+          className={`press flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors ${
             mode === 'scheduled'
-              ? 'bg-acc text-white shadow-sm'
+              ? 'bg-acc text-on-acc shadow-sm'
               : 'text-ink-3 hover:text-ink-2 hover:bg-surface-2'
           }`}
         >
@@ -221,9 +221,9 @@ export function MatchForm({ players }: MatchFormProps) {
         <button
           type="button"
           onClick={() => setMode('completed')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
+          className={`press flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-colors ${
             mode === 'completed'
-              ? 'bg-primary text-white shadow-sm'
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-ink-3 hover:text-ink-2 hover:bg-surface-2'
           }`}
         >
@@ -305,10 +305,10 @@ export function MatchForm({ players }: MatchFormProps) {
           {sets.map((set, idx) => (
             <div key={idx} className="grid grid-cols-3 gap-2 items-center">
               <span className="text-sm font-medium">Set {idx + 1}</span>
-              <Input type="number" min={0} max={7} className="text-center"
+              <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
                 placeholder="0" value={set.team1Games}
                 onChange={(e) => handleSetChange(idx, 'team1', e.target.value)} required />
-              <Input type="number" min={0} max={7} className="text-center"
+              <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
                 placeholder="0" value={set.team2Games}
                 onChange={(e) => handleSetChange(idx, 'team2', e.target.value)} required />
             </div>
@@ -331,7 +331,7 @@ export function MatchForm({ players }: MatchFormProps) {
         <Button
           type="submit"
           disabled={loading || !playersComplete || (mode === 'completed' && !matchResult)}
-          className={`flex-1 min-h-[40px] px-4 text-sm font-bold ${mode === 'scheduled' ? 'bg-acc hover:bg-blue-700' : 'bg-primary hover:bg-primary/90'} text-white`}
+          className={`flex-1 min-h-[44px] px-4 text-sm font-bold ${mode === 'scheduled' ? 'bg-acc hover:brightness-95' : 'bg-primary hover:bg-primary/90'} text-primary-foreground`}
         >
           {loading
             ? 'Guardando...'

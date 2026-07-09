@@ -326,7 +326,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
             ) : (
               <div className="w-full h-full flex items-center justify-center text-ink-3 text-3xl">📷</div>
             )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 [@media(hover:none)]:bg-black/25 transition-opacity flex items-center justify-center text-white text-xs font-bold">
               {uploading ? '⏳' : preview ? '🔄 Cambiar' : '📁 Elegir'}
             </div>
           </button>
@@ -383,10 +383,10 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         {sets.map((set, idx) => (
           <div key={idx} className="grid grid-cols-3 gap-2 items-center">
             <span className="text-sm font-medium">Set {idx + 1}</span>
-            <Input type="number" min={0} max={7} className="text-center"
+            <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
               placeholder="0" value={set.team1Games}
               onChange={(e) => handleSetChange(idx, 'team1', e.target.value)} required />
-            <Input type="number" min={0} max={7} className="text-center"
+            <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
               placeholder="0" value={set.team2Games}
               onChange={(e) => handleSetChange(idx, 'team2', e.target.value)} required />
           </div>

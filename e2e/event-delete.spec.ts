@@ -21,10 +21,10 @@ test('admin elimina un pozo desde el panel y desaparece de la lista', async ({ p
   // El botón de compartir enlace es visible.
   await expect(page.getByRole('button', { name: 'Compartir enlace' }).first()).toBeVisible();
 
-  // El confirm() del navegador se acepta automáticamente.
-  page.on('dialog', (d) => d.accept());
-
+  // El borrado se confirma en un diálogo propio (no confirm() nativo).
   await page.getByRole('button', { name: 'Eliminar pozo' }).first().click();
+  await expect(page.getByRole('heading', { name: '¿Eliminar este pozo?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sí, eliminar' }).click();
 
   // Navega a la lista de pozos y el evento ya no aparece.
   await expect(page).toHaveURL(/\/admin\/pozos$/);
