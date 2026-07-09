@@ -70,10 +70,11 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="reward-cost">Coste (tokens)</Label>
+          <Label htmlFor="reward-cost">Coste (fichas)</Label>
           <Input
             id="reward-cost"
             type="number"
+            inputMode="numeric"
             min={1}
             value={cost}
             onChange={(e) => setCost(Number(e.target.value))}
@@ -102,7 +103,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
               <li key={r.id} className="flex items-center justify-between gap-3">
                 <div>
                   <span className="font-medium text-sm">{r.title}</span>
-                  <span className="text-xs text-ink-3 ml-1.5">{r.cost} tk</span>
+                  <span className="text-xs text-ink-3 ml-1.5">{r.cost} fichas</span>
                   {!r.active && (
                     <span className="text-xs text-ink-3 ml-1.5">(inactivo)</span>
                   )}

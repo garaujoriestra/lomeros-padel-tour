@@ -185,9 +185,9 @@ export function PairingSuggestions({ selectedIds, players, onApply }: PairingSug
                   </span>
                 </div>
 
-                <div className="flex gap-3 items-start">
+                <div className="pairing-teams flex gap-3 items-start">
                   {renderTeam(opt.team1, opt.team1Elo, opt.team1SideRec)}
-                  <div className="text-center shrink-0">
+                  <div className="pairing-vs shrink-0">
                     <div className="display text-ink-3" style={{ fontSize: 15 }}>VS</div>
                     <div className="num" style={{ fontWeight: 800, color: 'var(--acc-text)', fontSize: 11.5 }}>
                       {t1Win}–{100 - t1Win}
@@ -204,8 +204,8 @@ export function PairingSuggestions({ selectedIds, players, onApply }: PairingSug
                 <button
                   type="button"
                   onClick={apply}
-                  className={`mt-3 w-full min-h-[40px] rounded-xl text-sm font-bold transition-all ${
-                    best ? 'bg-acc text-white hover:bg-blue-700' : 'bg-surface-2 text-ink-2 hover:bg-line'
+                  className={`press mt-3 w-full min-h-[44px] rounded-xl text-sm font-bold transition-colors ${
+                    best ? 'bg-acc text-on-acc hover:brightness-95' : 'bg-surface-2 text-ink-2 hover:bg-line'
                   }`}
                 >
                   Aplicar esta combinación

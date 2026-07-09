@@ -46,8 +46,13 @@ export function EloChart({ data, milestones = [], height = 200 }: { data: number
         height={height}
         viewBox={`0 0 ${w} ${height}`}
         preserveAspectRatio="none"
-        onMouseLeave={() => setHover(null)}
-        onMouseMove={(e) => {
+        // Pointer events: el scrub del tooltip funciona también con el dedo.
+        // pan-y deja pasar el scroll vertical de la página; el gesto horizontal
+        // sobre la gráfica mueve el cursor de lectura.
+        style={{ touchAction: 'pan-y' }}
+        onPointerLeave={() => setHover(null)}
+        onPointerDown={(e) => e.currentTarget.releasePointerCapture?.(e.pointerId)}
+        onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           const px = (e.clientX - r.left) * (w / r.width);
           const i = Math.max(0, Math.min(data.length - 1, Math.round(((px - pad.l) / (w - pad.l - pad.r)) * (data.length - 1))));

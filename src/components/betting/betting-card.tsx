@@ -50,6 +50,11 @@ export function BettingCard(props: BettingCardProps) {
   const [marcadorTeam, setMarcadorTeam] = useState<1 | 2>(1);
   const [marcadorScore, setMarcadorScore] = useState<'2-0' | '2-1'>('2-0');
   const [marcadorAmount, setMarcadorAmount] = useState(props.minBet);
+  // Progressive disclosure: la mayoría solo quiere el ganador; el marcador
+  // exacto se abre a demanda (o si ya tienes una apuesta en ese mercado).
+  const [showMarcador, setShowMarcador] = useState(() =>
+    props.myBets.some((b) => b.market === 'exact_score'),
+  );
   const [loading, setLoading] = useState(false);
 
   const closesAt = new Date(props.closesAtIso);
@@ -116,6 +121,56 @@ export function BettingCard(props: BettingCardProps) {
     !loading && amount >= props.minBet && amount <= props.maxBet
     && props.balance !== null && amount <= props.balance && !props.bankrupt;
 
+  // Preview del gasto ANTES de tocar el botón: cuánto queda, si sustituye una
+  // apuesta previa, o por qué el botón está deshabilitado. Gastar fichas no
+  // debe ser menos legible que canjear un premio.
+  const renderSpendInfo = (market: 'winner' | 'exact_score', amount: number) => {
+    if (props.balance === null) return null;
+    const prev = props.myBets.find((b) => b.market === market)?.amount ?? 0;
+    if (!Number.isFinite(amount) || amount < props.minBet || amount > props.maxBet) {
+      return (
+        <div className="small" style={{ color: 'var(--loss)', fontWeight: 600 }}>
+          El importe debe estar entre {props.minBet} y {props.maxBet} fichas.
+        </div>
+      );
+    }
+    if (amount > props.balance) {
+      return (
+        <div className="small" style={{ color: 'var(--loss)', fontWeight: 600 }}>
+          No te llega el saldo: tienes {props.balance} fichas.
+        </div>
+      );
+    }
+    return (
+      <div className="small muted" style={{ fontWeight: 600 }}>
+        {prev > 0 && <>Sustituirá tu apuesta actual de <b className="num">{prev} fichas</b> · </>}
+        Te quedarán <b className="num" style={{ color: 'var(--ink)' }}>{props.balance + prev - amount} fichas</b>.
+      </div>
+    );
+  };
+
+  // Pago estimado como protagonista (display type) o, en bote frío, la verdad
+  // sin número engañoso: el primer apostador no tiene proyección real.
+  const renderPayout = (est: { payout: number | null; ratio: number | null; noPool: boolean }) => {
+    if (est.noPool) {
+      return (
+        <div className="small muted" style={{ fontWeight: 600 }}>
+          Serías el primero en este bote: el pago dependerá de quién apueste después.
+        </div>
+      );
+    }
+    if (est.payout == null) return null;
+    return (
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
+        <span className="small muted" style={{ fontWeight: 600 }}>Si aciertas cobras</span>
+        <span className="display num" style={{ fontSize: 26, color: 'var(--acc-text)' }}>≈{est.payout}</span>
+        <span className="small muted" style={{ fontWeight: 600 }}>
+          fichas{est.ratio != null ? ` (x${est.ratio})` : ''}
+        </span>
+      </div>
+    );
+  };
+
   // ── Slip de Ganador ──
   const winnerSelKey = `team:${winnerTeam}`;
   const winnerEst = estimate(props.pools.winner, 'winner', winnerSelKey, winnerAmount);
@@ -157,6 +212,7 @@ export function BettingCard(props: BettingCardProps) {
                     <button
                       key={t} type="button"
                       disabled={!selectable}
+                      className="press"
                       onClick={() => selectable && setWinnerTeam(t as 1 | 2)}
                       style={{
                         flex: 1, minWidth: 0, textAlign: 'left', padding: '11px 12px', borderRadius: 12,
@@ -177,56 +233,67 @@ export function BettingCard(props: BettingCardProps) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Input type="number" min={props.minBet} max={props.maxBet} step={1} value={winnerAmount}
+                  inputMode="numeric" enterKeyHint="done"
                   onChange={(e) => setWinnerAmount(Number(e.target.value))} style={{ maxWidth: 110 }}
                   aria-label="Fichas a apostar al ganador" data-testid="bet-winner-amount" />
                 <span className="small muted" style={{ fontWeight: 600 }}>fichas ({props.minBet}–{props.maxBet})</span>
               </div>
-              <button type="button" data-testid="bet-winner-submit"
+              {renderSpendInfo('winner', winnerAmount)}
+              <button type="button" data-testid="bet-winner-submit" className="press"
                 onClick={() => placeBet('winner', winnerTeam, undefined, winnerAmount)} disabled={!canBet(winnerAmount)}
                 style={submitStyle(canBet(winnerAmount))}>
-                Apostar al ganador · {teamLabel(winnerTeam)}
+                {loading ? 'Apostando…' : <>Apostar al ganador · {teamLabel(winnerTeam)}</>}
               </button>
-              {winnerEst.payout != null && (
-                <div className="small muted" style={{ fontWeight: 600 }}>
-                  Si aciertas, cobras ≈ <b className="num" style={{ color: 'var(--acc-text)' }}>{winnerEst.payout} fichas</b>
-                  {winnerEst.ratio != null ? ` (x${winnerEst.ratio})` : ''}
-                </div>
-              )}
+              {renderPayout(winnerEst)}
             </div>
 
-            {/* ───── Mercado: Marcador exacto (solo espectadores) ───── */}
-            {!isPlayer && (
+            {/* ───── Mercado: Marcador exacto (solo espectadores) ─────
+                Colapsado por defecto: una decisión cada vez. Se abre a demanda
+                o si ya tienes apuesta en ese mercado. */}
+            {!isPlayer && !showMarcador && (
+              <button
+                type="button"
+                className="press"
+                data-testid="bet-marcador-toggle"
+                onClick={() => setShowMarcador(true)}
+                style={{
+                  padding: '10px 14px', borderRadius: 12, fontWeight: 700, fontSize: 13,
+                  border: '1px dashed var(--line-strong)', background: 'transparent',
+                  color: 'var(--ink-2)', cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                ＋ Apostar también al marcador exacto
+              </button>
+            )}
+            {!isPlayer && showMarcador && (
               <div style={slipStyle}>
                 <div style={slipTitleStyle}>Marcador exacto</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {[1, 2].map((t) => (
-                    <button key={t} type="button" onClick={() => setMarcadorTeam(t as 1 | 2)} style={toggleStyle(marcadorTeam === t)}>
+                    <button key={t} type="button" className="press" onClick={() => setMarcadorTeam(t as 1 | 2)} style={toggleStyle(marcadorTeam === t)}>
                       {teamLabel(t)}
                     </button>
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {SCORES.map((s) => (
-                    <button key={s} type="button" onClick={() => setMarcadorScore(s)} style={toggleStyle(marcadorScore === s)}>{s}</button>
+                    <button key={s} type="button" className="press" onClick={() => setMarcadorScore(s)} style={toggleStyle(marcadorScore === s)}>{s}</button>
                   ))}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Input type="number" min={props.minBet} max={props.maxBet} step={1} value={marcadorAmount}
+                    inputMode="numeric" enterKeyHint="done"
                     onChange={(e) => setMarcadorAmount(Number(e.target.value))} style={{ maxWidth: 110 }}
                     aria-label="Fichas a apostar al marcador" data-testid="bet-marcador-amount" />
                   <span className="small muted" style={{ fontWeight: 600 }}>fichas ({props.minBet}–{props.maxBet})</span>
                 </div>
-                <button type="button" data-testid="bet-marcador-submit"
+                {renderSpendInfo('exact_score', marcadorAmount)}
+                <button type="button" data-testid="bet-marcador-submit" className="press"
                   onClick={() => placeBet('exact_score', marcadorTeam, marcadorScore, marcadorAmount)} disabled={!canBet(marcadorAmount)}
                   style={submitStyle(canBet(marcadorAmount))}>
-                  Apostar al marcador · {teamLabel(marcadorTeam)} {marcadorScore}
+                  {loading ? 'Apostando…' : <>Apostar al marcador · {teamLabel(marcadorTeam)} {marcadorScore}</>}
                 </button>
-                {marcadorEst.payout != null && (
-                  <div className="small muted" style={{ fontWeight: 600 }}>
-                    Si aciertas, cobras ≈ <b className="num" style={{ color: 'var(--acc-text)' }}>{marcadorEst.payout} fichas</b>
-                    {marcadorEst.ratio != null ? ` (x${marcadorEst.ratio})` : ''}
-                  </div>
-                )}
+                {renderPayout(marcadorEst)}
               </div>
             )}
 
@@ -252,6 +319,7 @@ export function BettingCard(props: BettingCardProps) {
                 </span>
                 <button
                   type="button"
+                  className="press"
                   onClick={() => cancelBet(b.market as 'winner' | 'exact_score')}
                   disabled={loading}
                   style={{

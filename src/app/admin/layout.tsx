@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     : null;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <Navbar session={{ role: session.role, player }} />
       <div className="lpt-container" style={{ paddingTop: 'calc(22px * var(--sp))', paddingBottom: 'calc(48px * var(--sp))' }}>
         <div className="flex flex-col md:flex-row gap-4 md:gap-8">

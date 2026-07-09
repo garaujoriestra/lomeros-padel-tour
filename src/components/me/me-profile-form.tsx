@@ -87,7 +87,7 @@ export function MeProfileForm({ initial }: MeProfileFormProps) {
                     {initials}
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 [@media(hover:none)]:bg-black/25 transition-opacity flex items-center justify-center text-white text-xs font-bold">
                   {uploading ? '⏳' : '📷'}
                 </div>
               </button>

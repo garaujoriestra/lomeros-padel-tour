@@ -77,7 +77,7 @@ export default async function TokensPage() {
             >
               {player.tokenBalance}
             </span>
-            <span className="muted" style={{ fontWeight: 700, fontSize: 16 }}>tokens</span>
+            <span className="muted" style={{ fontWeight: 700, fontSize: 16 }}>fichas</span>
           </div>
           <div className="small muted" style={{ textAlign: 'center', marginTop: 6 }}>💰 Bote de La Timba: {pot.toFixed(2)} €</div>
 
@@ -128,10 +128,12 @@ export default async function TokensPage() {
                 >
                   <span className="small" style={{ fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     Equipo {b.predictedTeam}
-                    {b.predictedScore ? ` (${b.predictedScore})` : ''} · x{b.odds}
+                    {b.predictedScore ? ` (${b.predictedScore})` : ''}
+                    {/* Pari-mutuel: la proyección se mueve con el bote hasta el cierre. */}
+                    {b.odds != null ? ` · ≈x${b.odds}` : ''}
                   </span>
                   <span className="small num" style={{ whiteSpace: 'nowrap', fontWeight: 700, color: 'var(--acc-text)' }}>
-                    {b.amount} tk → {b.odds != null ? `${Math.round(b.amount * b.odds)} tk` : '?'}
+                    {b.amount} fichas → {b.odds != null ? `≈${Math.round(b.amount * b.odds)} fichas` : '?'}
                   </span>
                 </Link>
               ))}
@@ -206,7 +208,7 @@ export default async function TokensPage() {
                     {rd.rewardTitle}
                   </span>
                   <span className="small num" style={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
-                    {REDEMPTION_STATUS_LABEL[rd.status] ?? rd.status} · {rd.cost} tk
+                    {REDEMPTION_STATUS_LABEL[rd.status] ?? rd.status} · {rd.cost} fichas
                   </span>
                 </div>
               ))}

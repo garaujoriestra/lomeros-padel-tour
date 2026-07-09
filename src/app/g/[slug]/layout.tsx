@@ -32,7 +32,7 @@ export default async function GroupLayout({
       : null;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <Navbar session={navSession} basePath={ctx.basePath} links={[]} />
       <main className="screen">
         <div className="lpt-container">{children}</div>

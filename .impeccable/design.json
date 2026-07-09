@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-09T00:00:00Z",
+  "title": "Design System: Lomeros Padel Tour",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Lima Pista Central", "canonical": "#c8f03c", "tonalRamp": ["oklch(0.25 0.08 118)", "oklch(0.38 0.12 118)", "oklch(0.52 0.16 118)", "oklch(0.65 0.19 118)", "oklch(0.78 0.21 118)", "oklch(0.9 0.21 118)", "oklch(0.94 0.15 118)", "oklch(0.97 0.08 118)"] },
+      "win": { "role": "secondary", "displayName": "Verde victoria", "canonical": "oklch(0.62 0.16 150)", "tonalRamp": ["oklch(0.2 0.08 150)", "oklch(0.32 0.11 150)", "oklch(0.44 0.14 150)", "oklch(0.55 0.16 150)", "oklch(0.62 0.16 150)", "oklch(0.74 0.13 150)", "oklch(0.86 0.09 150)", "oklch(0.95 0.04 150)"] },
+      "loss": { "role": "secondary", "displayName": "Rojo derrota", "canonical": "oklch(0.6 0.18 25)", "tonalRamp": ["oklch(0.2 0.1 25)", "oklch(0.32 0.14 25)", "oklch(0.44 0.17 25)", "oklch(0.55 0.18 25)", "oklch(0.6 0.18 25)", "oklch(0.72 0.14 25)", "oklch(0.85 0.09 25)", "oklch(0.95 0.04 25)"] },
+      "warn": { "role": "secondary", "displayName": "Ámbar aviso", "canonical": "oklch(0.72 0.14 80)", "tonalRamp": ["oklch(0.25 0.07 80)", "oklch(0.38 0.1 80)", "oklch(0.5 0.12 80)", "oklch(0.62 0.13 80)", "oklch(0.72 0.14 80)", "oklch(0.82 0.12 80)", "oklch(0.9 0.08 80)", "oklch(0.96 0.04 80)"] },
+      "bg": { "role": "neutral", "displayName": "Fondo pista (claro)", "canonical": "oklch(0.962 0.008 160)", "tonalRamp": ["oklch(0.16 0.022 188)", "oklch(0.28 0.025 185)", "oklch(0.42 0.02 180)", "oklch(0.56 0.015 175)", "oklch(0.7 0.012 170)", "oklch(0.82 0.01 165)", "oklch(0.9 0.009 162)", "oklch(0.962 0.008 160)"] },
+      "ink": { "role": "neutral", "displayName": "Tinta", "canonical": "oklch(0.21 0.03 190)", "tonalRamp": ["oklch(0.15 0.028 190)", "oklch(0.21 0.03 190)", "oklch(0.34 0.03 185)", "oklch(0.44 0.028 182)", "oklch(0.52 0.025 180)", "oklch(0.68 0.02 175)", "oklch(0.82 0.015 165)", "oklch(0.93 0.01 160)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Broadcast display", "purpose": "Marcadores, Elo, posiciones, títulos de sección. Barlow Condensed 800 italic uppercase — solo para lo que retransmite." },
+      "body": { "displayName": "Archivo", "purpose": "Todo lo demás: prosa, labels, formularios, botones." }
+    },
+    "shadows": [
+      { "name": "card-light", "value": "0 2px 8px oklch(0.3 0.03 180 / 0.07)", "purpose": "Única sombra estructural en tema claro; acompaña siempre a un borde de 1px." },
+      { "name": "card-dark", "value": "0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px oklch(0 0 0 / 0.25)", "purpose": "Realce interior + profundidad en tema oscuro." },
+      { "name": "glow-lima", "value": "0 0 24px color-mix(in oklab, #c8f03c 40%, transparent)", "purpose": "Solo oscuro y solo protagonismo: podio, primary hover, ficha Timba activa." }
+    ],
+    "motion": [
+      { "name": "ease-reveal", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Curva única de reveals (screenIn, fadeUp, barGrow)." },
+      { "name": "duration-interaction", "value": "0.15s", "purpose": "Transiciones de estado en controles (color, borde, transform)." },
+      { "name": "duration-press", "value": "0.12s", "purpose": "Feedback de pulsación .press / :active." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-max", "value": "759px" },
+      { "name": "desktop-nav", "value": "760px" },
+      { "name": "wide-grid", "value": "980px" },
+      { "name": "stack-teams", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal: píldora lima con tinta oscura encima. Nunca texto blanco.",
+      "html": "<button class=\"ds-btn-primary\">Guardar resultado</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: Archivo, system-ui, sans-serif; font-size: 13.5px; font-weight: 700; letter-spacing: 0.02em; padding: 10px 18px; min-height: 44px; border-radius: 999px; border: 1px solid transparent; background: #c8f03c; color: oklch(0.2 0.03 140); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; } .ds-btn-primary:hover { transform: translateY(-1px); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid oklch(0.7 0.12 128); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción de soporte: superficie con borde de línea.",
+      "html": "<button class=\"ds-btn\">Cancelar</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: Archivo, system-ui, sans-serif; font-size: 13.5px; font-weight: 700; padding: 10px 18px; min-height: 44px; border-radius: 999px; border: 1px solid oklch(0.89 0.012 165); background: oklch(0.99 0.004 140); color: oklch(0.21 0.03 190); cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease; } .ds-btn:hover { border-color: oklch(0.8 0.02 170); transform: translateY(-1px); } .ds-btn:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Etiqueta píldora; variante accent con lima al 18%.",
+      "html": "<span class=\"ds-badge\">MEJOR OPCIÓN</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 5px; font-family: Archivo, system-ui, sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 999px; background: color-mix(in oklab, #c8f03c 18%, transparent); color: color-mix(in oklab, #c8f03c 55%, oklch(0.21 0.03 190)); border: 1px solid color-mix(in oklab, #c8f03c 35%, transparent); white-space: nowrap; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superficie base: borde 1px + sombra ambiental, radio 14px.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-kicker\">ÚLTIMA JORNADA</div><div class=\"ds-card-title\">RANKING LPT</div><p class=\"ds-card-body\">El líder defiende 42 puntos de ventaja.</p></div>",
+      "css": ".ds-card { background: oklch(0.99 0.004 140); border: 1px solid oklch(0.89 0.012 165); border-radius: 14px; box-shadow: 0 2px 8px oklch(0.3 0.03 180 / 0.07); padding: 18px 20px; font-family: Archivo, system-ui, sans-serif; color: oklch(0.21 0.03 190); } .ds-card-kicker { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: oklch(0.52 0.025 180); } .ds-card-title { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-style: italic; font-weight: 800; text-transform: uppercase; letter-spacing: 0.015em; font-size: 26px; line-height: 1; margin-top: 6px; } .ds-card-body { font-size: 15.5px; line-height: 1.5; margin: 10px 0 0; }"
+    },
+    {
+      "name": "Segmented",
+      "kind": "nav",
+      "description": "Filtro de pestañas en píldora; el activo salta a superficie.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-on\">Todos</button><button>Próximos</button><button>Jugados</button></div>",
+      "css": ".ds-seg { display: inline-flex; gap: 3px; background: oklch(0.945 0.01 160); border-radius: 999px; padding: 3px; border: 1px solid oklch(0.89 0.012 165); font-family: Archivo, system-ui, sans-serif; } .ds-seg button { padding: 7px 15px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: oklch(0.52 0.025 180); min-height: 38px; border: none; background: transparent; cursor: pointer; transition: color 0.15s, background 0.15s; } .ds-seg .ds-seg-on { background: oklch(0.99 0.004 140); color: oklch(0.21 0.03 190); box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "description": "Campo estándar sobre tokens; ≥16px para no disparar zoom en iOS.",
+      "html": "<input class=\"ds-input\" placeholder=\"Fichas a apostar\" />",
+      "css": ".ds-input { font-family: Archivo, system-ui, sans-serif; font-size: 16px; padding: 9px 12px; border-radius: 10px; border: 1px solid oklch(0.89 0.012 165); background: oklch(0.99 0.004 140); color: oklch(0.21 0.03 190); } .ds-input:focus-visible { outline: 2px solid oklch(0.7 0.12 128); outline-offset: 1px; } .ds-input::placeholder { color: oklch(0.52 0.025 180); }"
+    },
+    {
+      "name": "Ficha La Timba",
+      "kind": "custom",
+      "description": "Signature: la pestaña central del bottom nav como ficha de casino elevada.",
+      "html": "<button class=\"ds-timba\" aria-label=\"La Timba\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></svg></button>",
+      "css": ".ds-timba { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: #c8f03c; color: oklch(0.2 0.03 140); border: 3px solid oklch(0.99 0.004 140); box-shadow: 0 5px 16px color-mix(in oklab, #c8f03c 42%, transparent); cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; } .ds-timba:active { transform: scale(0.92); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Pista Central",
+    "overview": "LPT trata la liga de la peña como una retransmisión deportiva profesional. La jerarquía es la de un marcador de televisión: condensada itálica mayúscula para lo que grita el resultado, una sans neutra para lo que informa. Neutros verdosos de pista bajo focos y un único acento lima que hace de rótulo luminoso. Registro product: los controles son familiares y desaparecen en la tarea.",
+    "keyCharacteristics": [
+      "Tema dual con neutros verdosos (hue 160–190), nunca gris puro",
+      "Un solo acento (lima #c8f03c) con tinta oscura encima, jamás blanco",
+      "Display condensada itálica 800 uppercase solo para lo que retransmite",
+      "Números siempre tabulares",
+      "Móvil PWA primero: targets ≥44px, safe-areas, feedback táctil en todo"
+    ],
+    "rules": [
+      { "name": "The Tinta-sobre-Lima Rule", "body": "Texto blanco sobre el lima está prohibido (≈1.3:1). Sobre --acc va siempre --on-acc; como texto suelto, --acc-text.", "section": "colors" },
+      { "name": "The Un-Solo-Rótulo Rule", "body": "El lima ocupa ≤10% de cualquier pantalla. Si dos cosas compiten por él, una de las dos no lo lleva.", "section": "colors" },
+      { "name": "The Broadcast-Type Rule", "body": "La condensada itálica es solo para lo que marca resultado o identidad. Prohibida en labels, botones corrientes y párrafos.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Todo número comparable lleva tabular-nums.", "section": "typography" },
+      { "name": "The Borde-Primero Rule", "body": "La profundidad la da el borde de 1px; la sombra acompaña. Nunca sombra dura sin borde.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar --on-acc sobre lima y --acc-text como texto acento",
+      "Do mantener targets táctiles ≥44px y feedback :active en todo lo pulsable",
+      "Do tabular-nums en cualquier número comparable",
+      "Do neutros con chroma verdoso (0.004–0.03, hue 140–190); jamás gris puro",
+      "Do respetar prefers-reduced-motion",
+      "Do apilar comparativas lado-a-lado en vertical antes de truncar nombres en móvil"
+    ],
+    "donts": [
+      "Don't parecer un SaaS corporativo genérico: gradientes morados, hero-metrics, cards idénticas",
+      "Don't oler a casa de apuestas real: sin cuotas parpadeando ni urgencia de casino",
+      "Don't hacer Excel con estilos: toda tabla necesita jerarquía y lectura de jornada",
+      "Don't usar la condensada itálica en labels, formularios o prosa",
+      "Don't transition: all — enumerar propiedades siempre",
+      "Don't más de un elemento lima protagonista por pantalla",
+      "Don't modales para captura de datos principal"
+    ]
+  }
+}

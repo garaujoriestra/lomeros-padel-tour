@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PLANNER } from '@/lib/planner/config';
 import { allSlotStarts, formatMin } from '@/lib/planner/slots';
+import { madridTodayIso } from '@/lib/planner/weeks';
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 const DRAG_THRESHOLD_PX = 12; // un tap con micro-deslizamiento no debe pintar la celda vecina
@@ -50,15 +51,50 @@ export function AvailabilityGrid({
   const [byDay, setByDay] = useState<Set<number>[]>(() => initial.map((d) => new Set(d)));
   const [dirty, setDirty] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
+  // Guard de navegación: lo pintado sin guardar es el trabajo más caro de la
+  // app y un tap en «Próxima semana» lo destruía en silencio.
+  const [pendingNav, setPendingNav] = useState<string | null>(null);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+
+  useEffect(() => {
+    // Intercepta clicks en enlaces internos con cambios sin guardar (capture:
+    // defaultPrevented hace que el <Link> de Next no navegue).
+    const onDocClick = (e: MouseEvent) => {
+      if (dirtyRef.current.size === 0) return;
+      const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      const href = a?.getAttribute('href');
+      if (!href || !href.startsWith('/')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNav(href);
+    };
+    // Cierre de pestaña / recarga: diálogo nativo del navegador (único caso
+    // donde el navegador no permite otra cosa).
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current.size === 0) return;
+      e.preventDefault();
+    };
+    document.addEventListener('click', onDocClick, true);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('click', onDocClick, true);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, []);
   const paintMode = useRef<'paint' | 'erase' | null>(null);
   const dragFrom = useRef<{ x: number; y: number } | null>(null);
   const dragging = useRef(false);
+  // Táctil: el toggle se decide en pointerup (tap confirmado); si el gesto
+  // deriva en scroll, el navegador emite pointercancel y no se pinta nada.
+  const touchPending = useRef<{ day: number; min: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const stop = () => {
       paintMode.current = null;
       dragFrom.current = null;
       dragging.current = false;
+      touchPending.current = null;
     };
     window.addEventListener('pointerup', stop);
     window.addEventListener('pointercancel', stop);
@@ -69,8 +105,15 @@ export function AvailabilityGrid({
   }, []);
 
   const starts = useMemo(allSlotStarts, []);
+  const todayIso = useMemo(() => madridTodayIso(), []);
   const badByDay = byDay.map(invalidCells);
   const hasInvalid = badByDay.some((b) => b.size > 0);
+
+  const swatch = (background: string, extra?: React.CSSProperties): React.CSSProperties => ({
+    display: 'inline-block', width: 12, height: 12, borderRadius: 3,
+    border: '1px solid color-mix(in oklab, currentcolor 20%, transparent)',
+    background, flexShrink: 0, ...extra,
+  });
 
   function applyCell(day: number, min: number, mode: 'paint' | 'erase') {
     if (byDay[day].has(min) === (mode === 'paint')) return; // ya está así: evita renders por pointermove
@@ -84,6 +127,12 @@ export function AvailabilityGrid({
   }
 
   function startPaint(e: React.PointerEvent, day: number, min: number) {
+    // Táctil: no pintar aún — con touch-action:pan-y el dedo puede estar
+    // empezando un scroll. Se registra la celda y se resuelve en pointerup.
+    if (e.pointerType === 'touch') {
+      touchPending.current = { day, min, x: e.clientX, y: e.clientY };
+      return;
+    }
     // Sin captura de puntero: el drag debe disparar pointerenter en otras celdas.
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     dragFrom.current = { x: e.clientX, y: e.clientY };
@@ -94,14 +143,34 @@ export function AvailabilityGrid({
   }
 
   // Solo pinta por arrastre si el puntero se ha movido de verdad (umbral): un tap
-  // que resbala 1-2px ya no selecciona la celda de al lado.
+  // que resbala 1-2px ya no selecciona la celda de al lado. Solo ratón/lápiz.
   function continuePaint(e: React.PointerEvent, day: number, min: number) {
+    if (e.pointerType === 'touch') {
+      // Si el dedo se mueve más del umbral es un scroll: descarta el tap.
+      if (
+        touchPending.current &&
+        Math.hypot(e.clientX - touchPending.current.x, e.clientY - touchPending.current.y) >= DRAG_THRESHOLD_PX
+      ) {
+        touchPending.current = null;
+      }
+      return;
+    }
     if (!paintMode.current || !dragFrom.current) return;
     if (!dragging.current) {
       if (Math.hypot(e.clientX - dragFrom.current.x, e.clientY - dragFrom.current.y) < DRAG_THRESHOLD_PX) return;
       dragging.current = true;
     }
     applyCell(day, min, paintMode.current);
+  }
+
+  // Tap táctil confirmado: el dedo levantó sin moverse → toggle de la celda.
+  function endTouchTap(e: React.PointerEvent, day: number, min: number) {
+    if (e.pointerType !== 'touch') return;
+    const p = touchPending.current;
+    touchPending.current = null;
+    if (!p || p.day !== day || p.min !== min) return;
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) >= DRAG_THRESHOLD_PX) return;
+    applyCell(day, min, byDay[day].has(min) ? 'erase' : 'paint');
   }
 
   async function save() {
@@ -139,8 +208,28 @@ export function AvailabilityGrid({
           onClick={save}
           disabled={saving || hasInvalid || dirty.size === 0}
         >
-          {saving ? 'Guardando…' : 'Guardar'}
+          {saving
+            ? 'Guardando…'
+            : dirty.size > 0
+              ? `Guardar (${dirty.size} ${dirty.size === 1 ? 'día' : 'días'})`
+              : 'Guardar'}
         </button>
+      </div>
+      {/* Leyenda: 4 estados de celda que antes había que adivinar. De paso
+          enseña la regla de 1,5h ANTES de fallar, no solo en el error. */}
+      <div
+        className="small muted"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', alignItems: 'center', margin: '0 0 10px', fontWeight: 600 }}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <i style={swatch('var(--win)')} /> Tú puedes
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <i style={swatch('color-mix(in oklab, var(--win) 28%, transparent)')} /> Otros pueden (el nº dice cuántos)
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <i style={swatch('var(--loss)')} /> Bloque suelto — mínimo 1,5h (3 casillas seguidas)
+        </span>
       </div>
       {hasInvalid && (
         <p className="small" style={{ color: 'var(--loss)', margin: '0 0 8px' }}>
@@ -152,13 +241,24 @@ export function AvailabilityGrid({
           display: 'grid',
           gridTemplateColumns: '52px repeat(7, 1fr)',
           gap: 2,
-          touchAction: 'none',
+          // pan-y: el scroll vertical de la página sigue funcionando sobre la
+          // cuadrícula (en móvil ocupa toda la pantalla y bloquearlo la hacía
+          // imposible de recorrer). En táctil se pinta con tap, no con drag.
+          touchAction: 'pan-y',
           userSelect: 'none',
         }}
       >
         <div />
         {dates.map((d, i) => (
-          <div key={d} className="small muted" style={{ textAlign: 'center', fontWeight: 600 }}>
+          <div
+            key={d}
+            className="small"
+            style={{
+              textAlign: 'center',
+              fontWeight: d === todayIso ? 800 : 600,
+              color: d === todayIso ? 'var(--acc-text)' : 'var(--ink-3)',
+            }}
+          >
             {DAY_LABELS[i]} {Number(d.slice(8))}
           </div>
         ))}
@@ -183,11 +283,16 @@ export function AvailabilityGrid({
                   aria-label={`${DAY_LABELS[day]} ${formatMin(min)}`}
                   data-day={day}
                   data-min={min}
-                  // Pintado solo con puntero (tap/drag): sin ruta de teclado a propósito —
-                  // una cuadrícula de 32×7 celdas no es operable razonablemente por teclado.
+                  // Puntero: tap/drag. Teclado: Enter/Espacio disparan un click
+                  // sintético con detail===0 (los clicks de ratón/touch llegan
+                  // con detail>=1 y ya están cubiertos por los pointer events).
                   onPointerDown={(e) => { e.preventDefault(); startPaint(e, day, min); }}
                   onPointerEnter={(e) => continuePaint(e, day, min)}
                   onPointerMove={(e) => continuePaint(e, day, min)}
+                  onPointerUp={(e) => endTouchTap(e, day, min)}
+                  onClick={(e) => {
+                    if (e.detail === 0) applyCell(day, min, byDay[day].has(min) ? 'erase' : 'paint');
+                  }}
                   style={{
                     height: 28,
                     borderRadius: 4,
@@ -197,6 +302,7 @@ export function AvailabilityGrid({
                     padding: 0,
                     fontSize: 10,
                     fontWeight: 600,
+                    fontVariantNumeric: 'tabular-nums',
                     color: on ? '#fff' : 'inherit',
                   }}
                 >
@@ -207,6 +313,42 @@ export function AvailabilityGrid({
           </Fragment>
         ))}
       </div>
+
+      {/* Confirmación propia (no confirm() nativo) al salir con cambios. */}
+      {pendingNav && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Cambios sin guardar"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 80, display: 'grid', placeItems: 'center',
+            padding: 20,
+            background: 'color-mix(in oklab, var(--bg) 55%, transparent)',
+            backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+            animation: 'fadeIn 0.18s ease',
+          }}
+        >
+          <div
+            className="lpt-card card-pad"
+            style={{ width: '100%', maxWidth: 340, animation: 'popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1)' }}
+          >
+            <p style={{ margin: 0, fontWeight: 800 }}>Tienes disponibilidad sin guardar</p>
+            <p className="small muted" style={{ margin: '6px 0 14px' }}>
+              Si sales ahora, lo que has pintado se perderá.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button className="lpt-btn" onClick={() => setPendingNav(null)}>Seguir editando</button>
+              <button
+                className="lpt-btn"
+                style={{ color: 'var(--loss)', borderColor: 'var(--loss)' }}
+                onClick={() => { const href = pendingNav; setPendingNav(null); router.push(href); }}
+              >
+                Descartar y salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -45,6 +45,11 @@ const barlow = Barlow_Condensed({
 export const metadata: Metadata = {
   title: "Lomeros Padel Tour",
   description: "El ranking oficial del grupo Lomeros · LPT",
+  appleWebApp: {
+    capable: true,
+    title: "LPT",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -83,7 +88,14 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
         <ThemeProvider>
           {children}
-          <Toaster richColors position="top-right" />
+          {/* top-center con offset: en móvil los toasts no quedan bajo el notch
+              ni la topbar (58px + safe-area) de la PWA instalada. */}
+          <Toaster
+            richColors
+            position="top-center"
+            offset={{ top: 72 }}
+            mobileOffset={{ top: "calc(env(safe-area-inset-top) + 66px)" }}
+          />
           <Suspense fallback={null}>
             <NotificationReminderGate />
           </Suspense>

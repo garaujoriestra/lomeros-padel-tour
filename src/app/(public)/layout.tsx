@@ -14,7 +14,7 @@ export default async function PublicLayout({ children }: { children: React.React
     : null;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <Navbar session={session ? { role: session.role, player } : null} />
       <main className="screen">
         <div className="lpt-container">{children}</div>

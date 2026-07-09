@@ -88,12 +88,12 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
 
         {kind === 'pozo' && (
           <div><Label htmlFor="rounds">Nº de rondas</Label>
-            <Input id="rounds" type="number" value={rounds} onChange={(e) => setRounds(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            <Input id="rounds" type="number" inputMode="numeric" value={rounds} onChange={(e) => setRounds(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
         )}
         {kind === 'torneo' && format === 'groups_elim' && (
           <div className="flex gap-3">
-            <div><Label htmlFor="numGroups">Nº de grupos</Label><Input id="numGroups" type="number" value={numGroups} onChange={(e) => setNumGroups(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
-            <div><Label htmlFor="advancePerGroup">Pasan por grupo</Label><Input id="advancePerGroup" type="number" value={advancePerGroup} onChange={(e) => setAdvancePerGroup(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            <div><Label htmlFor="numGroups">Nº de grupos</Label><Input id="numGroups" type="number" inputMode="numeric" value={numGroups} onChange={(e) => setNumGroups(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
+            <div><Label htmlFor="advancePerGroup">Pasan por grupo</Label><Input id="advancePerGroup" type="number" inputMode="numeric" value={advancePerGroup} onChange={(e) => setAdvancePerGroup(Number(e.target.value))} className="bg-surface-2 border border-line rounded-md px-2 h-9 text-sm" /></div>
           </div>
         )}
         {kind === 'torneo' && (
