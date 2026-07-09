@@ -8,7 +8,18 @@ export interface EloMilestone {
 }
 
 /** Gráfica de evolución del Elo con hitos y tooltip (estilo broadcast). */
-export function EloChart({ data, milestones = [], height = 200 }: { data: number[]; milestones?: EloMilestone[]; height?: number }) {
+export function EloChart({
+  data,
+  labels,
+  milestones = [],
+  height = 200,
+}: {
+  data: number[];
+  /** Etiqueta legible por punto (fecha del partido); alineada con `data`. */
+  labels?: (string | null)[];
+  milestones?: EloMilestone[];
+  height?: number;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(560);
   const [hover, setHover] = useState<number | null>(null);
@@ -94,7 +105,8 @@ export function EloChart({ data, milestones = [], height = 200 }: { data: number
       </svg>
       {hover != null && (
         <div className="chart-hint" style={{ left: `${(X(hover) / w) * 100}%`, top: Y(data[hover]) }}>
-          {data[hover]} · P{hover}
+          {/* La fecha del partido, no el índice interno del punto. */}
+          {data[hover]} · {labels?.[hover] ?? (hover === 0 ? 'inicio' : `partido ${hover}`)}
           {hoverMilestone ? ` · ${hoverMilestone.label}` : ''}
         </div>
       )}

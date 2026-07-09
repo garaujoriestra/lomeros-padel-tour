@@ -161,7 +161,11 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
             <div className="section">
               <SectionHead icon={TrendingUp} title="Evolución del Elo" />
               <div className="lpt-card card-pad">
-                <EloChart data={eloSeries} milestones={milestones} />
+                <EloChart
+                  data={eloSeries}
+                  labels={['inicio', ...chartData.map((d) => formatMatchDate(d.date))]}
+                  milestones={milestones}
+                />
                 {milestones.length > 0 && (
                   <div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
                     {milestones.map((m, i) => (

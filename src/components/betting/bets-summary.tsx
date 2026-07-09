@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { bets, players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { LptAvatar } from '@/components/lpt/ui';
+import { getSession } from '@/lib/auth/session';
 
 const TEAM_LABEL: Record<number, string> = { 1: 'Equipo 1', 2: 'Equipo 2' };
 
@@ -27,10 +28,34 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
 
   if (rows.length === 0) return null;
 
+  // El acierto es el pico emocional de La Timba: si el jugador con sesión ganó
+  // aquí, su premio abre la liquidación como momento de retransmisión, no como
+  // una línea verde más del ledger.
+  const session = await getSession();
+  const myPlayerId = session?.player?.id ?? null;
+  const myWinTotal = myPlayerId
+    ? rows
+        .filter((r) => r.playerId === myPlayerId && r.status === 'won')
+        .reduce((sum, r) => sum + (r.payout ?? 0), 0)
+    : 0;
+
   return (
     <section className="section">
       <div className="lpt-card card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <h2 className="sec-title" style={{ margin: 0 }}>🎰 La Timba — resultado</h2>
+        {myWinTotal > 0 && (
+          <div
+            data-testid="timba-celebration"
+            className="lpt-card card-pad podium-gold"
+            style={{ textAlign: 'center', animation: 'celebrateIn 0.6s cubic-bezier(0.22, 1, 0.36, 1)' }}
+          >
+            <p style={{ fontSize: 30, lineHeight: 1, margin: 0 }}>🎉</p>
+            <p className="display" style={{ fontSize: 26, margin: '6px 0 0' }}>¡Acertaste!</p>
+            <p className="display num" style={{ fontSize: 42, color: 'var(--acc-text)', margin: '2px 0 0' }}>
+              +{myWinTotal} fichas
+            </p>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rows.map((r) => {
             let delta: string;

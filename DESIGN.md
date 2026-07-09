@@ -16,6 +16,8 @@ colors:
   ink: "oklch(0.21 0.03 190)"
   ink-2: "oklch(0.34 0.03 185)"
   ink-3: "oklch(0.52 0.025 180)"
+  splash-deep: "#0c1715"
+  splash-mid: "#1d2f2c"
 typography:
   display:
     fontFamily: "Barlow Condensed, Archivo, Arial Narrow, sans-serif"
@@ -113,6 +115,7 @@ Verde de pista bajo focos: neutros tintados hacia verde-azulado, un lima eléctr
 - **Superficie** y **Superficie-2** (surface/surface-2): cards y controles; segunda capa para segmented, badges y hover.
 - **Tinta / Tinta-2 / Tinta-3** (ink/ink-2/ink-3): jerarquía de texto en tres pasos. Tinta-3 es para metadatos, nunca para párrafos largos.
 - **Línea / Línea fuerte** (line/line-strong): bordes de 1px y separadores.
+- **Verde profundo de splash** (#0c1715, con #1d2f2c como tono medio): el gradiente del splash de arranque, el loader de marca, la página offline, el theme-color del manifest y los iconos PWA. Vive fuera del tema claro/oscuro a propósito: es el telón de la marca.
 
 ### Named Rules
 **The Tinta-sobre-Lima Rule.** Texto blanco sobre el lima está prohibido (≈1.3:1). Sobre `--acc` va siempre `--on-acc`; como texto suelto, `--acc-text`. Sin excepciones.

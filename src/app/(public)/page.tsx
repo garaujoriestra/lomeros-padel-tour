@@ -87,6 +87,23 @@ export default async function HomePage() {
   const podiumPlayers = topPlayers.map((p) => ({ ...p, delta: lastDelta[p.id] ?? null }));
   const season = new Date().getFullYear();
 
+  // Cold-open de retransmisión: el hero abre con lo último que ha pasado en la
+  // liga (el resultado más reciente), no solo con el ident de la temporada.
+  const lastCompleted = recentMatchesAll.find((m) => m.status === 'completed' && m.winnerTeam != null) ?? null;
+  let coldOpen: { text: string; href: string } | null = null;
+  if (lastCompleted) {
+    const short = (id: string | null) => (id && playerMap[id] ? (playerMap[id].nickname || playerMap[id].name.split(' ')[0]) : '?');
+    const score = allSets
+      .filter((s) => s.matchId === lastCompleted.id)
+      .sort((a, b) => a.setNumber - b.setNumber)
+      .map((s) => (lastCompleted.winnerTeam === 2 ? `${s.team2Games}-${s.team1Games}` : `${s.team1Games}-${s.team2Games}`))
+      .join(' ');
+    const t1 = `${short(lastCompleted.team1Player1Id)} y ${short(lastCompleted.team1Player2Id)}`;
+    const t2 = `${short(lastCompleted.team2Player1Id)} y ${short(lastCompleted.team2Player2Id)}`;
+    const [winners, losers] = lastCompleted.winnerTeam === 2 ? [t2, t1] : [t1, t2];
+    coldOpen = { text: `${winners} ${score} a ${losers}`, href: `/matches/${lastCompleted.id}` };
+  }
+
   return (
     <DirectionalTransition>
       <div>
@@ -103,6 +120,25 @@ export default async function HomePage() {
           <p style={{ opacity: 0.65, fontSize: 13.5, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, margin: 0 }}>
             El ranking oficial del grupo
           </p>
+          {coldOpen && (
+            <Link
+              href={coldOpen.href}
+              transitionTypes={['nav-forward']}
+              style={{
+                display: 'inline-block',
+                marginTop: 14,
+                padding: '7px 16px',
+                borderRadius: 999,
+                background: 'color-mix(in oklab, currentcolor 10%, transparent)',
+                border: '1px solid color-mix(in oklab, currentcolor 20%, transparent)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'inherit',
+              }}
+            >
+              Último partido: <span className="num">{coldOpen.text}</span> →
+            </Link>
+          )}
           <div
             style={{
               display: 'flex',
@@ -113,13 +149,15 @@ export default async function HomePage() {
               borderTop: '1px solid color-mix(in oklab, currentcolor 18%, transparent)',
             }}
           >
+            {/* Un-Solo-Rótulo: el lima solo en el dato protagonista (Elo líder);
+                los totales de temporada van en tinta. */}
             {([
-              [totalMatches, 'Partidos'],
-              [totalPlayers, 'Jugadores'],
-              [topPlayers[0] ? Math.round(topPlayers[0].eloRating) : 1500, 'Elo líder'],
-            ] as [number, string][]).map(([n, label]) => (
+              [totalMatches, 'Partidos', false],
+              [totalPlayers, 'Jugadores', false],
+              [topPlayers[0] ? Math.round(topPlayers[0].eloRating) : 1500, 'Elo líder', true],
+            ] as [number, string, boolean][]).map(([n, label, isLead]) => (
               <div key={label}>
-                <div className="display num" style={{ fontSize: 'clamp(26px, 4.5vw, 42px)', color: 'var(--acc)' }}>
+                <div className="display num" style={{ fontSize: 'clamp(26px, 4.5vw, 42px)', color: isLead ? 'var(--acc)' : 'inherit' }}>
                   <CountUp value={n} />
                 </div>
                 <div style={{ fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700, marginTop: 3 }}>
