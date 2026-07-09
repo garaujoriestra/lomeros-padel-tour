@@ -30,7 +30,7 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
         <span style={D} className={`italic font-extrabold text-lg w-6 text-center tabular-nums ${s?.rank === 1 ? 'text-acc-text' : 'text-ink-3'}`}>
           {s ? s.rank : '·'}
         </span>
-        <span className="flex-1 font-bold text-[14.5px] min-w-0 truncate">{label}</span>
+        <span title={label} className="flex-1 font-bold text-[14.5px] min-w-0 truncate">{label}</span>
         {s && <span className="text-xs text-ink-3 tabular-nums">{s.games} <span className="opacity-60">jg</span></span>}
       </div>
     );

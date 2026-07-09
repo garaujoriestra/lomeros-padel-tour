@@ -25,12 +25,16 @@ export function AchievementsCard({ earned }: AchievementsCardProps) {
   const selected = selectedId ? ACHIEVEMENTS.find((a) => a.id === selectedId) : undefined;
   const selectedEarnedAt = selectedId ? earnedMap.get(selectedId) : undefined;
 
+  // Debut: un muro de 15 trofeos grises desanima. Se enseñan solo los 3
+  // primeros como aperitivo hasta que caiga el primer logro.
+  const visible = earned.length === 0 ? ACHIEVEMENTS.slice(0, 3) : ACHIEVEMENTS;
+
   return (
     <div className="section">
       <SectionHead icon={Award} title="Logros" />
       <div className="lpt-card card-pad">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 10 }}>
-          {ACHIEVEMENTS.map((a: Achievement) => {
+          {visible.map((a: Achievement) => {
             const earnedAt = earnedMap.get(a.id);
             const got = earnedAt !== undefined;
             const isSelected = selectedId === a.id;
@@ -89,7 +93,9 @@ export function AchievementsCard({ earned }: AchievementsCardProps) {
         )}
       </div>
       <p className="small muted" style={{ marginTop: 8, textAlign: 'right' }}>
-        {earned.length} / {ACHIEVEMENTS.length} desbloqueados
+        {earned.length === 0
+          ? `${ACHIEVEMENTS.length} logros esperando · juega tu primer partido`
+          : `${earned.length} / ${ACHIEVEMENTS.length} desbloqueados`}
       </p>
     </div>
   );

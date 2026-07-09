@@ -1,4 +1,6 @@
 import { db } from '@/lib/db';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { getPlayersInGroup } from '@/lib/players/queries';
 import { notFound } from 'next/navigation';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
@@ -46,6 +48,9 @@ export default async function PublicPozoPage({ params }: { params: Promise<{ id:
   return (
     <div className="space-y-6">
       <div>
+        <Link href="/eventos" className="sec-link" style={{ marginBottom: 10, display: 'inline-flex' }}>
+          <ArrowLeft size={14} /> Eventos
+        </Link>
         <h1 className="sec-title">{ev.name}</h1>
         <p className="muted text-sm mt-1">{ev.date}{ev.location ? ` · ${ev.location}` : ''} · Pozo · {formatLabel(ev.format)}</p>
         {ev.format === 'americano' && (

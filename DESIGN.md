@@ -39,10 +39,15 @@ typography:
     fontWeight: 800
     letterSpacing: "0.14em"
 rounded:
+  dot: "3px"
+  micro: "4px"
+  cell: "6px"
+  hint: "7px"
   sm: "8px"
   md: "10px"
+  lg: "12px"
   card: "14px"
-  xl: "20px"
+  hero: "20px"
   pill: "999px"
 spacing:
   xs: "6px"

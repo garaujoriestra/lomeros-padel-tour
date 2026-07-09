@@ -374,6 +374,9 @@
 .set-cell.w { color: var(--acc-text); background: color-mix(in oklab, var(--acc) 12%, transparent); }
 
 /* ── Tablas de ranking ── */
+.rank-spark { width: 90px; display: flex; justify-content: center; flex-shrink: 0; }
+@media (max-width: 759px) { .rank-spark { width: 52px; } }
+
 .rank-row {
   display: flex; align-items: center; gap: 13px;
   padding: calc(12px * var(--sp)) calc(16px * var(--sp));
