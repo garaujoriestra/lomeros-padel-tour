@@ -451,6 +451,8 @@
 .stagger > *:nth-child(8) { animation-delay: 0.37s; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes popIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+/* Celebración (acierto en La Timba): entrada con leve rebote — momento raro, delight merecido. */
+@keyframes celebrateIn { 0% { opacity: 0; transform: scale(0.9); } 65% { opacity: 1; transform: scale(1.02); } 100% { opacity: 1; transform: none; } }
 @keyframes chartDraw { to { stroke-dashoffset: 0; } }
 
 /* ════════════ Loader de marca entre pantallas ════════════ */
