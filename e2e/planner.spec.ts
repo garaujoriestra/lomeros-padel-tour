@@ -99,12 +99,13 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     }
   });
 
-  test('pintar y guardar viernes aparece en «Quién puede» y persiste al recargar', async ({ page }) => {
+  test('pintar el viernes se AUTOGUARDA, aparece en «Quién puede» y persiste al recargar', async ({ page }) => {
     await page.goto('/planificador');
     for (const min of [1200, 1230, 1260]) {
       await page.locator(`button[data-day="4"][data-min="${min}"]`).first().click();
     }
-    await page.getByRole('button', { name: 'Guardar' }).first().click();
+    // Pintar es guardar: sin botón — el estado vivo confirma el autosave.
+    await expect(page.getByText('Guardado ✓').first()).toBeVisible();
     await expect(page.getByText('20:00–21:30 · Jugador 1').first()).toBeVisible();
     await expect(page.getByText(/Viernes \d+/).first()).toBeVisible();
 
@@ -122,11 +123,11 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     await expect(page.getByText(/mínimo 1,5h/).first()).toBeVisible();
   });
 
-  test('navegar con cambios sin guardar pide confirmación (y no destruye el pintado)', async ({ page }) => {
+  test('navegar con un bloque incompleto (no autoguardable) pide confirmación', async ({ page }) => {
     await page.goto('/planificador');
+    // Una sola casilla = bloque <1,5h: el autosave no lo guarda y queda pendiente.
     await page.locator('button[data-day="6"][data-min="1290"]').first().click();
-    // El botón refleja el estado sucio.
-    await expect(page.getByRole('button', { name: /Guardar \(1 día\)/ }).first()).toBeVisible();
+    await expect(page.getByText('Sin guardar — completa el bloque').first()).toBeVisible();
     // Tap en el conmutador de semana → diálogo propio, sin navegar.
     await page.getByRole('link', { name: 'Próxima' }).first().click();
     await expect(page.getByRole('alertdialog', { name: 'Cambios sin guardar' })).toBeVisible();
@@ -136,16 +137,16 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
       .toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('bloques de <3 casillas bloquean el guardado', async ({ page }) => {
+  test('bloques de <3 casillas NO se autoguardan; al completar el bloque sí', async ({ page }) => {
     await page.goto('/planificador');
-    // Dos celdas sueltas el sábado (day=5) → aviso y botón deshabilitado.
+    // Dos celdas sueltas el sábado (day=5) → aviso rojo y estado «Sin guardar».
     await page.locator('button[data-day="5"][data-min="1200"]').first().click();
     await page.locator('button[data-day="5"][data-min="1230"]').first().click();
     await expect(page.getByText('Los bloques deben ser de mínimo 1,5h').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeDisabled();
-    // Completar el bloque a 3 → se puede guardar.
+    await expect(page.getByText('Sin guardar — completa el bloque').first()).toBeVisible();
+    // Completar el bloque a 3 → autosave.
     await page.locator('button[data-day="5"][data-min="1260"]').first().click();
-    await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeEnabled();
+    await expect(page.getByText('Guardado ✓').first()).toBeVisible();
   });
 
   test('no-fuga: el planificador de Lomeros no muestra datos de grupo-test', async ({ page }) => {

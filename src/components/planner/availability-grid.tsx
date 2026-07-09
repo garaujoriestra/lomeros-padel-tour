@@ -50,7 +50,15 @@ export function AvailabilityGrid({
   const router = useRouter();
   const [byDay, setByDay] = useState<Set<number>[]>(() => initial.map((d) => new Set(d)));
   const [dirty, setDirty] = useState<Set<number>>(new Set());
-  const [saving, setSaving] = useState(false);
+  // Pintar ES guardar: cada trazo agenda un autosave con debounce. Solo se
+  // guardan los días VÁLIDOS (los bloques incompletos <1,5h quedan pendientes
+  // con su aviso); las versiones por día evitan borrar de «dirty» un día que
+  // se repintó mientras su PUT estaba en vuelo.
+  const [saveState, setSaveState] = useState<'clean' | 'pending' | 'saving' | 'saved' | 'error'>('clean');
+  const byDayRef = useRef(byDay);
+  byDayRef.current = byDay;
+  const dayVersions = useRef<number[]>(Array(7).fill(0));
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guard de navegación: lo pintado sin guardar es el trabajo más caro de la
   // app y un tap en «Próxima semana» lo destruía en silencio.
   const [pendingNav, setPendingNav] = useState<string | null>(null);
@@ -124,6 +132,52 @@ export function AvailabilityGrid({
       return next;
     });
     setDirty((prev) => new Set(prev).add(day));
+    dayVersions.current[day]++;
+    scheduleAutosave();
+  }
+
+  function scheduleAutosave() {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaveState('pending');
+    saveTimer.current = setTimeout(() => void autosave(), 1000);
+  }
+
+  async function autosave() {
+    const days = [...dirtyRef.current].filter((d) => invalidCells(byDayRef.current[d]).size === 0);
+    if (days.length === 0) {
+      // Solo hay bloques incompletos: siguen pendientes (aviso rojo), no hay
+      // nada guardable en vuelo.
+      setSaveState('clean');
+      return;
+    }
+    const snapshot = days.map((d) => ({ d, v: dayVersions.current[d] }));
+    setSaveState('saving');
+    try {
+      for (const { d } of snapshot) {
+        const slots = [...byDayRef.current[d]].sort((a, b) => a - b);
+        const res = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ g, week, day: d, slots }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error ?? 'Error al guardar');
+        }
+      }
+      setDirty((prev) => {
+        const next = new Set(prev);
+        for (const { d, v } of snapshot) {
+          if (dayVersions.current[d] === v) next.delete(d); // sin trazos nuevos en vuelo
+        }
+        return next;
+      });
+      setSaveState('saved');
+      router.refresh(); // «Quién puede esta semana» refleja lo recién pintado
+    } catch (e) {
+      setSaveState('error');
+      toast.error(e instanceof Error ? e.message : 'Error al guardar');
+    }
   }
 
   function startPaint(e: React.PointerEvent, day: number, min: number) {
@@ -173,47 +227,35 @@ export function AvailabilityGrid({
     applyCell(day, min, byDay[day].has(min) ? 'erase' : 'paint');
   }
 
-  async function save() {
-    setSaving(true);
-    try {
-      for (const day of [...dirty]) {
-        const slots = [...byDay[day]].sort((a, b) => a - b);
-        const res = await fetch(endpoint, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ g, week, day, slots }),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? 'Error al guardar');
-        }
-      }
-      setDirty(new Set());
-      toast.success('Disponibilidad guardada');
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Error al guardar');
-    } finally {
-      setSaving(false);
-    }
-  }
+  // Al desmontar, cancela el debounce pendiente (el guard ya habrá avisado si
+  // quedaba algo sin guardar).
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   return (
     <div className="lpt-card" style={{ padding: 14 }}>
       <div className="flex items-center justify-between gap-3" style={{ marginBottom: 10 }}>
         <h2 className="sec-title" style={{ fontSize: 17 }}>{title}</h2>
-        <button
-          className="lpt-btn primary"
-          style={{ minHeight: 34, padding: '6px 14px' }}
-          onClick={save}
-          disabled={saving || hasInvalid || dirty.size === 0}
-        >
-          {saving
-            ? 'Guardando…'
-            : dirty.size > 0
-              ? `Guardar (${dirty.size} ${dirty.size === 1 ? 'día' : 'días'})`
-              : 'Guardar'}
-        </button>
+        {/* Pintar es guardar: sin botón. El estado vivo cuenta la verdad. */}
+        <span role="status" className="small" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+          {saveState === 'error' ? (
+            <button
+              type="button"
+              className="press"
+              onClick={() => void autosave()}
+              style={{ color: 'var(--loss)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
+            >
+              Error al guardar — Reintentar
+            </button>
+          ) : saveState === 'saving' || saveState === 'pending' ? (
+            <span className="muted">Guardando…</span>
+          ) : dirty.size > 0 ? (
+            <span style={{ color: 'var(--loss)' }}>Sin guardar — completa el bloque</span>
+          ) : saveState === 'saved' ? (
+            <span style={{ color: 'var(--win)' }}>Guardado ✓</span>
+          ) : (
+            <span className="muted">Se guarda solo al pintar</span>
+          )}
+        </span>
       </div>
       {/* Leyenda: 4 estados de celda que antes había que adivinar. De paso
           enseña la regla de 1,5h ANTES de fallar, no solo en el error. */}
@@ -334,7 +376,8 @@ export function AvailabilityGrid({
           >
             <p style={{ margin: 0, fontWeight: 800 }}>Tienes disponibilidad sin guardar</p>
             <p className="small muted" style={{ margin: '6px 0 14px' }}>
-              Si sales ahora, lo que has pintado se perderá.
+              Normalmente es un bloque incompleto (mínimo 1,5h) o un guardado en curso.
+              Si sales ahora, esos trazos se perderán.
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button className="lpt-btn" onClick={() => setPendingNav(null)}>Seguir editando</button>
