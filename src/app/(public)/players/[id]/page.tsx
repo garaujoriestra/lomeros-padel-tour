@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { loadPlayerProfile } from '@/lib/players/profile-data';
 import { PlayerProfileView } from '@/components/players/player-profile-view';
@@ -13,7 +15,12 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   if (!data) notFound();
   return (
     <DirectionalTransition>
-      <PlayerProfileView data={data} editable={false} />
+      <div>
+        <Link href="/rankings" transitionTypes={['nav-back']} className="sec-link" style={{ marginBottom: 14, display: 'inline-flex' }}>
+          <ArrowLeft size={14} /> Ranking
+        </Link>
+        <PlayerProfileView data={data} editable={false} />
+      </div>
     </DirectionalTransition>
   );
 }

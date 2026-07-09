@@ -38,4 +38,12 @@ test('torneo eliminación directa: parejas → generar → cuadro → resultados
 
   // Tras las semis, la final queda jugable (resolveBracket rellena sus parejas) → aparece su Guardar.
   await expect(page.getByRole('button', { name: 'Guardar' })).toBeVisible();
+
+  // Registrar la final: el campeón abre la vista con su banda a ancho completo
+  // (peak-end: la corona ya no queda escondida al final del scroll horizontal).
+  await page.getByLabel('Juegos equipo A').first().fill('2');
+  await page.getByLabel('Juegos equipo B').first().fill('0');
+  await page.getByRole('button', { name: 'Guardar' }).first().click();
+  await expect(page.locator('.podium-gold').first()).toBeVisible();
+  await expect(page.getByText('Campeón').first()).toBeVisible();
 });

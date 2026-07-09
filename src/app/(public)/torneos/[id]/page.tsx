@@ -1,4 +1,6 @@
 import { db } from '@/lib/db';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { tournamentGroups } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { getPlayersInGroup } from '@/lib/players/queries';
@@ -45,6 +47,9 @@ export default async function PublicTorneoPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-6">
       <div>
+        <Link href="/eventos" className="sec-link" style={{ marginBottom: 10, display: 'inline-flex' }}>
+          <ArrowLeft size={14} /> Eventos
+        </Link>
         <h1 className="sec-title">{ev.name}</h1>
         <p className="muted text-sm mt-1">{ev.date}{ev.location ? ` · ${ev.location}` : ''} · Torneo</p>
       </div>

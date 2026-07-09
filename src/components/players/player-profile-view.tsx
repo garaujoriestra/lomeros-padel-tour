@@ -4,6 +4,7 @@ import { EloChart, type EloMilestone } from '@/components/lpt/elo-chart';
 import { CountUp } from '@/components/lpt/count-up';
 import { SectionHead, LptAvatar, Delta, StatBar, FormDots, displayName, formatMatchDate } from '@/components/lpt/ui';
 import { PartnerCard } from '@/components/shared/partner-card';
+import { ShareProfileButton } from '@/components/shared/share-profile-button';
 import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card';
 import { AchievementsCard } from '@/components/shared/achievements-card';
 import type { RivalryStats } from '@/lib/rating/head-to-head';
@@ -89,32 +90,49 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
               {player.isLeftHanded && (
                 <span className="lpt-badge"><Hand size={11} /> Zurdo</span>
               )}
+              {/* Racha en tonos win/loss (el lima queda para Elo, #rank y compartir). */}
               {streak.count > 1 && (streak.type === 'W' || streak.type === 'L') && (
-                <span className={`lpt-badge ${streak.type === 'W' ? 'accent' : 'loss'}`}>
+                <span className={`lpt-badge ${streak.type === 'W' ? 'win' : 'loss'}`}>
                   {streak.type === 'W' ? '🔥' : '❄️'} Racha de {streak.count}
                 </span>
               )}
+              <ShareProfileButton
+                title={`${displayName(player)} · LPT`}
+                text={`${displayName(player)} — Elo ${Math.round(player.eloRating)}${rank != null ? ` · #${rank} del ranking` : ''} · Lomeros Padel Tour`}
+              />
               {editable && (
-                <Link href="/me/edit" className="lpt-badge accent">
+                <Link href="/me/edit" className="lpt-badge">
                   <Pencil size={11} /> Editar perfil
                 </Link>
               )}
             </div>
           </div>
           <div className="profile-elo" style={{ textAlign: 'right' }}>
-            <div className="display num" style={{ fontSize: 'clamp(40px, 6vw, 58px)', color: 'var(--acc)' }}>
-              <CountUp value={Math.round(player.eloRating)} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>Elo</span>
-              <Delta value={lastDelta} pulse />
-            </div>
+            {player.matchesPlayed > 0 ? (
+              <>
+                <div className="display num" style={{ fontSize: 'clamp(40px, 6vw, 58px)', color: 'var(--acc)' }}>
+                  <CountUp value={Math.round(player.eloRating)} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>Elo</span>
+                  <Delta value={lastDelta} pulse />
+                </div>
+              </>
+            ) : (
+              // Debut: el 1500 por defecto no se muestra como si fuera ganado.
+              <>
+                <div className="display" style={{ fontSize: 'clamp(24px, 4vw, 32px)' }}>Debut pendiente</div>
+                <div style={{ fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>
+                  Elo inicial 1500
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 10,
             marginTop: 'calc(24px * var(--sp))',
             paddingTop: 'calc(18px * var(--sp))',
@@ -122,11 +140,11 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
             textAlign: 'center',
           }}
         >
+          {/* Sin duplicar: el desglose V/D vive solo en su card de detalle. */}
           {([
             [player.matchesPlayed, 'Partidos'],
-            [player.wins, 'Victorias'],
-            [player.losses, 'Derrotas'],
-            [`${winRate}%`, 'Win rate'],
+            [player.matchesPlayed > 0 ? `${winRate}%` : '—', 'Win rate'],
+            [streak.count > 0 ? `${streak.count}${streak.type === 'W' ? 'V' : 'D'}` : '—', 'Racha'],
           ] as [number | string, string][]).map(([n, l]) => (
             <div key={l}>
               <div className="display num" style={{ fontSize: 'clamp(20px, 3.5vw, 30px)' }}>{n}</div>
@@ -168,7 +186,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
                 </div>
               )}
               <div className="lpt-card card-pad">
-                <div className="kicker" style={{ marginBottom: 12 }}>Win rate</div>
+                <div className="kicker" style={{ marginBottom: 12 }}>Victorias y derrotas</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <StatBar pct={winRate} tone={winRate >= 50 ? 'win' : 'loss'} />
@@ -198,7 +216,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
                   <div className="kicker" style={{ marginBottom: 8 }}>
                     Lado {label}
                     {s.matches > 0 && isBest && driveW !== revesW && (
-                      <span style={{ color: 'var(--acc-text)' }}>· su mejor lado</span>
+                      <span style={{ color: 'var(--acc-text)' }}>· {editable ? 'tu' : 'su'} mejor lado</span>
                     )}
                   </div>
                   {s.matches === 0 ? (
