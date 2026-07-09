@@ -41,6 +41,7 @@
   --color-card: var(--card);
   --color-win: var(--win);
   --color-loss: var(--loss);
+  --color-loss-text: var(--loss-text);
   --color-warn: var(--warn);
   --color-acc: var(--acc);
   --color-on-acc: var(--on-acc);
@@ -67,6 +68,10 @@
 :root {
   --win: oklch(0.62 0.16 150);
   --loss: oklch(0.6 0.18 25);
+  /* --loss como TEXTO pequeño falla AA sobre surface (4.13:1 en oscuro). Esta
+     variante más luminosa lo sube a ~5.3:1; úsala solo como color de texto,
+     no como fondo/borde (esos siguen con --loss vía color-mix). */
+  --loss-text: oklch(0.6 0.18 25);
   --warn: oklch(0.72 0.14 80);
   --sp: 1;
   --maxw: 1060px;
@@ -136,6 +141,7 @@
   --ink: oklch(0.965 0.008 120);
   --ink-2: oklch(0.82 0.02 150);
   --ink-3: oklch(0.62 0.025 170);
+  --loss-text: oklch(0.66 0.17 25); /* AA como texto pequeño sobre surface oscuro (~5.3:1) */
   --acc-text: var(--acc);
   --card-border: 1px solid var(--line);
   --card-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px oklch(0 0 0 / 0.25);
@@ -285,7 +291,7 @@
 
 .delta { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; }
 .delta.up { color: var(--win); }
-.delta.down { color: var(--loss); }
+.delta.down { color: var(--loss-text); }
 .delta.pulse { animation: deltaPulse 2.4s ease-in-out infinite; }
 @keyframes deltaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
@@ -306,7 +312,7 @@
 }
 .lpt-badge.accent { background: color-mix(in oklab, var(--acc) 18%, transparent); color: var(--acc-text); border-color: color-mix(in oklab, var(--acc) 35%, transparent); }
 .lpt-badge.win { background: color-mix(in oklab, var(--win) 14%, transparent); color: var(--win); border-color: color-mix(in oklab, var(--win) 30%, transparent); }
-.lpt-badge.loss { background: color-mix(in oklab, var(--loss) 13%, transparent); color: var(--loss); border-color: color-mix(in oklab, var(--loss) 30%, transparent); }
+.lpt-badge.loss { background: color-mix(in oklab, var(--loss) 13%, transparent); color: var(--loss-text); border-color: color-mix(in oklab, var(--loss) 30%, transparent); }
 
 .lpt-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -354,7 +360,7 @@
 }
 .status-pill.scheduled { background: color-mix(in oklab, var(--acc) 16%, transparent); color: var(--acc-text); }
 .status-pill.completed { background: var(--surface-2); color: var(--ink-3); }
-.status-pill.injury { background: color-mix(in oklab, var(--loss) 14%, transparent); color: var(--loss); }
+.status-pill.injury { background: color-mix(in oklab, var(--loss) 14%, transparent); color: var(--loss-text); }
 
 /* ── Scoreboard ── */
 .score-grid { display: grid; gap: 3px 0; }
@@ -408,7 +414,7 @@
 /* ── Sinergia ── */
 .synergy { font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
 .synergy.pos { color: var(--win); }
-.synergy.neg { color: var(--loss); }
+.synergy.neg { color: var(--loss-text); }
 
 /* ── Líder del podio ── */
 .podium-gold { border-color: color-mix(in oklab, var(--acc) 55%, var(--line)); }
@@ -504,7 +510,7 @@
   .card-pad { padding: calc(15px * var(--sp)) calc(16px * var(--sp)); }
   .rank-row { gap: 10px; padding-left: calc(12px * var(--sp)); padding-right: calc(12px * var(--sp)); }
   .rank-pos { width: 24px; font-size: 18px; }
-  .icon-btn { width: 40px; height: 40px; }
+  .icon-btn { width: 44px; height: 44px; }
   .topbar-inner { padding: 0 14px; gap: 12px; }
   .sec-title { font-size: 23px; }
   .seg button { padding: 8px 13px; min-height: 44px; }

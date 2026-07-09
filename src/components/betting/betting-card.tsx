@@ -323,8 +323,9 @@ export function BettingCard(props: BettingCardProps) {
                   onClick={() => cancelBet(b.market as 'winner' | 'exact_score')}
                   disabled={loading}
                   style={{
-                    marginLeft: 'auto', padding: '4px 10px', borderRadius: 8, fontWeight: 700, fontSize: 11.5,
-                    border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--loss)',
+                    marginLeft: 'auto', padding: '4px 12px', minHeight: 44, borderRadius: 8, fontWeight: 700, fontSize: 11.5,
+                    display: 'inline-flex', alignItems: 'center',
+                    border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--loss-text)',
                     cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
                   }}
                 >

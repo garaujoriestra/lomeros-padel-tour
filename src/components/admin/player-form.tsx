@@ -134,7 +134,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                 {preview && (
                   <button
                     type="button"
-                    className="text-xs text-loss hover:text-loss"
+                    className="text-xs text-loss-text hover:opacity-80 min-h-11 inline-flex items-center"
                     onClick={() => { setPreview(''); setForm((f) => ({ ...f, avatarUrl: '' })); }}
                   >
                     ✕ Quitar foto
@@ -185,36 +185,36 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-h-11">
             <input
               id="isLeftHanded"
               type="checkbox"
               checked={form.isLeftHanded}
               onChange={(e) => setForm({ ...form, isLeftHanded: e.target.checked })}
-              className="h-4 w-4 rounded border-line"
+              className="h-5 w-5 rounded border-line"
             />
-            <Label htmlFor="isLeftHanded" className="cursor-pointer">🤚 Zurdo</Label>
+            <Label htmlFor="isLeftHanded" className="cursor-pointer flex-1 py-2">🤚 Zurdo</Label>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-h-11">
             <input
               id="juegaPadel"
               type="checkbox"
               checked={form.juegaPadel}
               onChange={(e) => setForm({ ...form, juegaPadel: e.target.checked })}
-              className="h-4 w-4 rounded border-line"
+              className="h-5 w-5 rounded border-line"
             />
-            <Label htmlFor="juegaPadel" className="cursor-pointer">Juega al pádel (desmarca para un apostante de La Timba que no juega)</Label>
+            <Label htmlFor="juegaPadel" className="cursor-pointer flex-1 py-2">Juega al pádel (desmarca para un apostante de La Timba que no juega)</Label>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button type="submit" disabled={loading || uploading} className="min-h-[40px] px-4 text-sm">
+            <Button type="submit" disabled={loading || uploading} className="min-h-11 px-4 text-sm">
               {loading ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear jugador'}
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="min-h-[40px] px-4 text-sm"
+              className="min-h-11 px-4 text-sm"
               onClick={() => router.push('/admin/players')}
             >
               Cancelar

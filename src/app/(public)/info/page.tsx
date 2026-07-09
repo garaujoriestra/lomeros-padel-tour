@@ -44,7 +44,7 @@ export default function InfoPage() {
 
       <div className="stagger" style={{ display: 'grid', gap: 14 }}>
         <div className="lpt-card card-pad">
-          <div className="kicker" style={{ marginBottom: 8 }}>El ranking Elo</div>
+          <h2 className="kicker" style={{ marginBottom: 8 }}>El ranking Elo</h2>
           <p className="small" style={{ margin: 0, lineHeight: 1.6 }}>
             Todos empiezan con <b>1500 puntos</b>. Cada partido transfiere puntos del equipo perdedor al ganador:
             ganar a rivales mejores da más puntos; perder contra rivales peores quita más. Las parejas son dinámicas
@@ -65,7 +65,7 @@ export default function InfoPage() {
         </div>
 
         <div className="lpt-card card-pad">
-          <div className="kicker" style={{ marginBottom: 8 }}>Factor-K (velocidad de cambio)</div>
+          <h2 className="kicker" style={{ marginBottom: 8 }}>Factor-K (velocidad de cambio)</h2>
           <div className="small" style={{ display: 'grid', gap: 7, lineHeight: 1.55 }}>
             <span><b className="num">&lt;10 partidos:</b> K=40 — cambios rápidos para calibrar el nivel inicial.</span>
             <span><b className="num">10–30 partidos:</b> K=32 — cambios moderados.</span>
@@ -74,7 +74,7 @@ export default function InfoPage() {
         </div>
 
         <div className="lpt-card card-pad">
-          <div className="kicker" style={{ marginBottom: 8 }}>Elo de pareja y sinergia</div>
+          <h2 className="kicker" style={{ marginBottom: 8 }}>Elo de pareja y sinergia</h2>
           <p className="small" style={{ margin: 0, lineHeight: 1.6 }}>
             Cada pareja tiene su propio Elo. La <b>sinergia</b> compara ese rendimiento con el esperado por los
             niveles individuales: positiva (verde) si juntos sois mejores, negativa (roja) si os hacéis peores.

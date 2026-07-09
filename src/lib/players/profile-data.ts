@@ -12,37 +12,44 @@ export async function loadPlayerProfile(groupId: string, id: string) {
   const player = await getPlayerInGroup(groupId, id);
   if (!player) return null;
 
-  const playerMatches = await db
-    .select()
-    .from(matches)
-    .where(
-      or(
-        eq(matches.team1Player1Id, id),
-        eq(matches.team1Player2Id, id),
-        eq(matches.team2Player1Id, id),
-        eq(matches.team2Player2Id, id)
-      )
-    )
-    .orderBy(desc(matches.date));
+  // Estas seis lecturas son mutuamente independientes (solo dependen de id/groupId,
+  // no unas de otras): en paralelo con un solo Promise.all para no encadenar RTTs a
+  // la DB en la vista de detalle más visitada.
+  const [playerMatches, history, pairs, allPlayers, globalHistory, earnedGrants] =
+    await Promise.all([
+      db
+        .select()
+        .from(matches)
+        .where(
+          or(
+            eq(matches.team1Player1Id, id),
+            eq(matches.team1Player2Id, id),
+            eq(matches.team2Player1Id, id),
+            eq(matches.team2Player2Id, id)
+          )
+        )
+        .orderBy(desc(matches.date)),
+      db
+        .select()
+        .from(ratingHistory)
+        .where(eq(ratingHistory.playerId, id))
+        .orderBy(ratingHistory.recordedAt),
+      db
+        .select()
+        .from(pairStats)
+        .where(or(eq(pairStats.player1Id, id), eq(pairStats.player2Id, id)))
+        .orderBy(desc(pairStats.wins)),
+      listAllPlayersInGroup(groupId),
+      listRatingHistoryInGroup(groupId),
+      db
+        .select()
+        .from(playerAchievements)
+        .where(eq(playerAchievements.playerId, id))
+        .orderBy(desc(playerAchievements.earnedAt)),
+    ]);
 
   const completedMatches = playerMatches.filter((m) => m.status === 'completed');
-
-  const history = await db
-    .select()
-    .from(ratingHistory)
-    .where(eq(ratingHistory.playerId, id))
-    .orderBy(ratingHistory.recordedAt);
-
-  const pairs = await db
-    .select()
-    .from(pairStats)
-    .where(or(eq(pairStats.player1Id, id), eq(pairStats.player2Id, id)))
-    .orderBy(desc(pairStats.wins));
-
-  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
-
-  const globalHistory = await listRatingHistoryInGroup(groupId);
   const allRankEvents = detectRankChanges(globalHistory, allPlayers);
   const playerRankEvents = allRankEvents.filter((e) => e.playerId === id);
 
@@ -82,12 +89,6 @@ export async function loadPlayerProfile(groupId: string, id: string) {
   const totalCandidates = allPlayers.filter(
     (p) => p.id !== id && p.matchesPlayed > 0,
   ).length;
-
-  const earnedGrants = await db
-    .select()
-    .from(playerAchievements)
-    .where(eq(playerAchievements.playerId, id))
-    .orderBy(desc(playerAchievements.earnedAt));
 
   const sideStats = computeSideStats(id, completedMatches);
   const hasSideData = sideStats.drive.matches > 0 || sideStats.reves.matches > 0;

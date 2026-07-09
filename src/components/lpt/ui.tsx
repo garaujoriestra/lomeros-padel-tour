@@ -230,7 +230,7 @@ export function Sparkline({ data, w = 72, h = 24, stroke = 'var(--acc)' }: { dat
     .map((v, i) => `${(i / (data.length - 1)) * w},${h - 3 - ((v - min) / span) * (h - 6)}`)
     .join(' ');
   return (
-    <svg width={w} height={h} style={{ display: 'block', overflow: 'visible' }}>
+    <svg width={w} height={h} style={{ display: 'block', overflow: 'visible' }} aria-hidden="true">
       <polyline points={pts} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

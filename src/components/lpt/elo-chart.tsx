@@ -50,9 +50,20 @@ export function EloChart({
   const pathLen = 1600;
   const hoverMilestone = hover != null ? milestones.find((m) => m.index === hover) : undefined;
 
+  // Alternativa textual para lectores de pantalla: el chart es puro SVG y el
+  // tooltip es solo de puntero, así que resumimos inicio → actual y la variación.
+  const first = Math.round(data[0]);
+  const current = Math.round(data[data.length - 1]);
+  const netDelta = current - first;
+  const ariaLabel =
+    `Evolución de Elo en ${data.length} registros: de ${first} a ${current}` +
+    ` (${netDelta >= 0 ? '+' : ''}${netDelta}).`;
+
   return (
     <div className="chart-wrap" ref={wrapRef}>
       <svg
+        role="img"
+        aria-label={ariaLabel}
         width="100%"
         height={height}
         viewBox={`0 0 ${w} ${height}`}
