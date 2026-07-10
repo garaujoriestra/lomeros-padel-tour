@@ -308,6 +308,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             sets={sets}
             winnerTeam={isInjury ? null : match.winnerTeam}
             injuredPlayerId={match.injuredPlayerId}
+            animated
           />
         )}
 

@@ -167,6 +167,7 @@ export function ScoreGrid({
   winnerTeam,
   injuredPlayerId,
   compact,
+  animated,
 }: {
   team1: (LptPlayer | undefined)[];
   team2: (LptPlayer | undefined)[];
@@ -174,6 +175,8 @@ export function ScoreGrid({
   winnerTeam?: number | null;
   injuredPlayerId?: string | null;
   compact?: boolean;
+  /** Flip de videomarcador al entrar (solo detalle de partido; las listas no). */
+  animated?: boolean;
 }) {
   const n = Math.max(sets.length, 1);
   const row = (players: (LptPlayer | undefined)[], teamIdx: 1 | 2) => {
@@ -201,7 +204,11 @@ export function ScoreGrid({
             const mine = teamIdx === 1 ? s.team1Games : s.team2Games;
             const theirs = teamIdx === 1 ? s.team2Games : s.team1Games;
             return (
-              <span key={i} className={`set-cell ${mine > theirs ? 'w' : ''}`}>
+              <span
+                key={i}
+                className={`set-cell ${mine > theirs ? 'w' : ''}`}
+                style={animated ? ({ '--set-i': i } as React.CSSProperties) : undefined}
+              >
                 {mine}
               </span>
             );
@@ -213,7 +220,7 @@ export function ScoreGrid({
     );
   };
   return (
-    <div className="score-grid">
+    <div className={animated ? 'score-grid sets-flip' : 'score-grid'}>
       {row(team1, 1)}
       {row(team2, 2)}
     </div>

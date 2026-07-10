@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Swords } from 'lucide-react';
 import { MatchCard, type MatchCardData } from './match-card';
+import { Seg } from './seg';
 import type { LptPlayer, ScoreSet } from '@/components/lpt/ui';
 
 export interface MatchListItem {
@@ -45,13 +46,7 @@ export function MatchesList({ items }: { items: MatchListItem[] }) {
           Partidos
         </h2>
         <div className="sec-rule" />
-        <div className="seg">
-          {TABS.map(([k, label]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => { setEntered(true); setTab(k); }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <Seg options={TABS} value={tab} onChange={(k) => { setEntered(true); setTab(k); }} />
       </div>
 
       {showUpcoming.length > 0 && (

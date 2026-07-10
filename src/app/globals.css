@@ -423,6 +423,24 @@
   box-shadow: var(--card-shadow), 0 0 38px color-mix(in oklab, var(--acc) 15%, transparent);
 }
 
+/* Entrada del podio: los escalones suben (scale 0.96 + rise, ease-out fuerte)
+   y el oro aterriza el ÚLTIMO — el líder es el dato protagonista del home.
+   En oscuro, su glow lima "respira" UNA vez al posarse (momento, no loop). */
+@keyframes podiumIn { from { opacity: 0; transform: translateY(16px) scale(0.96); } }
+.podium-step { animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.podium-step.p-silver { animation-delay: 0.04s; }
+.podium-step.p-bronze { animation-delay: 0.1s; }
+.podium-step.p-gold { animation-delay: 0.18s; }
+@keyframes podiumGlow {
+  0% { box-shadow: var(--card-shadow), 0 0 0 color-mix(in oklab, var(--acc) 0%, transparent); }
+  55% { box-shadow: var(--card-shadow), 0 0 46px color-mix(in oklab, var(--acc) 32%, transparent); }
+  100% { box-shadow: var(--card-shadow), 0 0 38px color-mix(in oklab, var(--acc) 15%, transparent); }
+}
+.dark .podium-step.p-gold {
+  animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.18s both,
+             podiumGlow 1.4s ease-out 0.65s 1 both;
+}
+
 /* ── Feed ── */
 .feed-row { display: flex; align-items: flex-start; gap: 13px; padding: calc(13px * var(--sp)) 0; border-bottom: 1px solid var(--line); color: inherit; }
 .feed-row:last-child { border-bottom: none; }
@@ -435,6 +453,23 @@
 .seg { display: inline-flex; gap: 3px; background: var(--surface-2); border-radius: var(--r-pill); padding: 3px; border: 1px solid var(--line); }
 .seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: color 0.15s, background 0.15s, box-shadow 0.15s; cursor: pointer; }
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); }
+
+/* Variante con indicador deslizante (componente <Seg>): la píldora activa se
+   DESLIZA entre opciones (continuidad espacial) en vez de saltar de fondo.
+   ease-out fuerte y <200ms: es un control frecuente, feedback sin ceremonia. */
+.seg.has-ind { position: relative; }
+.seg.has-ind button { position: relative; z-index: 1; background: transparent; box-shadow: none; }
+.seg.has-ind button.on { background: transparent; box-shadow: none; }
+.seg-ind {
+  position: absolute; top: 3px; bottom: 3px; left: 0; z-index: 0;
+  border-radius: var(--r-pill); background: var(--surface);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); /* misma sombra que .seg button.on */
+  /* width en la transición a propósito: las pestañas tienen anchos distintos y
+     scaleX deformaría el radio de la píldora; al ser absolute, el layout que
+     recalcula es solo el suyo (sin thrash de hermanos). */
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), width 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
 
 /* ── Tooltip simple del chart ── */
 .chart-wrap { position: relative; }
@@ -460,6 +495,28 @@
 /* Celebración (acierto en La Timba): entrada con leve rebote — momento raro, delight merecido. */
 @keyframes celebrateIn { 0% { opacity: 0; transform: scale(0.9); } 65% { opacity: 1; transform: scale(1.02); } 100% { opacity: 1; transform: none; } }
 @keyframes chartDraw { to { stroke-dashoffset: 0; } }
+
+/* Marcador broadcast (solo detalle de partido): los números de cada set caen
+   como fichas de videomarcador, columna a columna. Una vez, al cargar —
+   momento ocasional, puede tener drama. Las listas NO lo usan. */
+@keyframes setFlip { from { opacity: 0; transform: rotateX(-80deg); } }
+.sets-flip .score-row { perspective: 500px; }
+.sets-flip .set-cell {
+  animation: setFlip 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(0.15s + var(--set-i, 0) * 0.11s);
+  transform-origin: center bottom;
+}
+
+/* Lectura de jornada (▲/▼): los chips de movimiento de Elo entran con un pop
+   sutil escalonado — que se note que acaba de pasar algo. */
+.pop-in > * { animation: popIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.pop-in > *:nth-child(1) { animation-delay: 0.05s; }
+.pop-in > *:nth-child(2) { animation-delay: 0.09s; }
+.pop-in > *:nth-child(3) { animation-delay: 0.13s; }
+.pop-in > *:nth-child(4) { animation-delay: 0.17s; }
+.pop-in > *:nth-child(5) { animation-delay: 0.21s; }
+.pop-in > *:nth-child(6) { animation-delay: 0.25s; }
+.pop-in > *:nth-child(n + 7) { animation-delay: 0.29s; }
 
 /* ════════════ Loader de marca entre pantallas ════════════ */
 
