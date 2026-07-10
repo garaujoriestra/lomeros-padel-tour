@@ -33,6 +33,7 @@ export default async function HomePage() {
     recentNewPlayers,
     recentAchievements,
     eventSummaries,
+    allPlayers,
   ] = await Promise.all([
     listRankedPlayers(groupId, 20),
     listRecentMatches(groupId, 30),
@@ -43,6 +44,8 @@ export default async function HomePage() {
     listRecentPlayers(groupId, 5),
     listRecentAchievementsInGroup(groupId, 20),
     listEventSummaries(db, groupId),
+    // No depende de nada del batch: se une aquí en vez de esperar en serie.
+    listAllPlayersInGroup(groupId),
   ]);
 
   // Eventos públicos (no borradores), "en directo" primero y luego por fecha desc; máx 4.
@@ -59,7 +62,6 @@ export default async function HomePage() {
   const matchIds = recentMatchesAll.map((m) => m.id);
   const allSets = await listMatchSetsForMatches(matchIds);
 
-  const allPlayers = await listAllPlayersInGroup(groupId);
   const playerMap: Record<string, typeof allPlayers[number]> = {};
   for (const p of allPlayers) playerMap[p.id] = p;
 

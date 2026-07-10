@@ -188,14 +188,14 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
   if (mode === 'injury') {
     return (
       <form onSubmit={handleInjurySubmit} className="space-y-6 max-w-2xl">
-        <div className="bg-gradient-to-r from-red-950 to-rose-900 rounded-2xl p-6 text-white">
-          <p className="text-red-200 text-xs uppercase tracking-widest mb-3">🤕 No terminado por lesión</p>
+        <div className="rounded-2xl p-6 border border-loss/30 bg-loss/10">
+          <p className="text-loss-text text-xs font-black uppercase tracking-widest mb-3">🤕 No terminado por lesión</p>
           <div className="flex items-center justify-between">
-            <p className="font-black text-xl">🔵 {team1Name}</p>
+            <p className="font-black text-xl text-ink">🔵 {team1Name}</p>
             <span className="text-2xl font-black text-loss">VS</span>
-            <p className="font-black text-xl text-right">🔴 {team2Name}</p>
+            <p className="font-black text-xl text-right text-ink">🔴 {team2Name}</p>
           </div>
-          <div className="flex gap-4 mt-3 text-red-200 text-sm">
+          <div className="flex gap-4 mt-3 text-ink-3 text-sm">
             <span>📅 {date}</span>
             {location && <span>📍 {location}</span>}
           </div>
@@ -212,8 +212,8 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
                   onClick={() => setInjuredPlayerId(p.id)}
                   className={`flex items-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-bold text-left transition-colors ${
                     injuredPlayerId === p.id
-                      ? 'border-red-500 bg-loss/10 text-red-900'
-                      : 'border-line hover:border-line text-ink-2'
+                      ? 'border-loss bg-loss/15 text-loss-text'
+                      : 'border-line hover:border-line-strong text-ink-2'
                   }`}
                 >
                   <span className="text-lg">🤕</span>
@@ -232,11 +232,11 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           <Button
             type="submit"
             disabled={loading || !injuredPlayerId}
-            className="flex-1 min-h-[40px] px-4 text-sm bg-loss hover:bg-red-700 text-white font-bold"
+            className="flex-1 min-h-11 px-4 text-sm bg-loss hover:bg-loss/90 text-white font-bold"
           >
             {loading ? 'Guardando...' : '🤕 Marcar como lesión'}
           </Button>
-          <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => setMode('normal')}>
+          <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => setMode('normal')}>
             ← Volver a resultado
           </Button>
         </div>
@@ -269,7 +269,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         <button
           type="button"
           onClick={() => setMode('injury')}
-          className="text-xs font-bold text-loss hover:text-red-900 underline underline-offset-2"
+          className="text-xs font-bold text-loss-text hover:opacity-80 underline underline-offset-2 min-h-11 inline-flex items-center"
         >
           🤕 No terminado por lesión →
         </button>
@@ -360,13 +360,13 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🏆 Resultado (sets)</p>
           <div className="flex gap-2">
             {sets.length === 2 && (
-              <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
+              <Button type="button" variant="outline" className="min-h-11 px-3 text-xs"
                 onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                 + 3er set
               </Button>
             )}
             {sets.length === 3 && (
-              <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
+              <Button type="button" variant="ghost" className="min-h-11 px-3 text-xs"
                 onClick={() => setSets(sets.slice(0, 2))}>
                 Quitar 3er set
               </Button>
@@ -384,9 +384,11 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           <div key={idx} className="grid grid-cols-3 gap-2 items-center">
             <span className="text-sm font-medium">Set {idx + 1}</span>
             <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
+              aria-label={`Juegos de ${team1Name}, set ${idx + 1}`}
               placeholder="0" value={set.team1Games}
               onChange={(e) => handleSetChange(idx, 'team1', e.target.value)} required />
             <Input type="number" min={0} max={7} inputMode="numeric" enterKeyHint="next" className="text-center"
+              aria-label={`Juegos de ${team2Name}, set ${idx + 1}`}
               placeholder="0" value={set.team2Games}
               onChange={(e) => handleSetChange(idx, 'team2', e.target.value)} required />
           </div>
@@ -414,6 +416,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
                 <span className="text-sm text-ink-2 truncate">{player.name}</span>
                 <select
                   className="border rounded-md px-2 py-1 text-sm bg-card"
+                  aria-label={`Lado de ${player.name}`}
                   value={sidesByPlayerId[player.id] ?? ''}
                   onChange={(e) =>
                     setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
@@ -427,12 +430,13 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
             ))}
           </div>
           <div className="space-y-3">
-            <p className="font-semibold text-sm text-loss">🔴 {team2Name}</p>
+            <p className="font-semibold text-sm text-loss-text">🔴 {team2Name}</p>
             {pairing.team2.map((player) => (
               <div key={player.id} className="grid grid-cols-[1fr_auto] gap-2 items-center">
                 <span className="text-sm text-ink-2 truncate">{player.name}</span>
                 <select
                   className="border rounded-md px-2 py-1 text-sm bg-card"
+                  aria-label={`Lado de ${player.name}`}
                   value={sidesByPlayerId[player.id] ?? ''}
                   onChange={(e) =>
                     setSidesByPlayerId({ ...sidesByPlayerId, [player.id]: e.target.value })
@@ -452,11 +456,11 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         <Button
           type="submit"
           disabled={loading || !matchResult}
-          className="flex-1 min-h-[40px] px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+          className="flex-1 min-h-11 px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar resultado y actualizar rankings'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

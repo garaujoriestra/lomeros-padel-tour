@@ -72,19 +72,19 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
       <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🔵 Equipo 1</p>
-        {playerRow(props.team1Player1Name, 'team1Player1Side', 'text-blue-900')}
-        {playerRow(props.team1Player2Name, 'team1Player2Side', 'text-blue-900')}
+        {playerRow(props.team1Player1Name, 'team1Player1Side', 'text-acc-text')}
+        {playerRow(props.team1Player2Name, 'team1Player2Side', 'text-acc-text')}
       </div>
       <div className="bg-card rounded-2xl border border-line shadow-sm p-5 space-y-4">
         <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🔴 Equipo 2</p>
-        {playerRow(props.team2Player1Name, 'team2Player1Side', 'text-red-900')}
-        {playerRow(props.team2Player2Name, 'team2Player2Side', 'text-red-900')}
+        {playerRow(props.team2Player1Name, 'team2Player1Side', 'text-loss-text')}
+        {playerRow(props.team2Player2Name, 'team2Player2Side', 'text-loss-text')}
       </div>
       <div className="flex gap-3">
-        <Button type="submit" disabled={loading} className="flex-1 min-h-[40px] px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+        <Button type="submit" disabled={loading} className="flex-1 min-h-11 px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
           {loading ? 'Guardando...' : '✓ Guardar lados'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

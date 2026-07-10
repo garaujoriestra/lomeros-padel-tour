@@ -74,12 +74,12 @@ export default async function RankingsPage() {
 
       {/* Tu posición + movimientos: la tabla cuenta la jornada, no solo la lista. */}
       {ranked.length > 0 && (myRanked || movers.length > 0) && (
-        <section className="section" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <section className="section pop-in" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           {myRanked && (
             <span className="lpt-badge accent" style={{ fontSize: 12, padding: '6px 13px' }}>
               Tu posición: #{myRanked.rank}
               {myRanked.delta != null && myRanked.delta !== 0 && (
-                <b className="num" style={{ color: myRanked.delta > 0 ? 'var(--win)' : 'var(--loss)' }}>
+                <b className="num" style={{ color: myRanked.delta > 0 ? 'var(--win)' : 'var(--loss-text)' }}>
                   {myRanked.delta > 0 ? '▲' : '▼'}{Math.abs(Math.round(myRanked.delta))}
                 </b>
               )}

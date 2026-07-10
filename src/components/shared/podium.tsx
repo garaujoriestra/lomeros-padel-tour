@@ -27,7 +27,7 @@ function winRate(p: PodiumPlayer) {
   return p.matchesPlayed > 0 ? Math.round((p.wins / p.matchesPlayed) * 100) : 0;
 }
 
-function Step({ group, rank, first, barHeight }: { group: RankGroup<PodiumPlayer> | undefined; rank: number; first: boolean; barHeight: number }) {
+function Step({ group, rank, first, barHeight, step }: { group: RankGroup<PodiumPlayer> | undefined; rank: number; first: boolean; barHeight: number; step: 'p-gold' | 'p-silver' | 'p-bronze' }) {
   if (!group || group.players.length === 0) return <div />;
   const players = group.players;
   const single = players.length === 1;
@@ -35,7 +35,7 @@ function Step({ group, rank, first, barHeight }: { group: RankGroup<PodiumPlayer
 
   return (
     <div
-      className={`lpt-card clickable ${first ? 'podium-gold' : ''}`}
+      className={`lpt-card clickable podium-step ${step} ${first ? 'podium-gold' : ''}`}
       style={{ textAlign: 'center', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
     >
       <Link
@@ -98,13 +98,13 @@ export function Podium({ groups }: PodiumProps) {
   if (groups.length === 0) return null;
   const [gold, silver, bronze] = groups;
   return (
+    // Entrada propia (.podium-step, no .stagger): plata → bronce → ORO al final.
     <div
-      className="stagger"
       style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr 1fr', gap: 'calc(10px * var(--sp))', alignItems: 'end' }}
     >
-      <Step group={silver} rank={silver?.rank ?? 2} first={false} barHeight={40} />
-      <Step group={gold} rank={gold?.rank ?? 1} first barHeight={55} />
-      <Step group={bronze} rank={bronze?.rank ?? 3} first={false} barHeight={32} />
+      <Step group={silver} rank={silver?.rank ?? 2} first={false} barHeight={40} step="p-silver" />
+      <Step group={gold} rank={gold?.rank ?? 1} first barHeight={55} step="p-gold" />
+      <Step group={bronze} rank={bronze?.rank ?? 3} first={false} barHeight={32} step="p-bronze" />
     </div>
   );
 }

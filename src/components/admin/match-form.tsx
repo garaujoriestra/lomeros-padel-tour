@@ -168,6 +168,7 @@ export function MatchForm({ players }: MatchFormProps) {
             <select
               className="w-full border rounded-md px-3 py-2 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
               value={team[slot]}
+              aria-label={`${label} — Jugador ${slot + 1}`}
               onChange={(e) => {
                 const next: [string, string] = [...team] as [string, string];
                 next[slot] = e.target.value;
@@ -282,13 +283,13 @@ export function MatchForm({ players }: MatchFormProps) {
             <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🏆 Resultado (sets)</p>
             <div className="flex gap-2">
               {sets.length === 2 && (
-                <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
+                <Button type="button" variant="outline" className="min-h-11 px-3 text-xs"
                   onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                   + 3er set
                 </Button>
               )}
               {sets.length === 3 && (
-                <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
+                <Button type="button" variant="ghost" className="min-h-11 px-3 text-xs"
                   onClick={() => setSets(sets.slice(0, 2))}>
                   Quitar 3er set
                 </Button>
@@ -339,7 +340,7 @@ export function MatchForm({ players }: MatchFormProps) {
             ? '📅 Programar partido'
             : '✓ Guardar resultado'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

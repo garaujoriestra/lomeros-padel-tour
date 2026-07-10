@@ -100,7 +100,7 @@ export function PushNotificationsToggle() {
             aria-label="Activar notificaciones"
             onClick={enable}
             disabled={busy}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 min-h-11 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             Activar
           </button>
@@ -111,7 +111,7 @@ export function PushNotificationsToggle() {
             aria-label="Desactivar notificaciones"
             onClick={disable}
             disabled={busy}
-            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-ink-2 disabled:opacity-50"
+            className="rounded-lg border border-line px-4 py-2 min-h-11 text-sm font-semibold text-ink-2 disabled:opacity-50"
           >
             Desactivar
           </button>

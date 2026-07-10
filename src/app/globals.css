@@ -41,6 +41,7 @@
   --color-card: var(--card);
   --color-win: var(--win);
   --color-loss: var(--loss);
+  --color-loss-text: var(--loss-text);
   --color-warn: var(--warn);
   --color-acc: var(--acc);
   --color-on-acc: var(--on-acc);
@@ -67,6 +68,10 @@
 :root {
   --win: oklch(0.62 0.16 150);
   --loss: oklch(0.6 0.18 25);
+  /* --loss como TEXTO pequeño falla AA sobre surface (4.13:1 en oscuro). Esta
+     variante más luminosa lo sube a ~5.3:1; úsala solo como color de texto,
+     no como fondo/borde (esos siguen con --loss vía color-mix). */
+  --loss-text: oklch(0.6 0.18 25);
   --warn: oklch(0.72 0.14 80);
   --sp: 1;
   --maxw: 1060px;
@@ -136,6 +141,7 @@
   --ink: oklch(0.965 0.008 120);
   --ink-2: oklch(0.82 0.02 150);
   --ink-3: oklch(0.62 0.025 170);
+  --loss-text: oklch(0.66 0.17 25); /* AA como texto pequeño sobre surface oscuro (~5.3:1) */
   --acc-text: var(--acc);
   --card-border: 1px solid var(--line);
   --card-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px oklch(0 0 0 / 0.25);
@@ -285,7 +291,7 @@
 
 .delta { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; }
 .delta.up { color: var(--win); }
-.delta.down { color: var(--loss); }
+.delta.down { color: var(--loss-text); }
 .delta.pulse { animation: deltaPulse 2.4s ease-in-out infinite; }
 @keyframes deltaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
@@ -306,7 +312,7 @@
 }
 .lpt-badge.accent { background: color-mix(in oklab, var(--acc) 18%, transparent); color: var(--acc-text); border-color: color-mix(in oklab, var(--acc) 35%, transparent); }
 .lpt-badge.win { background: color-mix(in oklab, var(--win) 14%, transparent); color: var(--win); border-color: color-mix(in oklab, var(--win) 30%, transparent); }
-.lpt-badge.loss { background: color-mix(in oklab, var(--loss) 13%, transparent); color: var(--loss); border-color: color-mix(in oklab, var(--loss) 30%, transparent); }
+.lpt-badge.loss { background: color-mix(in oklab, var(--loss) 13%, transparent); color: var(--loss-text); border-color: color-mix(in oklab, var(--loss) 30%, transparent); }
 
 .lpt-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -354,7 +360,7 @@
 }
 .status-pill.scheduled { background: color-mix(in oklab, var(--acc) 16%, transparent); color: var(--acc-text); }
 .status-pill.completed { background: var(--surface-2); color: var(--ink-3); }
-.status-pill.injury { background: color-mix(in oklab, var(--loss) 14%, transparent); color: var(--loss); }
+.status-pill.injury { background: color-mix(in oklab, var(--loss) 14%, transparent); color: var(--loss-text); }
 
 /* ── Scoreboard ── */
 .score-grid { display: grid; gap: 3px 0; }
@@ -408,13 +414,31 @@
 /* ── Sinergia ── */
 .synergy { font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
 .synergy.pos { color: var(--win); }
-.synergy.neg { color: var(--loss); }
+.synergy.neg { color: var(--loss-text); }
 
 /* ── Líder del podio ── */
 .podium-gold { border-color: color-mix(in oklab, var(--acc) 55%, var(--line)); }
 .dark .podium-gold {
   border-color: color-mix(in oklab, var(--acc) 40%, var(--line));
   box-shadow: var(--card-shadow), 0 0 38px color-mix(in oklab, var(--acc) 15%, transparent);
+}
+
+/* Entrada del podio: los escalones suben (scale 0.96 + rise, ease-out fuerte)
+   y el oro aterriza el ÚLTIMO — el líder es el dato protagonista del home.
+   En oscuro, su glow lima "respira" UNA vez al posarse (momento, no loop). */
+@keyframes podiumIn { from { opacity: 0; transform: translateY(16px) scale(0.96); } }
+.podium-step { animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.podium-step.p-silver { animation-delay: 0.04s; }
+.podium-step.p-bronze { animation-delay: 0.1s; }
+.podium-step.p-gold { animation-delay: 0.18s; }
+@keyframes podiumGlow {
+  0% { box-shadow: var(--card-shadow), 0 0 0 color-mix(in oklab, var(--acc) 0%, transparent); }
+  55% { box-shadow: var(--card-shadow), 0 0 46px color-mix(in oklab, var(--acc) 32%, transparent); }
+  100% { box-shadow: var(--card-shadow), 0 0 38px color-mix(in oklab, var(--acc) 15%, transparent); }
+}
+.dark .podium-step.p-gold {
+  animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.18s both,
+             podiumGlow 1.4s ease-out 0.65s 1 both;
 }
 
 /* ── Feed ── */
@@ -429,6 +453,23 @@
 .seg { display: inline-flex; gap: 3px; background: var(--surface-2); border-radius: var(--r-pill); padding: 3px; border: 1px solid var(--line); }
 .seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: color 0.15s, background 0.15s, box-shadow 0.15s; cursor: pointer; }
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); }
+
+/* Variante con indicador deslizante (componente <Seg>): la píldora activa se
+   DESLIZA entre opciones (continuidad espacial) en vez de saltar de fondo.
+   ease-out fuerte y <200ms: es un control frecuente, feedback sin ceremonia. */
+.seg.has-ind { position: relative; }
+.seg.has-ind button { position: relative; z-index: 1; background: transparent; box-shadow: none; }
+.seg.has-ind button.on { background: transparent; box-shadow: none; }
+.seg-ind {
+  position: absolute; top: 3px; bottom: 3px; left: 0; z-index: 0;
+  border-radius: var(--r-pill); background: var(--surface);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); /* misma sombra que .seg button.on */
+  /* width en la transición a propósito: las pestañas tienen anchos distintos y
+     scaleX deformaría el radio de la píldora; al ser absolute, el layout que
+     recalcula es solo el suyo (sin thrash de hermanos). */
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), width 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
 
 /* ── Tooltip simple del chart ── */
 .chart-wrap { position: relative; }
@@ -454,6 +495,28 @@
 /* Celebración (acierto en La Timba): entrada con leve rebote — momento raro, delight merecido. */
 @keyframes celebrateIn { 0% { opacity: 0; transform: scale(0.9); } 65% { opacity: 1; transform: scale(1.02); } 100% { opacity: 1; transform: none; } }
 @keyframes chartDraw { to { stroke-dashoffset: 0; } }
+
+/* Marcador broadcast (solo detalle de partido): los números de cada set caen
+   como fichas de videomarcador, columna a columna. Una vez, al cargar —
+   momento ocasional, puede tener drama. Las listas NO lo usan. */
+@keyframes setFlip { from { opacity: 0; transform: rotateX(-80deg); } }
+.sets-flip .score-row { perspective: 500px; }
+.sets-flip .set-cell {
+  animation: setFlip 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: calc(0.15s + var(--set-i, 0) * 0.11s);
+  transform-origin: center bottom;
+}
+
+/* Lectura de jornada (▲/▼): los chips de movimiento de Elo entran con un pop
+   sutil escalonado — que se note que acaba de pasar algo. */
+.pop-in > * { animation: popIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.pop-in > *:nth-child(1) { animation-delay: 0.05s; }
+.pop-in > *:nth-child(2) { animation-delay: 0.09s; }
+.pop-in > *:nth-child(3) { animation-delay: 0.13s; }
+.pop-in > *:nth-child(4) { animation-delay: 0.17s; }
+.pop-in > *:nth-child(5) { animation-delay: 0.21s; }
+.pop-in > *:nth-child(6) { animation-delay: 0.25s; }
+.pop-in > *:nth-child(n + 7) { animation-delay: 0.29s; }
 
 /* ════════════ Loader de marca entre pantallas ════════════ */
 
@@ -504,7 +567,7 @@
   .card-pad { padding: calc(15px * var(--sp)) calc(16px * var(--sp)); }
   .rank-row { gap: 10px; padding-left: calc(12px * var(--sp)); padding-right: calc(12px * var(--sp)); }
   .rank-pos { width: 24px; font-size: 18px; }
-  .icon-btn { width: 40px; height: 40px; }
+  .icon-btn { width: 44px; height: 44px; }
   .topbar-inner { padding: 0 14px; gap: 12px; }
   .sec-title { font-size: 23px; }
   .seg button { padding: 8px 13px; min-height: 44px; }

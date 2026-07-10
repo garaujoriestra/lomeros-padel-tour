@@ -40,7 +40,7 @@ export function AdminSidebar({ basePath = '' }: { basePath?: string }) {
               key={link.href}
               href={href}
               className={cn(
-                'nav-tab whitespace-nowrap shrink-0 md:shrink min-h-[40px]',
+                'nav-tab whitespace-nowrap shrink-0 md:shrink min-h-11',
                 active ? 'active' : 'bg-surface md:bg-transparent border border-line md:border-transparent'
               )}
             >

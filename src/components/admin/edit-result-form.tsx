@@ -156,13 +156,13 @@ export function EditResultForm({
           <p className="text-xs font-black text-ink-3 uppercase tracking-widest">🏆 Resultado (sets)</p>
           <div className="flex gap-2">
             {sets.length === 2 && (
-              <Button type="button" variant="outline" className="min-h-[40px] px-3 text-xs"
+              <Button type="button" variant="outline" className="min-h-11 px-3 text-xs"
                 onClick={() => setSets([...sets, { team1Games: '', team2Games: '' }])}>
                 + 3er set
               </Button>
             )}
             {sets.length === 3 && (
-              <Button type="button" variant="ghost" className="min-h-[40px] px-3 text-xs"
+              <Button type="button" variant="ghost" className="min-h-11 px-3 text-xs"
                 onClick={() => setSets(sets.slice(0, 2))}>
                 Quitar 3er set
               </Button>
@@ -264,11 +264,11 @@ export function EditResultForm({
         <Button
           type="submit"
           disabled={loading || uploading || winnerChanged || (setsDirty && !matchResult)}
-          className="flex-1 min-h-[40px] px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+          className="flex-1 min-h-11 px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar corrección'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-[40px] px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
           Cancelar
         </Button>
       </div>

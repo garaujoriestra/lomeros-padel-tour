@@ -16,7 +16,7 @@ export function ShareMatchButton({ url }: ShareMatchButtonProps) {
     <Button
       type="button"
       onClick={handleShare}
-      className="min-h-[40px] px-4 text-sm bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold inline-flex items-center gap-2"
+      className="min-h-11 px-4 text-sm bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold inline-flex items-center gap-2"
     >
       <svg
         viewBox="0 0 24 24"
