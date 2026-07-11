@@ -22,9 +22,20 @@ export async function getGroupById(id: string): Promise<GroupRow | null> {
   return g ?? null;
 }
 
+// ¿Es una violación de UNIQUE de SQLite/libsql? El error puede venir envuelto
+// (drizzle re-lanza con `cause`), así que se recorre la cadena.
+function isUniqueViolation(err: unknown): boolean {
+  for (let e = err; e instanceof Error; e = e.cause instanceof Error ? e.cause : undefined) {
+    if (e.message.includes('UNIQUE constraint failed')) return true;
+  }
+  return false;
+}
+
 // Crea un grupo con su primera membership de admin (onboarding). El id = slug,
 // como los grupos existentes ('lomeros', 'grupo-test'). Devuelve error legible si
-// el slug ya existe (carrera entre el check del form y el INSERT).
+// el slug ya existe. Los dos INSERT van en una transacción para que nunca quede un
+// grupo huérfano sin admin, y la violación de UNIQUE se captura para cubrir la
+// carrera entre el check del form y el INSERT (dos requests con el mismo slug).
 export async function createGroupWithAdmin(input: {
   slug: string;
   name: string;
@@ -32,12 +43,19 @@ export async function createGroupWithAdmin(input: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const [existing] = await db.select({ id: groups.id }).from(groups).where(eq(groups.slug, input.slug));
   if (existing) return { ok: false, error: 'Ese nombre corto ya está cogido' };
-  await db.insert(groups).values({ id: input.slug, slug: input.slug, name: input.name });
-  await db.insert(memberships).values({
-    userId: input.userId,
-    groupId: input.slug,
-    role: 'admin',
-    playerId: null,
-  });
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(groups).values({ id: input.slug, slug: input.slug, name: input.name });
+      await tx.insert(memberships).values({
+        userId: input.userId,
+        groupId: input.slug,
+        role: 'admin',
+        playerId: null,
+      });
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) return { ok: false, error: 'Ese nombre corto ya está cogido' };
+    throw err;
+  }
   return { ok: true };
 }
