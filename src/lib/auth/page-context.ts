@@ -53,9 +53,11 @@ export const resolvePageContext = cache(async (slug?: string): Promise<PageConte
 });
 
 // Sesión para el <Navbar> a partir del contexto de página: miembro del grupo (admin/player)
-// → {role, player}; visitante o super_admin (solo-lectura, sin ficha) → null.
+// → {role, player}; super_admin → {role, player: null} (solo-lectura, sin ficha, pero con
+// logout y acceso de lectura al admin de grupo); visitante o logueado sin acceso → null.
 export function navSessionFromContext(ctx: PageContext): NavSession | null {
-  if (!ctx.role || ctx.role === 'super_admin') return null;
+  if (!ctx.role) return null;
+  if (ctx.role === 'super_admin') return { role: 'super_admin', player: null };
   return {
     role: ctx.role,
     player: ctx.player

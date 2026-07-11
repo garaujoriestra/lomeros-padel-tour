@@ -6,10 +6,12 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
 import { navLinks, isNavActive, type NavLink } from './nav-links';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
+import type { SwitcherGroup } from '@/lib/auth/group-switcher';
+import { GroupSwitcher } from './group-switcher';
 import Crest from './crest';
 
 export interface NavSession {
-  role: 'admin' | 'player';
+  role: 'admin' | 'player' | 'super_admin';
   player: LptPlayer | null;
 }
 
@@ -35,7 +37,13 @@ export function Navbar({
   session = null,
   basePath = '',
   links = navLinks,
-}: { session?: NavSession | null; basePath?: string; links?: NavLink[] }) {
+  switcher = null,
+}: {
+  session?: NavSession | null;
+  basePath?: string;
+  links?: NavLink[];
+  switcher?: SwitcherGroup[] | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -74,10 +82,13 @@ export function Navbar({
         </nav>
 
         <div className="topbar-actions">
+          {switcher && <GroupSwitcher groups={switcher} />}
           <ThemeToggle />
           {session ? (
             <>
-              {session.role === 'admin' && (
+              {/* Engranaje: admin del grupo, o súper-admin bajo /g/ (solo-lectura; en la
+                  raíz el layout admin le redirige fuera, así que no se le ofrece). */}
+              {(session.role === 'admin' || (session.role === 'super_admin' && basePath !== '')) && (
                 <Link href={`${basePath}/admin`} className="icon-btn" title="Admin" aria-label="Admin">
                   <Settings size={16} />
                 </Link>
