@@ -71,6 +71,8 @@ test.describe('onboarding · crear grupo (API)', () => {
     await loginAsFreshUser(request, 'validation');
     const t = await inviteToken();
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: `a-${Date.now()}` } })).status()).toBe(403);
+    // Orden de validación: el token se comprueba ANTES que el slug (sin token + slug ocupado → 403, no 400).
+    expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'grupo-test' } })).status()).toBe(403);
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'admin', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'grupo-test', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: '  ', slug: `b-${Date.now()}`, t } })).status()).toBe(400);
