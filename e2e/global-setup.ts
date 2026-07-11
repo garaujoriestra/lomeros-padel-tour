@@ -159,7 +159,8 @@ export default async function globalSetup() {
   });
 
   // Usuario SÚPER-ADMIN (allowlist SUPER_ADMIN_EMAILS del webServer, SIN memberships):
-  // ve todos los grupos en el conmutador y el admin de grupo en solo-lectura.
+  // ve todos los grupos en el conmutador, el admin de grupo en solo-lectura, y genera
+  // los enlaces de invitación del onboarding. Fixture ÚNICO compartido por ambas suites.
   const superUserId = 'e2e-super-user';
   await db.execute({
     sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
@@ -174,4 +175,6 @@ export default async function globalSetup() {
   await writeFile('e2e/.auth/gt-player.json', JSON.stringify(await sessionStorageState(gtPlayerUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/multi.json', JSON.stringify(await sessionStorageState(multiUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/super.json', JSON.stringify(await sessionStorageState(superUserId, TEST_ENV.AUTH_SECRET)));
+  // Alias del mismo súper-admin para la suite de onboarding.
+  await writeFile('e2e/.auth/super-admin.json', JSON.stringify(await sessionStorageState(superUserId, TEST_ENV.AUTH_SECRET)));
 }

@@ -22,7 +22,9 @@ export default defineConfig({
   },
   webServer: {
     // Borra la DB y arranca el dev server con env de prueba. La DB la crean las migraciones del globalSetup.
-    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL} npm run dev:e2e`,
+    // SUPER_ADMIN_EMAILS incluye también al admin de Lomeros: el dueño real es ambas
+    // cosas, y el bloque de invitaciones del dashboard se prueba con esa combinación.
+    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL},${TEST_ADMIN_EMAIL} npm run dev:e2e`,
     // Readiness contra un endpoint sin DB (el manifest es estático): evita el huevo-y-gallina con las migraciones.
     url: `${BASE_URL}/manifest.webmanifest`,
     reuseExistingServer: !process.env.CI,
