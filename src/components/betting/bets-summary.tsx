@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { bets, players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { LptAvatar } from '@/components/lpt/ui';
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 
 const TEAM_LABEL: Record<number, string> = { 1: 'Equipo 1', 2: 'Equipo 2' };
 
@@ -31,8 +31,8 @@ export async function BetsSummary({ matchId }: { matchId: string }) {
   // El acierto es el pico emocional de La Timba: si el jugador con sesión ganó
   // aquí, su premio abre la liquidación como momento de retransmisión, no como
   // una línea verde más del ledger.
-  const session = await getSession();
-  const myPlayerId = session?.player?.id ?? null;
+  const ctx = await resolvePageContext();
+  const myPlayerId = ctx.player?.id ?? null;
   const myWinTotal = myPlayerId
     ? rows
         .filter((r) => r.playerId === myPlayerId && r.status === 'won')

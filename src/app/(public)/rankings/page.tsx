@@ -1,5 +1,5 @@
 import { getDefaultGroupId } from '@/lib/auth/group-context';
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { listRankedPlayers, listUnrankedPlayers } from '@/lib/players/queries';
 import { listRatingHistoryInGroup } from '@/lib/rating/queries';
 import Link from 'next/link';
@@ -13,13 +13,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function RankingsPage() {
   const groupId = await getDefaultGroupId();
-  const [ranked, unranked, history, session] = await Promise.all([
+  const [ranked, unranked, history, ctx] = await Promise.all([
     listRankedPlayers(groupId),
     listUnrankedPlayers(groupId),
     listRatingHistoryInGroup(groupId),
-    getSession(),
+    resolvePageContext(),
   ]);
-  const myPlayerId = session?.player?.id ?? null;
+  const myPlayerId = ctx.player?.id ?? null;
 
   // Historial de Elo por jugador (para sparkline, delta y racha)
   const histByPlayer: Record<string, { elo: number[]; changes: number[] }> = {};

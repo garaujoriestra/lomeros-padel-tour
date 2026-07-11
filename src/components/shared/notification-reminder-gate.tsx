@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { NotificationReminder } from './notification-reminder';
 
 /**
@@ -7,7 +7,7 @@ import { NotificationReminder } from './notification-reminder';
  * results and achievements, so it has nothing to offer anonymous visitors.
  */
 export async function NotificationReminderGate() {
-  const session = await getSession();
-  if (!session?.player) return null;
+  const ctx = await resolvePageContext();
+  if (!ctx.player) return null;
   return <NotificationReminder />;
 }

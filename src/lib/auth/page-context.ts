@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
+import type { NavSession } from '@/components/shared/navbar';
 import type { Player } from '@/lib/db/schema';
 import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { getGroupBySlug } from '@/lib/groups/resolve-slug';
@@ -50,3 +51,20 @@ export const resolvePageContext = cache(async (slug?: string): Promise<PageConte
     basePath,
   };
 });
+
+// Sesión para el <Navbar> a partir del contexto de página: miembro del grupo (admin/player)
+// → {role, player}; visitante o super_admin (solo-lectura, sin ficha) → null.
+export function navSessionFromContext(ctx: PageContext): NavSession | null {
+  if (!ctx.role || ctx.role === 'super_admin') return null;
+  return {
+    role: ctx.role,
+    player: ctx.player
+      ? {
+          id: ctx.player.id,
+          name: ctx.player.name,
+          nickname: ctx.player.nickname,
+          avatarUrl: ctx.player.avatarUrl,
+        }
+      : null,
+  };
+}

@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth/session';
 import { db } from '@/lib/db';
 import { users, memberships, pushSubscriptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { Bell, BellOff } from 'lucide-react';
 import { BroadcastForm } from '@/components/admin/broadcast-form';
@@ -13,9 +13,10 @@ export const dynamic = 'force-dynamic';
 export default async function AdminNotificationsPage() {
   const session = await getSession();
   if (!session) redirect('/login?from=/admin/notifications');
-  if (session.role !== 'admin') redirect('/me');
+  const ctx = await resolvePageContext();
+  if (ctx.role !== 'admin') redirect('/me');
 
-  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const groupId = ctx.groupId;
   const allUsers = await db.select().from(users);
   const allPlayers = await listAllPlayersInGroup(groupId);
   const subs = await db.select().from(pushSubscriptions);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
-import { requireAdmin } from '@/lib/auth/guard';
+import { requireGroupAdmin } from '@/lib/auth/guard';
 import { TOURNAMENT_DDL, TOURNAMENT_DROP } from '@/lib/tournament/schema-ddl';
 
 const CONFIRM = 'replace-tournaments-schema';
@@ -13,7 +13,7 @@ const CONFIRM = 'replace-tournaments-schema';
 // torneos reales); NO lo vuelvas a llamar una vez existan torneos de verdad o los perderás.
 // Solo admin + body { confirm: 'replace-tournaments-schema' } para evitar disparos accidentales.
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
+  const auth = await requireGroupAdmin();
   if ('response' in auth) return auth.response;
   const body = await request.json().catch(() => ({}));
   if (body?.confirm !== CONFIRM) {

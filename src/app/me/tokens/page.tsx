@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { bets, tokenLedger, penalties } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { listActiveRewardsInGroup, getMyRedemptions } from '@/lib/rewards/queries';
 import { RedeemButton } from '@/components/betting/redeem-button';
 import { potEuros } from '@/lib/betting/pot';
@@ -34,10 +34,11 @@ const REDEMPTION_STATUS_LABEL: Record<string, string> = {
 export default async function TokensPage() {
   const session = await getSession();
   if (!session) redirect('/login?from=/me/tokens');
-  const player = session.player;
+  const ctx = await resolvePageContext();
+  const player = ctx.player;
   if (!player) redirect('/me');
 
-  const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
+  const groupId = ctx.groupId;
   const [openBets, ledger, catalog, myRedemptions, myPenalties, pot] = await Promise.all([
     db
       .select()

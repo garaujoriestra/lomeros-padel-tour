@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { getUserByEmail } from '@/lib/auth/users';
+import { homePathForUser } from '@/lib/auth/home-path';
 import { signSession } from '@/lib/auth/jwt';
 import { isDevToolingEnabled } from '@/lib/auth/dev-login';
 
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
   }
 
   const token = await signSession({ userId: user.id });
-  const res = NextResponse.json({ ok: true, userId: user.id });
+  // `home` = aterrizaje grupo-hogar, como el callback OAuth (el form navega ahí).
+  const res = NextResponse.json({ ok: true, userId: user.id, home: await homePathForUser(user.id) });
   res.cookies.set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

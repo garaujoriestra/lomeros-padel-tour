@@ -10,14 +10,16 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
   test('dashboard 200 con contadores; sin acciones a sub-rutas diferidas', async ({ page }) => {
     const res = await page.goto('/g/grupo-test/admin');
     expect(res?.status()).toBe(200);
-    await expect(page.getByRole('heading', { name: 'Administración' })).toBeVisible();
-    await expect(page.getByText('Partidos jugados', { exact: true })).toBeVisible();
+    // .first(): el dev server de Next puede dejar una copia <div hidden> de la página
+    // en el DOM (flake documentado) que rompe el strict mode sin afectar al usuario.
+    await expect(page.getByRole('heading', { name: 'Administración' }).first()).toBeVisible();
+    await expect(page.getByText('Partidos jugados', { exact: true }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Añadir jugador|Registrar partido|Notificaciones/ })).toHaveCount(0);
   });
 
   test('players lista jugadores del grupo, no de Lomeros; sin alta/edición', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/players');
-    await expect(page.getByText('Jugador GT', { exact: true })).toBeVisible();
+    await expect(page.getByText('Jugador GT', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Nuevo' })).toHaveCount(0);
     await expect(page.getByLabel(/^Editar a /)).toHaveCount(0);

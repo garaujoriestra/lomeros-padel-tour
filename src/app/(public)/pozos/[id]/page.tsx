@@ -9,7 +9,7 @@ import { loadEvent } from '@/lib/tournament/event-store';
 import { loadPairs } from '@/lib/tournament/pair-store';
 import { listPozoMatches, pozoStandingsLive } from '@/lib/tournament/pozo-engine';
 import { buildDisplayContext, buildEscaleraView, formatLabel } from '@/lib/tournament/pozo-view';
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { PozoEscalera } from '@/components/tournament/pozo-escalera';
 import { NextMatchCard } from '@/components/tournament/next-match-card';
 
@@ -35,8 +35,8 @@ export default async function PublicPozoPage({ params }: { params: Promise<{ id:
   const standings = ev.status !== 'draft' ? await pozoStandingsLive(db, id) : [];
 
   // "Tu próximo partido" para el jugador logueado, si participa.
-  const session = await getSession();
-  const myPlayerId = session?.player?.id ?? null;
+  const pageCtx = await resolvePageContext();
+  const myPlayerId = pageCtx.player?.id ?? null;
   const myPairIds = myPlayerId
     ? pairs.filter((p) => p.player1Id === myPlayerId || p.player2Id === myPlayerId).map((p) => p.id)
     : [];

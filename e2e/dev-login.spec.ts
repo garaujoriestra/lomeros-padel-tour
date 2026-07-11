@@ -29,7 +29,8 @@ test.describe('dev-login página (UI)', () => {
     await page.goto('/dev-login');
     await expect(page.getByRole('heading', { name: 'Dev login' })).toBeVisible();
     await page.getByRole('button', { name: /pl1@test\.com/ }).click();
-    await expect(page).toHaveURL(/\/$/);
+    // Paso C: aterrizaje grupo-hogar (miembro de Lomeros → /me).
+    await expect(page).toHaveURL(/\/me$/);
     const cookies = await page.context().cookies();
     expect(cookies.some((c) => c.name === 'session')).toBe(true);
   });
@@ -39,7 +40,8 @@ test.describe('dev-login página (UI)', () => {
     await page.goto('/dev-login');
     await page.getByLabel('Email nuevo').fill(email);
     await page.getByRole('button', { name: 'Entrar como nuevo' }).click();
-    await expect(page).toHaveURL(/\/$/);
+    // Paso C: sin membership → /me (bienvenida).
+    await expect(page).toHaveURL(/\/me$/);
     await page.goto('/dev-login');
     await expect(page.getByRole('button', { name: new RegExp(email) })).toBeVisible();
   });
