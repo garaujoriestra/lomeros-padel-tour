@@ -69,7 +69,9 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     // 6px que ENTRA en la celda vecina (dispara pointerenter) pero queda bajo el
     // umbral de 12px → solo la celda inicial acaba pintada. (No se guarda nada:
     // el goto del siguiente test resetea el estado.)
-    const cell = page.locator('button[data-day="3"][data-min="1320"]').first();
+    // :visible esquiva la copia <div hidden> obsoleta que el dev server de Next puede
+    // dejar en el DOM (se desprende a mitad de scroll y rompe scrollIntoViewIfNeeded).
+    const cell = page.locator('button[data-day="3"][data-min="1320"]:visible').first();
     // page.mouse no hace auto-scroll (a diferencia de .click()): la fila de las
     // 22:00 queda bajo el pliegue del viewport y hay que traerla a la vista.
     await cell.scrollIntoViewIfNeeded();
@@ -84,12 +86,12 @@ test.describe('planner · flujo del jugador (pl1, Lomeros)', () => {
     // Arrastre real: down en 22:30 (celda sin pintar; empezar en la ya pintada
     // entraría en modo borrar) y move >12px pasando por los centros de las dos
     // siguientes → las tres acaban pintadas.
-    const from = page.locator('button[data-day="3"][data-min="1350"]').first();
+    const from = page.locator('button[data-day="3"][data-min="1350"]:visible').first();
     const fromBox = (await from.boundingBox())!;
     const x = fromBox.x + fromBox.width / 2;
     await page.mouse.move(x, fromBox.y + fromBox.height / 2);
     await page.mouse.down();
-    const to = page.locator('button[data-day="3"][data-min="1410"]').first();
+    const to = page.locator('button[data-day="3"][data-min="1410"]:visible').first();
     const toBox = (await to.boundingBox())!;
     await page.mouse.move(x, toBox.y + toBox.height / 2, { steps: 10 });
     await page.mouse.up();

@@ -16,7 +16,8 @@ export function DevLoginForm({ users }: { users: Row[] }) {
       body: JSON.stringify({ email: targetEmail }),
     });
     if (res.ok) {
-      window.location.assign('/');
+      const { home } = (await res.json()) as { home?: string };
+      window.location.assign(home ?? '/me');
     } else {
       setBusy(false);
       toast.error('Error en dev-login');

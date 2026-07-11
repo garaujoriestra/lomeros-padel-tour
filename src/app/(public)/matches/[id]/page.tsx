@@ -13,7 +13,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Bandage } from 'lucide-react';
 import { expectedScore, projectDoublesElo, type EloProjection } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
 import { DirectionalTransition } from '@/components/shared/view-transitions';
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { currentMatchPools } from '@/lib/betting/match-odds';
 import { bettingClosesAt, isBettingOpen } from '@/lib/betting/close-time';
 import { hasPendingPenalty } from '@/lib/betting/settle';
@@ -211,14 +211,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const injured = match.injuredPlayerId ? playerMap[match.injuredPlayerId] : null;
 
   // ── La Timba (apuestas) ──
-  const session = await getSession();
+  const pageCtx = await resolvePageContext();
   const bettingOpen = isBettingOpen(match);
   let timba: React.ReactNode = null;
   if (bettingOpen) {
     const pools = await currentMatchPools(match);
     const allBets = (await getBetsWithBettorForMatch(match.id)) as PublicBet[];
 
-    const me = session?.player ?? null;
+    const me = pageCtx.player;
     const team1Ids = [match.team1Player1Id, match.team1Player2Id];
     const team2Ids = [match.team2Player1Id, match.team2Player2Id];
     const ownTeam: 0 | 1 | 2 = me && team1Ids.includes(me.id) ? 1 : me && team2Ids.includes(me.id) ? 2 : 0;

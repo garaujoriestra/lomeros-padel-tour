@@ -12,7 +12,7 @@ import { loadPairs } from '@/lib/tournament/pair-store';
 import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
 import { buildDisplayContext } from '@/lib/tournament/pozo-view';
 import { buildGroupsView, buildBracketView, torneoNextMatch } from '@/lib/tournament/torneo-view';
-import { getSession } from '@/lib/auth/session';
+import { resolvePageContext } from '@/lib/auth/page-context';
 import { TorneoBoard } from '@/components/tournament/torneo-board';
 
 export const dynamic = 'force-dynamic';
@@ -39,8 +39,8 @@ export default async function PublicTorneoPage({ params }: { params: Promise<{ i
   const groupsView = buildGroupsView(groupRows, pairs, matches, ctx, courtLabelById);
   const bracket = buildBracketView(matches, ctx, courtLabelById);
 
-  const session = await getSession();
-  const myPlayerId = session?.player?.id ?? null;
+  const pageCtx = await resolvePageContext();
+  const myPlayerId = pageCtx.player?.id ?? null;
   const myPairIds = myPlayerId ? pairs.filter((p) => p.player1Id === myPlayerId || p.player2Id === myPlayerId).map((p) => p.id) : [];
   const next = myPlayerId ? torneoNextMatch(matches, ctx, courtLabelById, myPlayerId, myPairIds) : null;
 

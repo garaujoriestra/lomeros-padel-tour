@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
-import { requireAdmin } from '@/lib/auth/guard';
+import { requireGroupAdmin } from '@/lib/auth/guard';
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin();
+  // Sin grupo objetivo (multipart sin campo g): única membership = admin de su grupo.
+  const auth = await requireGroupAdmin();
   if ('response' in auth) return auth.response;
   try {
     const formData = await req.formData();

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForIdToken, verifyGoogleIdToken } from '@/lib/auth/google';
 import { getUserByEmail } from '@/lib/auth/users';
+import { homePathForUser } from '@/lib/auth/home-path';
 import { signSession } from '@/lib/auth/jwt';
 
 export async function GET(request: NextRequest) {
@@ -33,7 +34,9 @@ export async function GET(request: NextRequest) {
     const token = await signSession({ userId: user.id });
     // Solo rutas internas: evita open-redirect (incl. protocol-relative //evil.com y /\evil.com).
     const isInternal = !!from && from.startsWith('/') && !from.startsWith('//') && !from.startsWith('/\\');
-    const dest = isInternal ? from : '/me';
+    // Sin `from`: aterrizaje en el grupo-hogar (miembro del grupo por defecto → /me;
+    // de otro grupo → /g/<slug>/me).
+    const dest = isInternal ? from : await homePathForUser(user.id);
     const res = NextResponse.redirect(new URL(dest, base));
     res.cookies.set('session', token, {
       httpOnly: true,

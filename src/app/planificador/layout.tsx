@@ -1,21 +1,13 @@
 import { Navbar } from '@/components/shared/navbar';
 import { BottomNav } from '@/components/shared/bottom-nav';
-import { getSession } from '@/lib/auth/session';
+import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
 
 export default async function PlanificadorLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  const player = session?.player
-    ? {
-        id: session.player.id,
-        name: session.player.name,
-        nickname: session.player.nickname,
-        avatarUrl: session.player.avatarUrl,
-      }
-    : null;
+  const ctx = await resolvePageContext();
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <Navbar session={session ? { role: session.role, player } : null} />
+      <Navbar session={navSessionFromContext(ctx)} />
       <main className="screen">
         <div className="lpt-container">{children}</div>
       </main>

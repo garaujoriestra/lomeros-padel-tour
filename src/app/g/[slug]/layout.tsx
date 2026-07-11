@@ -1,6 +1,6 @@
 import { permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/shared/navbar';
-import { resolvePageContext } from '@/lib/auth/page-context';
+import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,24 +16,9 @@ export default async function GroupLayout({
 
   if (ctx.basePath === '') permanentRedirect('/'); // /g/lomeros → raíz canónica
 
-  const navSession =
-    ctx.role && ctx.role !== 'super_admin'
-      ? {
-          role: ctx.role,
-          player: ctx.player
-            ? {
-                id: ctx.player.id,
-                name: ctx.player.name,
-                nickname: ctx.player.nickname,
-                avatarUrl: ctx.player.avatarUrl,
-              }
-            : null,
-        }
-      : null;
-
   return (
     <div className="min-h-dvh flex flex-col">
-      <Navbar session={navSession} basePath={ctx.basePath} links={[]} />
+      <Navbar session={navSessionFromContext(ctx)} basePath={ctx.basePath} links={[]} />
       <main className="screen">
         <div className="lpt-container">{children}</div>
       </main>
