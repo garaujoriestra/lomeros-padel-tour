@@ -24,7 +24,7 @@ Todo el backend ya existe: `resolveGroupContext` da contexto `super_admin` en gr
 ### 2.2 Fuente de datos
 
 - Helper **puro** `buildSwitcherGroups({ memberships, allGroups, isSuperAdmin, defaultGroupId, currentGroupId })` → `SwitcherGroup[] = { slug, name, href, current }` (unit-testeable).
-- `getSwitcherGroups(currentGroupId)` (server, en `src/lib/auth/page-context.ts` junto a `navSessionFromContext`): sin sesión → `null`; con sesión → memberships JOIN groups del usuario; si `isSuperAdminEmail` → `listGroups()` (todos, el súper-admin ve todo); `<2` entradas → `null`.
+- `getSwitcherGroups(currentGroupId)` (server, en `src/lib/auth/group-switcher.ts`, módulo propio junto a `home-path.ts`): sin sesión → `null`; con sesión → memberships JOIN groups del usuario; si `isSuperAdminEmail` → `listGroups()` (todos, el súper-admin ve todo); `<2` entradas → `null`.
 - Cableado en los **5 layouts** que montan `Navbar` ((public), me, admin, planificador, g/[slug]) → nueva prop opcional `switcher` del `Navbar` (default `null` = nada nuevo).
 
 ### 2.3 Súper-admin: vista solo-lectura

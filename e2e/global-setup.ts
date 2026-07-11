@@ -141,10 +141,37 @@ export default async function globalSetup() {
     args: ['gt-tournament1', 'grupo-test', 'Torneo GT', '2026-01-01', 'pozo', 'americano', '{}', 'draft'],
   });
 
+  // Usuario MULTI-GRUPO (membership player en Lomeros y en Grupo Test, sin ficha), para
+  // el conmutador de grupos. OJO: los tests del fallback "única membership" usan a
+  // gt-admin/gt-player, que siguen teniendo una sola — este usuario es aparte.
+  const multiUserId = 'e2e-multi-user';
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
+    args: [multiUserId, 'multi@test.com', 'player'],
+  });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-multi-lomeros', multiUserId, 'lomeros', 'player', null],
+  });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO memberships (id, user_id, group_id, role, player_id) VALUES (?, ?, ?, ?, ?)',
+    args: ['mb-multi-gt', multiUserId, 'grupo-test', 'player', null],
+  });
+
+  // Usuario SÚPER-ADMIN (allowlist SUPER_ADMIN_EMAILS del webServer, SIN memberships):
+  // ve todos los grupos en el conmutador y el admin de grupo en solo-lectura.
+  const superUserId = 'e2e-super-user';
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
+    args: [superUserId, TEST_ENV.SUPER_ADMIN_EMAIL, 'player'],
+  });
+
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
   await writeFile('e2e/.auth/admin.json', JSON.stringify(await sessionStorageState(adminId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/player.json', JSON.stringify(await sessionStorageState(playerUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/gt-admin.json', JSON.stringify(await sessionStorageState(gtAdminUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/gt-player.json', JSON.stringify(await sessionStorageState(gtPlayerUserId, TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/multi.json', JSON.stringify(await sessionStorageState(multiUserId, TEST_ENV.AUTH_SECRET)));
+  await writeFile('e2e/.auth/super.json', JSON.stringify(await sessionStorageState(superUserId, TEST_ENV.AUTH_SECRET)));
 }
