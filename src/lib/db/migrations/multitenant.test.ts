@@ -63,6 +63,18 @@ describe('migrateMultitenant', () => {
     expect(res.rows[0][0]).toBe(LOMEROS_GROUP_ID);
   });
 
+  it('NO cuela en Lomeros a users que ya son miembros de OTRO grupo (re-run multi-grupo)', async () => {
+    await migrateMultitenant(client);
+    // Simula un mundo multi-grupo posterior: user nuevo que solo pertenece a otro grupo.
+    await client.execute(`INSERT INTO groups (id, slug, name) VALUES ('otro','otro','Otro Grupo')`);
+    await client.execute(`INSERT INTO users (id, email) VALUES ('u3','ana@otro.com')`);
+    await client.execute(`INSERT INTO memberships (id, user_id, group_id, role) VALUES ('mb3','u3','otro','admin')`);
+
+    await migrateMultitenant(client);
+    const res = await client.execute(`SELECT group_id FROM memberships WHERE user_id = 'u3'`);
+    expect(res.rows.map((r) => r[0])).toEqual(['otro']);
+  });
+
   it('es idempotente: ejecutarla dos veces no duplica ni falla', async () => {
     await migrateMultitenant(client);
     const report = await migrateMultitenant(client);
