@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/auth/guard';
-import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
+import { requireGroupAdmin } from '@/lib/auth/guard';
+import { groupIdFromValue } from '@/lib/groups/request-group';
 import { loadEvent } from '@/lib/tournament/event-store';
 import { getTournamentInGroup } from '@/lib/tournament/queries';
 import { generateEvent } from '@/lib/tournament/event-engine';
 
-// POST /api/tournaments/[id]/generate — genera el evento (pozo o torneo) (admin). Body: { seed?: number }.
+// POST /api/tournaments/[id]/generate — genera el evento (pozo o torneo) (admin del grupo).
+// Body: { seed?: number, g?: string }.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const body = await request.json().catch(() => ({}));
+  const auth = await requireGroupAdmin(await groupIdFromValue(body.g));
   if ('response' in auth) return auth.response;
   const { id } = await params;
   try {
-    const groupId = (await getGroupContext())?.groupId ?? (await getDefaultGroupId());
-    if (!(await getTournamentInGroup(groupId, id))) {
+    if (!(await getTournamentInGroup(auth.ctx.groupId, id))) {
       return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
     }
     const ev = await loadEvent(db, id);
@@ -22,7 +23,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Un pozo americano necesita al menos 4 jugadores' }, { status: 400 });
     }
 
-    const body = await request.json().catch(() => ({}));
     const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 0x7fffffff);
     await generateEvent(db, id, seed);
     return NextResponse.json({ ok: true });

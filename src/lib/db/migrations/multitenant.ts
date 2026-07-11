@@ -73,15 +73,17 @@ export async function migrateMultitenant(client: Client): Promise<MultitenantMig
   await client.execute({
     // id vía SQL puro (hex de 32 chars, no UUID dasheado como crypto.randomUUID) para que el
     // backfill sea un único INSERT...SELECT sin round-trip por fila. Ambos son TEXT PK válidos.
+    // Solo users SIN NINGUNA membership (los pre-multitenant): en un mundo multi-grupo,
+    // re-ejecutar la migración no debe colar a miembros de otros grupos como miembros de Lomeros.
     sql: `
       INSERT INTO memberships (id, user_id, group_id, role, player_id)
       SELECT lower(hex(randomblob(16))), u.id, ?, u.role, u.player_id
       FROM users u
       WHERE NOT EXISTS (
-        SELECT 1 FROM memberships m WHERE m.user_id = u.id AND m.group_id = ?
+        SELECT 1 FROM memberships m WHERE m.user_id = u.id
       )
     `,
-    args: [LOMEROS_GROUP_ID, LOMEROS_GROUP_ID],
+    args: [LOMEROS_GROUP_ID],
   });
 
   // 3) group_id en tablas raíz tenant (NOT NULL DEFAULT lomeros = backfill + red de seguridad)
