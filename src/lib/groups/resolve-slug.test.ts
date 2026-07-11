@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 // Lo mockeamos para no necesitar env vars de DB en este unit de la parte pura.
 vi.mock('@/lib/db', () => ({ db: {} }));
 
-import { isValidGroupSlug, RESERVED_SLUGS } from './resolve-slug';
+import { isValidGroupSlug, RESERVED_SLUGS, slugFromName } from './resolve-slug';
 
 describe('isValidGroupSlug', () => {
   it('acepta slugs en minúsculas con dígitos y guiones internos', () => {
@@ -26,5 +26,22 @@ describe('isValidGroupSlug', () => {
       expect(RESERVED_SLUGS.has(r)).toBe(true);
       expect(isValidGroupSlug(r)).toBe(false);
     }
+  });
+});
+
+describe('slugFromName', () => {
+  it('minúsculas, sin acentos, espacios→guiones', () => {
+    expect(slugFromName('Panteras Pádel Club')).toBe('panteras-padel-club');
+  });
+  it('colapsa símbolos y guiones repetidos, recorta extremos', () => {
+    expect(slugFromName('  ¡Los + Máquinas! ')).toBe('los-maquinas');
+    expect(slugFromName('a---b')).toBe('a-b');
+  });
+  it('vacío o solo símbolos → cadena vacía (el form no permite enviar)', () => {
+    expect(slugFromName('')).toBe('');
+    expect(slugFromName('!!!')).toBe('');
+  });
+  it('crear-grupo está reservado', () => {
+    expect(RESERVED_SLUGS.has('crear-grupo')).toBe(true);
   });
 });

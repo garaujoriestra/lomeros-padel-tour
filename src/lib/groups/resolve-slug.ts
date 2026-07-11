@@ -12,6 +12,7 @@ export const RESERVED_SLUGS = new Set<string>([
   'g', 'api', 'admin', 'me', 'login', 'logout', 'dev-login',
   'offline', 'unauthorized', 'matches', 'players', 'pozos', 'torneos',
   'rankings', 'eventos', 'info', 'icon', 'apple-icon', 'planificador',
+  'crear-grupo',
 ]);
 
 // Forma válida de slug: minúsculas, dígitos y guiones internos (sin guiones en los
@@ -33,4 +34,15 @@ export async function getGroupBySlug(slug: string): Promise<GroupRow | null> {
     .from(groups)
     .where(eq(groups.slug, slug));
   return g ?? null;
+}
+
+// Deriva un slug editable a partir del nombre del grupo (onboarding): minúsculas,
+// sin acentos (NFD), todo lo no [a-z0-9] a guiones, colapsados y sin extremos.
+export function slugFromName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
