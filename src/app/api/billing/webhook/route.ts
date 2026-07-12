@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripeForWebhooks } from '@/lib/billing/stripe';
-import { recordBillingEvent } from '@/lib/billing/events';
-import { extendGroupPass } from '@/lib/groups/queries';
+import { grantSeasonPass } from '@/lib/groups/queries';
 
 // Stripe.webhooks.constructEvent es SÍNCRONO y usa el crypto de Node.
 export const runtime = 'nodejs';
@@ -32,11 +31,10 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session;
     const groupId = session.metadata?.groupId;
     if (groupId && session.payment_status === 'paid') {
-      // Registrar ANTES de aplicar (idempotencia: reintentos del mismo event.id no
-      // reaplican el efecto). extendGroupPass es una UPDATE atómica (cierra la carrera
-      // de dos pagos concurrentes distintos: no hay read-modify-write intermedio).
-      const fresh = await recordBillingEvent(event.id, groupId, event.type);
-      if (fresh) await extendGroupPass(groupId);
+      // Registro + concesión en UNA transacción atómica e idempotente: reintentos del
+      // mismo event.id no reaplican el efecto, y si el proceso cae a mitad no se
+      // commitea nada (Stripe reintenta y lo reprocesa).
+      await grantSeasonPass(event.id, groupId, event.type);
     }
   }
 

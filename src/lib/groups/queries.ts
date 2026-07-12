@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { groups, memberships } from '@/lib/db/schema';
+import { groups, memberships, billingEvents } from '@/lib/db/schema';
 
 export interface GroupRow {
   id: string;
@@ -40,26 +40,38 @@ export async function updateGroupBranding(
   await db.update(groups).set(branding).where(eq(groups.id, id));
 }
 
-// Vigencia del Pase de Temporada (la escribe SOLO el webhook de Stripe).
-export async function setGroupPaidUntil(id: string, paidUntil: string): Promise<void> {
-  await db.update(groups).set({ paidUntil }).where(eq(groups.id, id));
-}
-
-// Extiende el Pase +1 año de forma ATÓMICA (una sola UPDATE, sin read-modify-write):
-// base = max(paid_until vigente, ahora). Así dos pagos concurrentes DISTINTOS no leen
-// el mismo paid_until y se pisan. Único escritor: el webhook de Stripe.
-// El formato de salida debe coincidir byte a byte con extendedPaidUntil (toISOString):
-// strftime('%Y-%m-%dT%H:%M:%fZ', ...) da milisegundos y sufijo 'Z' idénticos.
-export async function extendGroupPass(id: string, now: Date = new Date()): Promise<void> {
+// Concede el Pase de forma ATÓMICA e IDEMPOTENTE: registra el evento de Stripe y, solo
+// si es nuevo, extiende paid_until (+1 año sobre max(vigente, ahora)) en la MISMA
+// transacción. Si el proceso cae a mitad no se commitea nada y el reintento de Stripe lo
+// reprocesa (durabilidad): no queda un billing_events huérfano con el pase sin aplicar.
+// base = max(paid_until vigente, ahora): renovar antes de caducar no penaliza, y dos
+// pagos concurrentes DISTINTOS no se pisan (todo dentro de la tx). El formato coincide
+// byte a byte con extendedPaidUntil (toISOString): strftime('%Y-%m-%dT%H:%M:%fZ', ...)
+// preserva milisegundos y sufijo 'Z'. Único escritor de groups.paid_until.
+// Devuelve true si concedió (evento nuevo), false si era un reintento ya visto.
+export async function grantSeasonPass(
+  eventId: string,
+  groupId: string,
+  type: string,
+  now: Date = new Date(),
+): Promise<boolean> {
   const nowIso = now.toISOString();
-  await db
-    .update(groups)
-    .set({
-      paidUntil: sql`strftime('%Y-%m-%dT%H:%M:%fZ',
-        CASE WHEN ${groups.paidUntil} IS NOT NULL AND ${groups.paidUntil} > ${nowIso}
-             THEN ${groups.paidUntil} ELSE ${nowIso} END, '+1 year')`,
-    })
-    .where(eq(groups.id, id));
+  return db.transaction(async (tx) => {
+    const rec = await tx
+      .insert(billingEvents)
+      .values({ id: eventId, groupId, type })
+      .onConflictDoNothing();
+    if ((rec as { rowsAffected: number }).rowsAffected === 0) return false;
+    await tx
+      .update(groups)
+      .set({
+        paidUntil: sql`strftime('%Y-%m-%dT%H:%M:%fZ',
+          CASE WHEN ${groups.paidUntil} IS NOT NULL AND ${groups.paidUntil} > ${nowIso}
+               THEN ${groups.paidUntil} ELSE ${nowIso} END, '+1 year')`,
+      })
+      .where(eq(groups.id, groupId));
+    return true;
+  });
 }
 
 // ¿Es una violación de UNIQUE de SQLite/libsql? El error puede venir envuelto
