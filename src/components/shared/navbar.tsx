@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Settings, LogOut, LogIn } from 'lucide-react';
-import { navLinks, isNavActive, type NavLink } from './nav-links';
+import { navLinksFor, isNavActive, type NavLink } from './nav-links';
 import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 import type { SwitcherGroup } from '@/lib/auth/group-switcher';
 import { GroupSwitcher } from './group-switcher';
@@ -36,7 +36,12 @@ function ThemeToggle() {
 export function Navbar({
   session = null,
   basePath = '',
-  links = navLinks,
+  // Se calcula aquí (no en el server) porque los `icon` de NavLink son
+  // referencias a componentes: pasarlas ya resueltas desde un Server
+  // Component como prop revienta la serialización RSC ("Functions cannot be
+  // passed directly to Client Components"). Al ser un valor por defecto
+  // evaluado en este módulo cliente, no cruza esa frontera.
+  links = navLinksFor(basePath),
   switcher = null,
 }: {
   session?: NavSession | null;
@@ -68,12 +73,13 @@ export function Navbar({
         <nav className="nav-tabs" aria-label="Navegación principal">
           {links.map((link) => {
             const Icon = link.icon;
-            const href = `${basePath}${link.href === '/' ? '' : link.href}` || '/';
+            // `links` (por defecto vía navLinksFor(basePath)) ya trae los href
+            // con el basePath aplicado — no volver a prefijarlo aquí.
             return (
               <Link
                 key={link.href}
-                href={href}
-                className={`nav-tab ${isNavActive(href, pathname) ? 'active' : ''}`}
+                href={link.href}
+                className={`nav-tab ${isNavActive(link.href, pathname) ? 'active' : ''}`}
               >
                 <Icon size={15} strokeWidth={2.2} /> {link.label}
               </Link>
