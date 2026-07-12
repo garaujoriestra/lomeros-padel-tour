@@ -13,14 +13,14 @@
 
 - Columnas nuevas en `groups`: `logo_url TEXT` (null = sin logo), `accent_color TEXT` (hex `#rrggbb`, null = acento por defecto), `paid_until TEXT` (ISO date, null = nunca pagó).
 - Migración idempotente `/api/migrate-branding` (ALTER TABLE ADD COLUMN, patrón `migrate-multitenant`; extraída a `src/lib/db/migrations/` y añadida a `ensureAuxTables`/orden del e2e global-setup si aplica).
-- Helper puro `isPaidGroup(group, now)` en `src/lib/billing/`: `BILLING_ENABLED !== 'true'` → **true para todos**; encendido → `paid_until > now`. Único punto de verdad del gating.
+- Helpers puros en `src/lib/billing/`: `isPaidGroup(group, now)` (`BILLING_ENABLED !== 'true'` → **true para todos**; encendido → `paid_until > now`) gobierna branding y atribución; `hasSeasonPass(group, now)` (`paid_until` real y vigente, ignora el flag) gobierna la **⭐ Tour Oficial** — así en la beta el branding es gratis pero la ⭐ sigue siendo un badge ganado, no regalado.
 - `GroupRow` (DAL `src/lib/groups/queries.ts`) amplía a `logoUrl/accentColor/paidUntil` — llega ya a layouts vía `resolvePageContext().group`.
 
 ## 3. Dónde se aplica (solo `/g/[slug]`; la raíz de Lomeros NO se toca)
 
-- **Navbar de grupo** (`g/[slug]/layout`): la marca pasa a ser **nombre del grupo** (gratis, para todos los grupos — hoy muestra "Lomeros Padel Tour", que era atribución provisional del MVP). Si `isPaidGroup`: su **logo** (sustituye al Crest) y **⭐** junto al nombre. Si NO de pago: Crest por defecto + atribución discreta "hecho con Lomeros Padel Tour" en un footer del layout de grupo (elemento nuevo, solo bajo `/g/`).
+- **Navbar de grupo** (`g/[slug]/layout`): la marca pasa a ser **nombre del grupo** (gratis, para todos los grupos — hoy muestra "Lomeros Padel Tour", que era atribución provisional del MVP). Si `isPaidGroup`: su **logo** (sustituye al Crest); la **⭐** junto al nombre solo con `hasSeasonPass` (pase real). Si NO de pago: Crest por defecto + atribución discreta "hecho con Lomeros Padel Tour" en un footer del layout de grupo (elemento nuevo, solo bajo `/g/`).
 - **Color de acento**: el layout de grupo inyecta el override de `--acc` (y sus derivadas `--on-acc`/`--acc-text`, que en `globals.css` se computan con `color-mix` en `:root` y NO se recalculan solas al sobreescribir `--acc` en un wrapper — hay que redeclararlas juntas en el wrapper) vía `style` en el contenedor del layout. Solo si `isPaidGroup` y hay `accent_color`.
-- **OG image**: ya lee `group.name` (1D); se añade la ⭐ si `isPaidGroup`. Nada más.
+- **OG image**: DIFERIDA. La única OG existente (partido) es de la raíz/grupo por defecto (las páginas de detalle bajo `/g/` no existen aún) — tocarla rompería "raíz cero diff". La ⭐ en OG llegará con esas páginas.
 - El branding guardado **no se borra al expirar el pase**: simplemente deja de aplicarse (vuelve acento por defecto, sin logo/⭐, con atribución).
 
 ## 4. Admin de grupo: sección "Marca"
