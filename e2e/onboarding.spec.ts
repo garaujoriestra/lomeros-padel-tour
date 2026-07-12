@@ -248,3 +248,50 @@ test.describe('onboarding · partido y resultado bajo el grupo (gt-admin)', () =
     expect(del.ok()).toBeTruthy();
   });
 });
+
+test.describe('onboarding · viaje completo', () => {
+  test('enlace → crear grupo → invitar jugador → el invitado aterriza y ve el grupo', async ({ browser }) => {
+    const slug = `viaje-${Date.now()}`;
+    const email = `viaje-${Date.now()}@test.com`;
+
+    // 1) El súper-admin genera el enlace (API).
+    const sa = await browser.newContext({ storageState: 'e2e/.auth/super-admin.json' });
+    const { url } = (await (await sa.request.post('/api/onboarding/invite-link')).json()) as { url: string };
+    await sa.close();
+
+    // 2) Un usuario nuevo (dev-login = misma semántica de cuenta que el callback) crea el grupo por UI.
+    const admin = await browser.newContext();
+    const adminPage = await admin.newPage();
+    await adminPage.goto('/dev-login');
+    await adminPage.getByLabel('Email nuevo').fill(`founder-${Date.now()}@test.com`);
+    await adminPage.getByRole('button', { name: 'Entrar como nuevo' }).click();
+    await adminPage.waitForURL(/\/me$/);
+    await adminPage.goto(url.replace(/^https?:\/\/[^/]+/, ''));
+    await adminPage.getByLabel(/nombre del grupo/i).fill('Grupo Viaje');
+    await adminPage.getByLabel(/nombre corto/i).fill(slug);
+    await adminPage.getByRole('button', { name: /crear grupo/i }).click();
+    await adminPage.waitForURL(new RegExp(`/g/${slug}/admin$`));
+
+    // 3) Invita a un jugador con email desde su admin.
+    await adminPage.goto(`/g/${slug}/admin/players/new`);
+    await adminPage.getByLabel(/nombre/i).first().fill('Jugadora Uno');
+    await adminPage.getByLabel(/email/i).fill(email);
+    await adminPage.getByRole('button', { name: /crear jugador/i }).click();
+    await adminPage.waitForURL(new RegExp(`/g/${slug}/admin/players$`));
+    await admin.close();
+
+    // 4) La invitada entra y aterriza en SU grupo con su ficha.
+    const guest = await browser.newContext();
+    const guestPage = await guest.newPage();
+    await guestPage.goto('/dev-login');
+    await guestPage.getByLabel('Email nuevo').fill(email); // el user ya existe: dev-login lo reutiliza
+    await guestPage.getByRole('button', { name: 'Entrar como nuevo' }).click();
+    await guestPage.waitForURL(new RegExp(`/g/${slug}/me$`));
+    await expect(guestPage.getByText('Jugadora Uno').first()).toBeVisible();
+
+    // 5) No-fuga: su home de grupo no lista jugadores de Lomeros.
+    await guestPage.goto(`/g/${slug}`);
+    await expect(guestPage.getByText('Jugador 1', { exact: true })).toHaveCount(0);
+    await guest.close();
+  });
+});
