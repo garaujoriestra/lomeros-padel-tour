@@ -12,6 +12,7 @@ import { PairingSuggestions } from '@/components/admin/pairing-suggestions';
 
 interface MatchFormProps {
   players: Player[];
+  groupSlug?: string;
 }
 
 interface SetScore {
@@ -21,8 +22,9 @@ interface SetScore {
 
 type Mode = 'scheduled' | 'completed';
 
-export function MatchForm({ players }: MatchFormProps) {
+export function MatchForm({ players, groupSlug }: MatchFormProps) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('completed');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -110,6 +112,7 @@ export function MatchForm({ players }: MatchFormProps) {
     }
 
     const payload = {
+      ...(groupSlug && { g: groupSlug }),
       date,
       time: time || null,
       location: location.trim() || null,
@@ -142,7 +145,7 @@ export function MatchForm({ players }: MatchFormProps) {
           ? 'Partido registrado y ratings actualizados ✓'
           : 'Partido programado correctamente 📅'
       );
-      router.push('/admin/matches');
+      router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -340,7 +343,7 @@ export function MatchForm({ players }: MatchFormProps) {
             ? '📅 Programar partido'
             : '✓ Guardar resultado'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push(`${basePath}/admin/matches`)}>
           Cancelar
         </Button>
       </div>

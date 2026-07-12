@@ -9,8 +9,9 @@ import type { PageContext } from '@/lib/auth/page-context';
 const smallBtn = { minHeight: 38, padding: '7px 13px', fontSize: 12.5 } as const;
 
 // Cuerpo compartido de /admin/matches (raíz) y /g/[slug]/admin/matches.
-// Bajo grupo: nuevo/resultado/lados ocultos (sub-rutas diferidas del MVP);
-// el borrado funciona vía API group-aware con ?g= explícito.
+// Bajo grupo: nuevo partido y resultado ya viven en /g/[slug]/admin/matches/...
+// (Task 11); "Lados" y "Editar" siguen diferidas al MVP (solo-raíz).
+// El borrado funciona vía API group-aware con ?g= explícito.
 export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
   const { groupId, basePath } = ctx;
   const isRoot = basePath === '';
@@ -47,20 +48,16 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
             {completed.length} completado{completed.length !== 1 ? 's' : ''}
           </p>
         </div>
-        {isRoot && (
-          <Link href="/admin/matches/new" className="lpt-btn primary shrink-0" style={smallBtn}>
-            <Plus size={15} /> Partido
-          </Link>
-        )}
+        <Link href={`${basePath}/admin/matches/new`} className="lpt-btn primary shrink-0" style={smallBtn}>
+          <Plus size={15} /> Partido
+        </Link>
       </div>
 
       {allMatches.length === 0 ? (
         <div className="text-center py-12 muted">
           <p className="text-4xl mb-2">🎾</p>
           <p>No hay partidos todavía.</p>
-          {isRoot && (
-            <Link href="/admin/matches/new" className="lpt-btn primary mt-4 inline-flex">Registrar el primero</Link>
-          )}
+          <Link href={`${basePath}/admin/matches/new`} className="lpt-btn primary mt-4 inline-flex">Registrar el primero</Link>
         </div>
       ) : (
         <div className="space-y-6">
@@ -79,15 +76,13 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
                     </div>
                     <ScoreGrid team1={t1} team2={t2} sets={[]} compact />
                     <div className="flex items-center justify-end gap-2 flex-wrap mt-3 pt-3" style={{ borderTop: '1px solid var(--line)' }}>
+                      <Link href={`${basePath}/admin/matches/${match.id}/result`} className="lpt-btn primary" style={smallBtn}>
+                        <ClipboardPen size={14} /> Resultado
+                      </Link>
                       {isRoot && (
-                        <>
-                          <Link href={`/admin/matches/${match.id}/result`} className="lpt-btn primary" style={smallBtn}>
-                            <ClipboardPen size={14} /> Resultado
-                          </Link>
-                          <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
-                            <RectangleVertical size={14} /> Lados
-                          </Link>
-                        </>
+                        <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
+                          <RectangleVertical size={14} /> Lados
+                        </Link>
                       )}
                       <DeleteMatchButton id={match.id} g={gSlug} />
                     </div>

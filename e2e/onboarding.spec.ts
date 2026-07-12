@@ -199,3 +199,45 @@ test.describe('onboarding · alta de jugadores bajo el grupo (gt-admin)', () => 
     await expect(page).toHaveURL(/\/g\/grupo-test\/admin\/players$/);
   });
 });
+
+test.describe('onboarding · partido y resultado bajo el grupo (gt-admin)', () => {
+  test.use({ storageState: 'e2e/.auth/gt-admin.json' });
+
+  test('programa un partido y registra el resultado desde la UI del grupo', async ({ page }) => {
+    // 1) /g/grupo-test/admin/matches → link de cabecera a new
+    await page.goto('/g/grupo-test/admin/matches');
+    await page.getByRole('link', { name: 'Partido', exact: true }).filter({ visible: true }).first().click();
+    await page.waitForURL(/\/g\/grupo-test\/admin\/matches\/new$/);
+
+    // 2) Modo "Programar partido" (sin resultado) + 4 jugadores libres del grupo (gt-pl5..gt-pl8)
+    //    + fecha; gt-match1 (gt-pl1..4) no se toca.
+    await page.getByRole('button', { name: '📅 Programar partido' }).click();
+    await page.locator('#date').fill('2026-08-01');
+    await page.getByLabel('🔵 Equipo 1 — Jugador 1').selectOption({ label: 'Jugador GT 5' });
+    await page.getByLabel('🔵 Equipo 1 — Jugador 2').selectOption({ label: 'Jugador GT 6' });
+    await page.getByLabel('🔴 Equipo 2 — Jugador 1').selectOption({ label: 'Jugador GT 7' });
+    await page.getByLabel('🔴 Equipo 2 — Jugador 2').selectOption({ label: 'Jugador GT 8' });
+    await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/g\/grupo-test\/admin\/matches$/);
+
+    // 3) Botón "Resultado" del partido recién creado (tarjeta con los 4 nuevos jugadores)
+    const card = page.locator('.lpt-card').filter({ visible: true }).filter({ hasText: 'Jugador GT 5' }).filter({ hasText: 'Jugador GT 8' });
+    await expect(card).toBeVisible();
+    await card.getByRole('link', { name: 'Resultado' }).click();
+    await page.waitForURL(/\/g\/grupo-test\/admin\/matches\/.+\/result$/);
+
+    // 4) Marcador 2 sets, guardar
+    const inputs = page.locator('input[type="number"]').filter({ visible: true });
+    await inputs.nth(0).fill('6');
+    await inputs.nth(1).fill('0');
+    await inputs.nth(2).fill('6');
+    await inputs.nth(3).fill('0');
+    await page.getByRole('button', { name: /Guardar resultado y actualizar rankings/ }).click();
+
+    // 5) Vuelve a la lista y el partido pasa a completado.
+    await page.waitForURL(/\/g\/grupo-test\/admin\/matches$/);
+    const completedCard = page.locator('.lpt-card').filter({ visible: true }).filter({ hasText: 'Jugador GT 5' }).filter({ hasText: 'Jugador GT 8' });
+    await expect(completedCard.getByText('6', { exact: true }).first()).toBeVisible();
+    await expect(completedCard.getByRole('link', { name: 'Resultado' })).toHaveCount(0);
+  });
+});

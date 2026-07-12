@@ -112,6 +112,16 @@ export default async function globalSetup() {
     args: ['gt-match1', 'grupo-test', '2026-01-01', 'gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4', 'scheduled'],
   });
 
+  // gt-pl5..gt-pl8: jugadores "libres" del Grupo Test, aparte de gt-pl1..4 (que gt-match1
+  // ya ocupa y que otros specs no deben mutar). Para specs de onboarding que crean partidos
+  // nuevos desde la UI sin tocar gt-match1 ni sus jugadores.
+  for (let i = 5; i <= 8; i++) {
+    await db.execute({
+      sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
+      args: [`gt-pl${i}`, 'grupo-test', `Jugador GT ${i}`],
+    });
+  }
+
   // Estado de La Timba y premios del "Grupo Test", para no-fuga: una apuesta abierta
   // de gt-pl1 en su partido, una penalización pendiente suya, un premio de su grupo y
   // un canje. Lomeros nunca debe ver ni tocar nada de esto.

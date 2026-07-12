@@ -1,0 +1,61 @@
+import { notFound } from 'next/navigation';
+import { resolvePageContext } from '@/lib/auth/page-context';
+import { getMatchInGroup } from '@/lib/matches/queries';
+import { listAllPlayersInGroup } from '@/lib/players/queries';
+import { ResultForm } from '@/components/admin/result-form';
+
+export const dynamic = 'force-dynamic';
+
+export default async function GroupAddResultPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+  const { slug, id } = await params;
+  const ctx = await resolvePageContext(slug);
+  const groupId = ctx.groupId;
+  const match = await getMatchInGroup(groupId, id);
+  if (!match) notFound();
+  if (match.status === 'completed') {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <h1 className="sec-title">Resultado ya registrado</h1>
+        <p className="text-ink-3">Este partido ya tiene resultado guardado.</p>
+      </div>
+    );
+  }
+  if (match.status === 'injury_aborted') {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <h1 className="sec-title">🤕 Marcado como lesión</h1>
+        <p className="text-ink-3">Este partido se marcó como no terminado por lesión y no cuenta para ranking.</p>
+      </div>
+    );
+  }
+
+  const allPlayers = await listAllPlayersInGroup(groupId);
+  const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="sec-title">Añadir resultado</h1>
+        <p className="muted text-sm mt-1.5">Introduce el marcador para completar el partido</p>
+      </div>
+      <ResultForm
+        matchId={id}
+        date={match.date}
+        location={match.location}
+        matchPlayers={[
+          { id: match.team1Player1Id, name: pMap[match.team1Player1Id]?.name ?? '?' },
+          { id: match.team1Player2Id, name: pMap[match.team1Player2Id]?.name ?? '?' },
+          { id: match.team2Player1Id, name: pMap[match.team2Player1Id]?.name ?? '?' },
+          { id: match.team2Player2Id, name: pMap[match.team2Player2Id]?.name ?? '?' },
+        ]}
+        initialSides={{
+          team1Player1Side: match.team1Player1Side,
+          team1Player2Side: match.team1Player2Side,
+          team2Player1Side: match.team2Player1Side,
+          team2Player2Side: match.team2Player2Side,
+        }}
+        groupSlug={slug}
+      />
+    </div>
+  );
+}

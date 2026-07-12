@@ -22,6 +22,7 @@ interface ResultFormProps {
   matchId: string;
   date: string;
   location?: string | null;
+  groupSlug?: string;
   // Order from the scheduled match: [team1Player1, team1Player2, team2Player1, team2Player2]
   matchPlayers: [ResultFormPlayer, ResultFormPlayer, ResultFormPlayer, ResultFormPlayer];
   initialSides: {
@@ -48,8 +49,9 @@ function makePairingOptions(
   ];
 }
 
-export function ResultForm({ matchId, date, location, matchPlayers, initialSides }: ResultFormProps) {
+export function ResultForm({ matchId, date, location, matchPlayers, initialSides, groupSlug }: ResultFormProps) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'normal' | 'injury'>('normal');
   const [injuredPlayerId, setInjuredPlayerId] = useState<string>('');
@@ -133,6 +135,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        ...(groupSlug && { g: groupSlug }),
         sets: sets.map((s, i) => ({
           setNumber: i + 1,
           team1Games: Number(s.team1Games),
@@ -152,7 +155,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
 
     if (res.ok) {
       toast.success('Resultado guardado y ratings actualizados ✓');
-      router.push('/admin/matches');
+      router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -171,12 +174,12 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
     const res = await fetch(`/api/matches/${matchId}/abandon`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ injuredPlayerId }),
+      body: JSON.stringify({ ...(groupSlug && { g: groupSlug }), injuredPlayerId }),
     });
 
     if (res.ok) {
       toast.success('Partido marcado como no terminado por lesión');
-      router.push('/admin/matches');
+      router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -460,7 +463,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
         >
           {loading ? 'Guardando...' : '✓ Guardar resultado y actualizar rankings'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push(`${basePath}/admin/matches`)}>
           Cancelar
         </Button>
       </div>
