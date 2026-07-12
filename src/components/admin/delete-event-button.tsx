@@ -12,24 +12,26 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface Props { id: string; kind: 'pozo' | 'torneo' }
+interface Props { id: string; kind: 'pozo' | 'torneo'; groupSlug?: string }
 
-export function DeleteEventButton({ id, kind }: Props) {
+export function DeleteEventButton({ id, kind, groupSlug }: Props) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function remove() {
     setLoading(true); setError(null);
-    const res = await fetch(`/api/tournaments/${id}`, { method: 'DELETE' });
+    const qs = groupSlug ? `?g=${groupSlug}` : '';
+    const res = await fetch(`/api/tournaments/${id}${qs}`, { method: 'DELETE' });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
       setError(j.error || 'Error al eliminar');
       setLoading(false);
       return;
     }
-    router.push(kind === 'pozo' ? '/admin/pozos' : '/admin/torneos');
+    router.push(`${basePath}${kind === 'pozo' ? '/admin/pozos' : '/admin/torneos'}`);
     router.refresh();
   }
 

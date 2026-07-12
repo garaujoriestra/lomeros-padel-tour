@@ -14,7 +14,7 @@ import { ShareEventButton } from './share-event-button';
 import { PozoEscalera } from '@/components/tournament/pozo-escalera';
 import { TorneoBoard } from '@/components/tournament/torneo-board';
 
-export async function EventPanel({ id }: { id: string }) {
+export async function EventPanel({ id, groupSlug }: { id: string; groupSlug?: string }) {
   const ev = await loadEvent(db, id);
   const roster = ev.participantPlayerIds.length
     ? await db.select({ id: players.id, name: players.name }).from(players).where(inArray(players.id, ev.participantPlayerIds))
@@ -48,28 +48,29 @@ export async function EventPanel({ id }: { id: string }) {
         <div className="space-y-3">
           {needsPairs && (
             <PairsEditor tournamentId={id} participants={roster}
-              initialPairs={pairs.map((p) => [p.player1Id, p.player2Id] as [string, string])} />
+              initialPairs={pairs.map((p) => [p.player1Id, p.player2Id] as [string, string])} groupSlug={groupSlug} />
           )}
           <GenerateButton tournamentId={id}
             disabled={needsPairs && !pairsComplete}
-            disabledReason={needsPairs && !pairsComplete ? 'Define todas las parejas antes de generar.' : undefined} />
+            disabledReason={needsPairs && !pairsComplete ? 'Define todas las parejas antes de generar.' : undefined}
+            groupSlug={groupSlug} />
         </div>
       )}
 
-      {isPozo && !isDraft && <PozoSection id={id} courtsByOrder={courtsByOrder} ctx={ctx} format={ev.format} participantPlayerIds={ev.participantPlayerIds} />}
-      {!isPozo && !isDraft && <TorneoSection id={id} ctx={ctx} courtLabelById={courtLabelById} />}
+      {isPozo && !isDraft && <PozoSection id={id} courtsByOrder={courtsByOrder} ctx={ctx} format={ev.format} participantPlayerIds={ev.participantPlayerIds} groupSlug={groupSlug} />}
+      {!isPozo && !isDraft && <TorneoSection id={id} ctx={ctx} courtLabelById={courtLabelById} groupSlug={groupSlug} />}
 
       <div className="pt-6 mt-2 border-t border-line flex flex-wrap gap-3">
-        <ShareEventButton id={id} kind={ev.kind} />
-        <DeleteEventButton id={id} kind={ev.kind} />
+        <ShareEventButton id={id} kind={ev.kind} groupSlug={groupSlug} />
+        <DeleteEventButton id={id} kind={ev.kind} groupSlug={groupSlug} />
       </div>
     </div>
   );
 }
 
-async function PozoSection({ id, courtsByOrder, ctx, format, participantPlayerIds }: {
+async function PozoSection({ id, courtsByOrder, ctx, format, participantPlayerIds, groupSlug }: {
   id: string; courtsByOrder: { id: string; label: string }[]; ctx: ReturnType<typeof buildDisplayContext>;
-  format: string; participantPlayerIds: string[];
+  format: string; participantPlayerIds: string[]; groupSlug?: string;
 }) {
   const matches = await listPozoMatches(db, id);
   const standings = await pozoStandingsLive(db, id);
@@ -80,13 +81,13 @@ async function PozoSection({ id, courtsByOrder, ctx, format, participantPlayerId
   return (
     <section>
       <h2 className="sec-title mb-3">Escalera</h2>
-      <PozoEscalera tournamentId={id} view={view} standings={standings} editable />
+      <PozoEscalera tournamentId={id} view={view} standings={standings} editable groupSlug={groupSlug} />
     </section>
   );
 }
 
-async function TorneoSection({ id, ctx, courtLabelById }: {
-  id: string; ctx: ReturnType<typeof buildDisplayContext>; courtLabelById: Map<string, string>;
+async function TorneoSection({ id, ctx, courtLabelById, groupSlug }: {
+  id: string; ctx: ReturnType<typeof buildDisplayContext>; courtLabelById: Map<string, string>; groupSlug?: string;
 }) {
   const ev = await loadEvent(db, id);
   const matches = await loadTorneoMatches(db, id);
@@ -96,5 +97,5 @@ async function TorneoSection({ id, ctx, courtLabelById }: {
   const groupsView = buildGroupsView(groupRows, pairs, matches, ctx, courtLabelById);
   const bracket = buildBracketView(matches, ctx, courtLabelById);
   const advance = (ev.config as { advancePerGroup?: number }).advancePerGroup ?? 2;
-  return <TorneoBoard tournamentId={id} groups={groupsView} bracket={bracket} advance={advance} editable />;
+  return <TorneoBoard tournamentId={id} groups={groupsView} bracket={bracket} advance={advance} editable groupSlug={groupSlug} />;
 }

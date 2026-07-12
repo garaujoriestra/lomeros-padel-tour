@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface Props { tournamentId: string; disabled?: boolean; disabledReason?: string }
+interface Props { tournamentId: string; disabled?: boolean; disabledReason?: string; groupSlug?: string }
 
-export function GenerateButton({ tournamentId, disabled, disabledReason }: Props) {
+export function GenerateButton({ tournamentId, disabled, disabledReason, groupSlug }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +12,8 @@ export function GenerateButton({ tournamentId, disabled, disabledReason }: Props
   async function generate() {
     setLoading(true); setError(null);
     const res = await fetch(`/api/tournaments/${tournamentId}/generate`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...(groupSlug && { g: groupSlug }) }),
     });
     if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || 'Error'); setLoading(false); return; }
     setLoading(false);

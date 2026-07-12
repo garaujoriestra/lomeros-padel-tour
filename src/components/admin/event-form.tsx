@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 
 interface RosterPlayer { id: string; name: string; nickname: string | null }
 
-export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: RosterPlayer[] }) {
+export function EventForm({ kind, roster, groupSlug }: { kind: 'pozo' | 'torneo'; roster: RosterPlayer[]; groupSlug?: string }) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
@@ -46,6 +47,7 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
     const res = await fetch('/api/tournaments', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        ...(groupSlug && { g: groupSlug }),
         name, date, location: location || null, kind, format,
         config: buildConfig(),
         courts: courts.map((c, i) => ({ label: c.label, order: i + 1, availableFrom: c.availableFrom, availableTo: c.availableTo })),
@@ -53,7 +55,7 @@ export function EventForm({ kind, roster }: { kind: 'pozo' | 'torneo'; roster: R
       }),
     });
     if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || 'Error'); setLoading(false); return; }
-    router.push(kind === 'pozo' ? '/admin/pozos' : '/admin/torneos');
+    router.push(`${basePath}${kind === 'pozo' ? '/admin/pozos' : '/admin/torneos'}`);
   }
 
   return (

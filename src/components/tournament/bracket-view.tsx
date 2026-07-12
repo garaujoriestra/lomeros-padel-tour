@@ -14,9 +14,9 @@ const roundTitle = (round: number, total: number) => {
   return `Ronda ${round + 1}`;
 };
 
-interface Props { tournamentId: string; bracket: BracketViewModel; editable: boolean; myPairIds?: string[]; }
+interface Props { tournamentId: string; bracket: BracketViewModel; editable: boolean; myPairIds?: string[]; groupSlug?: string; }
 
-export function BracketView({ tournamentId, bracket, editable, myPairIds = [] }: Props) {
+export function BracketView({ tournamentId, bracket, editable, myPairIds = [], groupSlug }: Props) {
   const mine = new Set(myPairIds);
   const liveCol = useRef<HTMLDivElement>(null);
 
@@ -67,7 +67,7 @@ export function BracketView({ tournamentId, bracket, editable, myPairIds = [] }:
         {sideRow(m.teamB, m.teamBId, m.teamBScore, m.winner === 'B', m.isBye && m.teamBId === null)}
         {editable && m.playable && pending && (
           <div className="px-2.5 py-2 border-t border-line">
-            <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} />
+            <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} groupSlug={groupSlug} />
           </div>
         )}
       </div>

@@ -13,9 +13,10 @@ interface Props {
   advance: number;
   editable: boolean;
   myPairIds?: string[];
+  groupSlug?: string;
 }
 
-export function TorneoBoard({ tournamentId, groups, bracket, advance, editable, myPairIds = [] }: Props) {
+export function TorneoBoard({ tournamentId, groups, bracket, advance, editable, myPairIds = [], groupSlug }: Props) {
   const hasGroups = groups.length > 0;
   const hasBracket = bracket.rounds.length > 0;
   const [tab, setTab] = useState<'grupos' | 'cuadro'>(hasBracket ? 'cuadro' : 'grupos');
@@ -27,7 +28,7 @@ export function TorneoBoard({ tournamentId, groups, bracket, advance, editable, 
     return (
       <section className="space-y-3">
         <h2 className="kicker">Cuadro</h2>
-        <BracketView tournamentId={tournamentId} bracket={bracket} editable={editable} myPairIds={myPairIds} />
+        <BracketView tournamentId={tournamentId} bracket={bracket} editable={editable} myPairIds={myPairIds} groupSlug={groupSlug} />
       </section>
     );
   }
@@ -44,7 +45,7 @@ export function TorneoBoard({ tournamentId, groups, bracket, advance, editable, 
           <h2 className="kicker">Grupos</h2>
           <div className="grid gap-3 md:grid-cols-2">
             {groups.map((g) => (
-              <GroupsTable key={g.name} tournamentId={tournamentId} group={g} advance={advance} editable={editable} myPairIds={myPairIds} />
+              <GroupsTable key={g.name} tournamentId={tournamentId} group={g} advance={advance} editable={editable} myPairIds={myPairIds} groupSlug={groupSlug} />
             ))}
           </div>
         </div>
@@ -53,7 +54,7 @@ export function TorneoBoard({ tournamentId, groups, bracket, advance, editable, 
           <h2 className="kicker">Cuadro</h2>
           <CrossesBand bracket={bracket} groups={groups} />
           {hasBracket
-            ? <BracketView tournamentId={tournamentId} bracket={bracket} editable={editable} myPairIds={myPairIds} />
+            ? <BracketView tournamentId={tournamentId} bracket={bracket} editable={editable} myPairIds={myPairIds} groupSlug={groupSlug} />
             : <p className="text-sm text-ink-3">El cuadro se formará al cerrar la fase de grupos.</p>}
         </div>
       )}

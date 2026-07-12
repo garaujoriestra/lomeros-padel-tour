@@ -17,9 +17,11 @@ const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin/timba', label: 'La Timba', icon: Coins },
 ];
 
-// Bajo /g/[slug] solo existen las páginas MVP de la paridad (dashboard/players/matches);
-// el resto de secciones se omite para no enlazar 404s. En raíz se muestra todo.
-const GROUP_MVP_LINKS = new Set(['/admin', '/admin/players', '/admin/matches']);
+// Bajo /g/[slug] solo existen las páginas MVP de la paridad (dashboard/players/matches/
+// pozos/torneos); el resto de secciones (Avisos/Premios/Canjes/Timba, Task 8) se omite
+// para no enlazar 404s. Task 8 añadirá el resto y podrá eliminar el filtro. En raíz se
+// muestra todo.
+const GROUP_MVP_LINKS = new Set(['/admin', '/admin/players', '/admin/matches', '/admin/pozos', '/admin/torneos']);
 
 function isActive(href: string, pathname: string) {
   return href.endsWith('/admin') ? pathname === href : pathname.startsWith(href);

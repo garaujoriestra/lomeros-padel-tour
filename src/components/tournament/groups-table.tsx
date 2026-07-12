@@ -3,9 +3,9 @@ import { ResultEntry } from './result-entry';
 
 const D = { fontFamily: 'var(--font-display)' as const };
 
-interface Props { tournamentId: string; group: GroupView; advance: number; editable: boolean; myPairIds?: string[]; }
+interface Props { tournamentId: string; group: GroupView; advance: number; editable: boolean; myPairIds?: string[]; groupSlug?: string; }
 
-export function GroupsTable({ tournamentId, group, advance, editable, myPairIds = [] }: Props) {
+export function GroupsTable({ tournamentId, group, advance, editable, myPairIds = [], groupSlug }: Props) {
   const mine = new Set(myPairIds);
   const qualifies = (s: StandingRow) => s.rank <= advance;
 
@@ -46,7 +46,7 @@ export function GroupsTable({ tournamentId, group, advance, editable, myPairIds 
               {m.status === 'completed'
                 ? <span style={D} className="italic font-extrabold tabular-nums">{m.teamAScore}–{m.teamBScore}</span>
                 : editable && m.playable
-                  ? <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} />
+                  ? <ResultEntry tournamentId={tournamentId} matchId={m.matchId} initialA={m.teamAScore} initialB={m.teamBScore} groupSlug={groupSlug} />
                   : <span className="text-[11px] text-ink-3">Pendiente</span>}
             </li>
           ))}

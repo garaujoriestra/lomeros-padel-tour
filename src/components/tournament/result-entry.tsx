@@ -8,9 +8,10 @@ interface Props {
   initialA: number | null;
   initialB: number | null;
   disabled?: boolean;
+  groupSlug?: string;
 }
 
-export function ResultEntry({ tournamentId, matchId, initialA, initialB, disabled }: Props) {
+export function ResultEntry({ tournamentId, matchId, initialA, initialB, disabled, groupSlug }: Props) {
   const router = useRouter();
   const [a, setA] = useState(initialA ?? 0);
   const [b, setB] = useState(initialB ?? 0);
@@ -21,7 +22,7 @@ export function ResultEntry({ tournamentId, matchId, initialA, initialB, disable
     setSaving(true); setError(null);
     const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}/result`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gamesA: a, gamesB: b }),
+      body: JSON.stringify({ ...(groupSlug && { g: groupSlug }), gamesA: a, gamesB: b }),
     });
     if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || 'Error'); setSaving(false); return; }
     setSaving(false);

@@ -392,3 +392,100 @@ test.describe('paridad 2b · cartera y edición de perfil del grupo', () => {
     }
   });
 });
+
+test.describe('paridad 2b · admin de pozos y torneos del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-admin.json' });
+
+  test('el sidebar muestra Pozos y Torneos con hrefs bajo /g/grupo-test/admin', async ({ page }) => {
+    await page.goto('/g/grupo-test/admin');
+    await expect(page.locator('a[href="/g/grupo-test/admin/pozos"]')).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/admin/torneos"]')).toBeVisible();
+  });
+
+  test('crea un pozo, lo comparte, lo genera y lo borra desde el admin del grupo (hermético)', async ({ page }) => {
+    const name = `E2E Pozo GT ${Date.now()}`;
+    let id: string | undefined;
+    try {
+      // Crear vía UI (mismo EventForm que /admin/pozos/new, ver event-create.spec.ts),
+      // con roster de gt-pl5..8 (libres: gt-pl1..4 los ocupa gt-match1).
+      await page.goto('/g/grupo-test/admin/pozos/new');
+      await page.getByLabel('Nombre *').fill(name);
+      await page.getByLabel('Fecha *').fill('2026-07-20');
+      await page.getByLabel('Formato').selectOption('americano');
+      await page.getByLabel('Nº de rondas').fill('2');
+      await page.getByLabel('Nombre de la pista').first().fill('Central');
+      for (const n of ['Jugador GT 5', 'Jugador GT 6', 'Jugador GT 7', 'Jugador GT 8']) {
+        await page.getByRole('checkbox', { name: n }).check();
+      }
+      await page.getByRole('button', { name: 'Crear pozo' }).click();
+      await expect(page).toHaveURL('/g/grupo-test/admin/pozos');
+
+      const link = page.locator('a').filter({ hasText: name });
+      await expect(link).toBeVisible();
+      const href = await link.getAttribute('href');
+      id = href?.split('/').pop();
+      expect(id).toBeTruthy();
+
+      await page.goto(`/g/grupo-test/admin/pozos/${id}`);
+      await expect(page.getByRole('heading', { name })).toBeVisible();
+
+      // Compartir: en el entorno de test Chromium no expone navigator.share, así que
+      // ShareEventButton cae a clipboard.writeText — se intercepta para leer la URL
+      // copiada y comprobar que lleva el basePath del grupo. Si el navegador SÍ
+      // soportara Web Share nativo, se anota y se salta esta aserción concreta.
+      const hasNativeShare = await page.evaluate(() => typeof navigator.share === 'function');
+      if (!hasNativeShare) {
+        await page.evaluate(() => {
+          (window as unknown as { __copied?: string }).__copied = '';
+          navigator.clipboard.writeText = async (text: string) => {
+            (window as unknown as { __copied?: string }).__copied = text;
+          };
+        });
+        await page.getByRole('button', { name: 'Compartir enlace' }).click();
+        await expect(page.getByText('Enlace copiado')).toBeVisible();
+        const copied = await page.evaluate(() => (window as unknown as { __copied?: string }).__copied);
+        expect(copied).toContain(`/g/grupo-test/pozos/${id}`);
+      }
+
+      await page.getByRole('button', { name: 'Generar' }).click();
+      await expect(page.getByText('Escalera').first()).toBeVisible();
+
+      // Borrado hermético vía UI (mismo flujo que event-delete.spec.ts).
+      await page.getByRole('button', { name: 'Eliminar pozo' }).first().click();
+      await expect(page.getByRole('heading', { name: '¿Eliminar este pozo?' })).toBeVisible();
+      await page.getByRole('button', { name: 'Sí, eliminar' }).click();
+      await expect(page).toHaveURL('/g/grupo-test/admin/pozos');
+      await expect(page.getByText(name)).toHaveCount(0);
+      id = undefined; // ya borrado por la UI: el finally no necesita repetirlo.
+    } finally {
+      if (id) {
+        const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+        await admin.delete(`/api/tournaments/${id}?g=grupo-test`);
+        await admin.dispose();
+      }
+    }
+  });
+
+  test('no-fuga: la lista de pozos del grupo no incluye pozos de Lomeros', async ({ page }) => {
+    const lomerosAdmin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/admin.json' });
+    let id: string | undefined;
+    try {
+      const created = await lomerosAdmin.post('/api/tournaments', {
+        data: {
+          name: 'E2E Pozo Lomeros Admin No Fuga', date: '2026-07-21', location: null, kind: 'pozo', format: 'americano',
+          config: { rounds: 1, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+          courts: [{ label: 'Central', order: 1, availableFrom: '17:00', availableTo: '20:00' }],
+          participantPlayerIds: ['pl1', 'pl2', 'pl3', 'pl4'],
+        },
+      });
+      expect(created.ok()).toBeTruthy();
+      ({ id } = await created.json());
+
+      await page.goto('/g/grupo-test/admin/pozos');
+      await expect(page.getByText('E2E Pozo Lomeros Admin No Fuga')).toHaveCount(0);
+    } finally {
+      if (id) await lomerosAdmin.delete(`/api/tournaments/${id}`);
+      await lomerosAdmin.dispose();
+    }
+  });
+});

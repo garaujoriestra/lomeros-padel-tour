@@ -11,11 +11,12 @@ interface Props {
   standings: LadderStanding[];
   editable: boolean;            // admin true; público false
   myEntityIds?: string[];       // pareja/jugador del que mira (resalta su carril)
+  groupSlug?: string;
 }
 
 const D = { fontFamily: 'var(--font-display)' as const };
 
-export function PozoEscalera({ tournamentId, view, standings, editable, myEntityIds = [] }: Props) {
+export function PozoEscalera({ tournamentId, view, standings, editable, myEntityIds = [], groupSlug }: Props) {
   const [round, setRound] = useState(view.latestRound);
   const data = view.byRound[round];
   const stand = new Map(standings.map((s) => [s.entityId, s] as const));
@@ -105,7 +106,7 @@ export function PozoEscalera({ tournamentId, view, standings, editable, myEntity
               {sideBlock(lane.sideB)}
               {editable && lane.playable && lane.status !== 'completed' && (
                 <div className="mt-2 pt-2 border-t border-line">
-                  <ResultEntry tournamentId={tournamentId} matchId={lane.matchId} initialA={lane.sideA.score} initialB={lane.sideB.score} />
+                  <ResultEntry tournamentId={tournamentId} matchId={lane.matchId} initialA={lane.sideA.score} initialB={lane.sideB.score} groupSlug={groupSlug} />
                 </div>
               )}
             </div>
