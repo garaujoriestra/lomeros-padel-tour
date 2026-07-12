@@ -19,10 +19,12 @@ interface PlayerFormProps {
     juegaPadel?: boolean | null;
     email?: string | null;
   };
+  groupSlug?: string;
 }
 
-export function PlayerForm({ initialData }: PlayerFormProps) {
+export function PlayerForm({ initialData, groupSlug }: PlayerFormProps) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,12 +74,12 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(groupSlug ? { ...form, g: groupSlug } : form),
     });
 
     if (res.ok) {
       toast.success(isEditing ? 'Jugador actualizado' : 'Jugador creado');
-      router.push('/admin/players');
+      router.push(`${basePath}/admin/players`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -215,7 +217,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               type="button"
               variant="outline"
               className="min-h-11 px-4 text-sm"
-              onClick={() => router.push('/admin/players')}
+              onClick={() => router.push(`${basePath}/admin/players`)}
             >
               Cancelar
             </Button>

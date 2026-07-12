@@ -112,6 +112,16 @@ export default async function globalSetup() {
     args: ['gt-match1', 'grupo-test', '2026-01-01', 'gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4', 'scheduled'],
   });
 
+  // gt-pl5..gt-pl8: jugadores "libres" del Grupo Test, aparte de gt-pl1..4 (que gt-match1
+  // ya ocupa y que otros specs no deben mutar). Para specs de onboarding que crean partidos
+  // nuevos desde la UI sin tocar gt-match1 ni sus jugadores.
+  for (let i = 5; i <= 8; i++) {
+    await db.execute({
+      sql: 'INSERT OR IGNORE INTO players (id, group_id, name) VALUES (?, ?, ?)',
+      args: [`gt-pl${i}`, 'grupo-test', `Jugador GT ${i}`],
+    });
+  }
+
   // Estado de La Timba y premios del "Grupo Test", para no-fuga: una apuesta abierta
   // de gt-pl1 en su partido, una penalización pendiente suya, un premio de su grupo y
   // un canje. Lomeros nunca debe ver ni tocar nada de esto.
@@ -159,7 +169,8 @@ export default async function globalSetup() {
   });
 
   // Usuario SÚPER-ADMIN (allowlist SUPER_ADMIN_EMAILS del webServer, SIN memberships):
-  // ve todos los grupos en el conmutador y el admin de grupo en solo-lectura.
+  // ve todos los grupos en el conmutador, el admin de grupo en solo-lectura, y genera
+  // los enlaces de invitación del onboarding. Fixture ÚNICO compartido por ambas suites.
   const superUserId = 'e2e-super-user';
   await db.execute({
     sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
@@ -174,4 +185,6 @@ export default async function globalSetup() {
   await writeFile('e2e/.auth/gt-player.json', JSON.stringify(await sessionStorageState(gtPlayerUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/multi.json', JSON.stringify(await sessionStorageState(multiUserId, TEST_ENV.AUTH_SECRET)));
   await writeFile('e2e/.auth/super.json', JSON.stringify(await sessionStorageState(superUserId, TEST_ENV.AUTH_SECRET)));
+  // Alias del mismo súper-admin para la suite de onboarding.
+  await writeFile('e2e/.auth/super-admin.json', JSON.stringify(await sessionStorageState(superUserId, TEST_ENV.AUTH_SECRET)));
 }

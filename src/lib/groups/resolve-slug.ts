@@ -2,26 +2,13 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { groups } from '@/lib/db/schema';
 import type { GroupRow } from './queries';
+import { isValidGroupSlug } from './slug';
 
-// Segmentos de primer nivel que colisionarían con rutas reales de la app: un slug
-// de grupo NUNCA puede ser uno de estos. Solo se listan segmentos con forma de slug
-// válida — los que llevan '_' o '.' (p. ej. _next, manifest.webmanifest) ya los
-// rechaza SLUG_RE antes de consultar este set. Mantener en sync con src/app/ y
-// src/app/(public)/.
-export const RESERVED_SLUGS = new Set<string>([
-  'g', 'api', 'admin', 'me', 'login', 'logout', 'dev-login',
-  'offline', 'unauthorized', 'matches', 'players', 'pozos', 'torneos',
-  'rankings', 'eventos', 'info', 'icon', 'apple-icon', 'planificador',
-]);
-
-// Forma válida de slug: minúsculas, dígitos y guiones internos (sin guiones en los
-// extremos, sin dobles guiones, no vacío).
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-// Pura (no toca DB): ¿el slug tiene forma válida y no está reservado?
-export function isValidGroupSlug(slug: string): boolean {
-  return SLUG_RE.test(slug) && !RESERVED_SLUGS.has(slug);
-}
+// Los helpers PUROS (RESERVED_SLUGS, isValidGroupSlug, slugFromName) viven en ./slug
+// para que los client components puedan importarlos sin arrastrar el cliente de DB
+// al bundle del navegador. Se re-exportan aquí por compatibilidad con los
+// consumidores server-side existentes.
+export { RESERVED_SLUGS, isValidGroupSlug, slugFromName } from './slug';
 
 // Resuelve un slug de la URL a su grupo, o null si: tiene forma inválida, está
 // reservado, o no existe ningún grupo con ese slug. Las páginas /g/[slug] hacen

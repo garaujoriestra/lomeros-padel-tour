@@ -3,6 +3,7 @@ import { countPlayersInGroup } from '@/lib/players/queries';
 import { countMatchesInGroup } from '@/lib/matches/queries';
 import { UserPlus, Swords, Users, Bell, BarChart3, ChevronRight } from 'lucide-react';
 import type { PageContext } from '@/lib/auth/page-context';
+import { InviteLinkCard } from '@/components/onboarding/invite-link-card';
 
 // Cuerpo compartido de /admin (raíz) y /g/[slug]/admin. El gating de rol lo hace el
 // layout correspondiente (session.role en raíz; ctx.role del grupo bajo /g/[slug]).
@@ -70,6 +71,8 @@ export async function AdminDashboardBody({ ctx }: { ctx: PageContext }) {
           );
         })}
       </div>
+
+      {basePath === '' && ctx.isSuperAdmin && <InviteLinkCard />}
     </div>
   );
 }

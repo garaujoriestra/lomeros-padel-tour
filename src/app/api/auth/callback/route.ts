@@ -3,6 +3,9 @@ import { exchangeCodeForIdToken, verifyGoogleIdToken } from '@/lib/auth/google';
 import { getUserByEmail } from '@/lib/auth/users';
 import { homePathForUser } from '@/lib/auth/home-path';
 import { signSession } from '@/lib/auth/jwt';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { SIGNUP_INTENT_COOKIE, verifySignupIntent, shouldCreateUser } from '@/lib/onboarding/signup-intent';
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
@@ -26,9 +29,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/unauthorized', base));
     }
 
-    const user = await getUserByEmail(identity.email);
+    // Onboarding (beta cerrada): un email desconocido SOLO crea cuenta si trae la
+    // cookie de intención que dejó /crear-grupo tras validar el enlace de invitación.
+    let user = await getUserByEmail(identity.email);
+    let consumedIntent = false;
     if (!user) {
-      return NextResponse.redirect(new URL('/unauthorized', base));
+      const intentValid = await verifySignupIntent(request.cookies.get(SIGNUP_INTENT_COOKIE)?.value);
+      if (!shouldCreateUser({ userExists: false, intentValid })) {
+        return NextResponse.redirect(new URL('/unauthorized', base));
+      }
+      [user] = await db.insert(users).values({ email: identity.email.toLowerCase() }).returning();
+      consumedIntent = true;
     }
 
     const token = await signSession({ userId: user.id });
@@ -48,6 +59,7 @@ export async function GET(request: NextRequest) {
     // Limpiar cookies temporales.
     res.cookies.delete('oauth_state');
     res.cookies.delete('oauth_from');
+    if (consumedIntent) res.cookies.delete(SIGNUP_INTENT_COOKIE); // un solo uso
     return res;
   } catch (error) {
     console.error('OAuth callback error', error);

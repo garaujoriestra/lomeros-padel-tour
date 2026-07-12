@@ -17,12 +17,12 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     await expect(page.getByRole('link', { name: /Añadir jugador|Registrar partido|Notificaciones/ })).toHaveCount(0);
   });
 
-  test('players lista jugadores del grupo, no de Lomeros; sin alta/edición', async ({ page }) => {
+  test('players lista jugadores del grupo, no de Lomeros; con alta/edición (Task 10)', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/players');
     await expect(page.getByText('Jugador GT', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Nuevo' })).toHaveCount(0);
-    await expect(page.getByLabel(/^Editar a /)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Nuevo' }).first()).toBeVisible();
+    await expect(page.getByLabel(/^Editar a /).first()).toBeVisible();
   });
 
   test('crear jugador vía API (body.g), verlo en la lista y borrarlo (?g=)', async ({ page, request }) => {
@@ -39,17 +39,37 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     expect(del.ok()).toBeTruthy();
   });
 
-  test('matches lista el partido del grupo; sin nuevo/resultado/lados', async ({ page }) => {
+  test('matches lista el partido del grupo; con nuevo/resultado, sin lados/editar', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/matches');
     await expect(page.getByRole('heading', { name: 'Partidos', exact: true })).toBeVisible();
     await expect(page.getByText('Jugador GT', { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /^(Partido|Resultado|Lados)$/ })).toHaveCount(0);
+    // Task 11: Partido (nuevo) y Resultado ya viven bajo /g/[slug]/admin/matches/...
+    await expect(page.getByRole('link', { name: 'Partido', exact: true }).first()).toBeVisible();
+    // gt-match1 está scheduled: su botón de Resultado debe existir.
+    await expect(page.getByRole('link', { name: 'Resultado' }).first()).toBeVisible();
+    // Lados y Editar siguen diferidos, solo-raíz.
+    await expect(page.getByRole('link', { name: /^(Lados|Editar)$/ })).toHaveCount(0);
   });
 });
 
 test.describe('paridad · /g/[slug]/admin · gating de rol por grupo', () => {
-  test.describe('admin de Lomeros (ajeno al grupo)', () => {
+  test.describe('admin de Lomeros (que además es súper-admin, como el dueño real)', () => {
     test.use({ storageState: 'e2e/.auth/admin.json' });
+    // Desde la Tarea 3 (conmutador) el súper-admin entra al admin de OTROS grupos en
+    // solo-lectura con banner (antes este fixture no era súper y se le redirigía).
+    test('entra en solo-lectura con banner, y la API le rechaza escrituras', async ({ page, request }) => {
+      await page.goto('/g/grupo-test/admin');
+      await expect(page.getByRole('heading', { name: 'Administración' }).first()).toBeVisible();
+      await expect(page.getByText('Solo lectura', { exact: false }).first()).toBeVisible();
+      const res = await request.post('/api/players', { data: { g: 'grupo-test', name: 'Intruso Dueño' } });
+      expect(res.status()).toBe(403);
+    });
+  });
+
+  // Variante multi-membership: el rol se resuelve contra el grupo de la URL aunque
+  // el usuario tenga otras memberships (player en Lomeros Y en grupo-test).
+  test.describe('miembro player multi-grupo (no admin de grupo-test)', () => {
+    test.use({ storageState: 'e2e/.auth/multi.json' });
     test('redirige a /g/grupo-test/me', async ({ page }) => {
       await page.goto('/g/grupo-test/admin');
       await expect(page).toHaveURL(/\/g\/grupo-test\/me$/);
