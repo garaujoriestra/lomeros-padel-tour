@@ -11,7 +11,7 @@ export interface GroupRow {
   paidUntil: string | null;
 }
 
-const groupColumns = {
+export const groupColumns = {
   id: groups.id,
   slug: groups.slug,
   name: groups.name,
