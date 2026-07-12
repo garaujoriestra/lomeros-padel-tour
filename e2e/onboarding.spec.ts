@@ -87,3 +87,62 @@ test.describe('onboarding · crear grupo sin sesión', () => {
     expect(res.status()).toBe(401);
   });
 });
+
+test.describe('onboarding · página /crear-grupo', () => {
+  test('sin token → mensaje de invitación necesaria, sin formulario', async ({ page }) => {
+    await page.goto('/crear-grupo');
+    await expect(page.getByText(/necesitas una invitación/i).first()).toBeVisible();
+    await expect(page.getByLabel(/nombre del grupo/i)).toHaveCount(0);
+  });
+
+  test('token válido sin sesión → botón de Google (y deja cookie de intención)', async ({ page }) => {
+    const t = await inviteToken();
+    await page.goto(`/crear-grupo?t=${t}`);
+    const link = page.getByRole('link', { name: /entrar con google/i }).first();
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', `/api/onboarding/intent?t=${t}`);
+
+    // Adaptación (GOTCHA de Next): `cookies().set()` no está soportado en un Server
+    // Component, así que el botón enlaza a un Route Handler (/api/onboarding/intent)
+    // que deja la cookie y redirige a Google — no la deja el propio render de la página.
+    // En vez de clickear (nos llevaría a Google real, inexistente en e2e), pegamos
+    // directo al route handler sin seguir la redirección y comprobamos el Set-Cookie.
+    const res = await page.request.get(`/api/onboarding/intent?t=${t}`, { maxRedirects: 0 });
+    expect(res.status()).toBe(307);
+    expect(res.headers()['location']).toContain('/api/auth/login?from=');
+    const cookies = await page.context().cookies();
+    expect(cookies.some((c) => c.name === 'signup_intent')).toBe(true);
+  });
+
+  // Adaptación (igual que en 'crear grupo (API)' arriba): gt-player.json es single-membership
+  // y de él dependen otros specs (home-landing, fallback sin-g). Crear un grupo desde la UI
+  // le añadiría una 2ª membership y contaminaría ese estado compartido. En vez de reutilizar
+  // el fixture, forjamos un usuario fresco vía dev-login DESDE EL MISMO contexto de página
+  // (la cookie de sesión queda en ese contexto) y navegamos después.
+  async function loginFreshPage(page: import('@playwright/test').Page, tag: string) {
+    const email = `onb-ui-${tag}-${Date.now()}@test.com`;
+    const res = await page.request.post('/api/auth/dev-login', { data: { email } });
+    expect(res.status()).toBe(200);
+  }
+
+  test('token válido con sesión → crea el grupo desde la UI y aterriza en su admin', async ({ page }) => {
+    const slug = `ui-onb-${Date.now()}`;
+    await loginFreshPage(page, 'ok');
+    await page.goto(`/crear-grupo?t=${await inviteToken()}`);
+    await page.getByLabel(/nombre del grupo/i).fill('Panteras Pádel');
+    // El slug se auto-deriva; lo sobreescribimos por unicidad entre runs.
+    await page.getByLabel(/nombre corto/i).fill(slug);
+    await page.getByRole('button', { name: /crear grupo/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/g/${slug}/admin$`));
+  });
+
+  test('slug ocupado → error inline sin perder el nombre', async ({ page }) => {
+    await loginFreshPage(page, 'dup');
+    await page.goto(`/crear-grupo?t=${await inviteToken()}`);
+    await page.getByLabel(/nombre del grupo/i).fill('Duplicado');
+    await page.getByLabel(/nombre corto/i).fill('grupo-test');
+    await page.getByRole('button', { name: /crear grupo/i }).click();
+    await expect(page.getByText(/ya está cogido|inválido/i).first()).toBeVisible();
+    await expect(page.getByLabel(/nombre del grupo/i)).toHaveValue('Duplicado');
+  });
+});
