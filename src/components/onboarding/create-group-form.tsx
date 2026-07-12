@@ -18,18 +18,24 @@ export function CreateGroupForm({ t }: { t: string }) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch('/api/onboarding/create-group', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, slug, t }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      window.location.assign(`/g/${data.slug}/admin`);
-    } else {
+    try {
+      const res = await fetch('/api/onboarding/create-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, slug, t }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        // Navegando fuera: dejamos busy=true para que el botón no reviva un instante.
+        window.location.assign(`/g/${data.slug}/admin`);
+        return;
+      }
       setError(data.error ?? 'Error al crear el grupo');
-      setBusy(false);
+    } catch {
+      // Fallo de red (fetch rechazado): sin esto el botón quedaría muerto sin mensaje.
+      setError('No se pudo conectar. Inténtalo de nuevo.');
     }
+    setBusy(false);
   }
 
   return (
@@ -52,11 +58,16 @@ export function CreateGroupForm({ t }: { t: string }) {
           id="cg-slug"
           value={slug}
           required
+          aria-describedby={error ? 'cg-error' : undefined}
           onChange={(e) => { setSlugTouched(true); setSlug(e.target.value); }}
         />
         <p className="small muted" style={{ marginTop: 4 }}>Tu grupo vivirá en /g/{slug || '…'}</p>
       </div>
-      {error && <p className="small" style={{ color: 'var(--loss-text, var(--loss))' }}>{error}</p>}
+      {error && (
+        <p id="cg-error" role="alert" className="small" style={{ color: 'var(--loss-text, var(--loss))' }}>
+          {error}
+        </p>
+      )}
       <Button type="submit" disabled={busy} className="min-h-11" style={{ width: '100%' }}>
         Crear grupo
       </Button>
