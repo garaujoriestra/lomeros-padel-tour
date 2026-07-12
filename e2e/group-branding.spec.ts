@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createClient } from '@libsql/client';
 import { createHmac } from 'node:crypto';
 import { TEST_ENV } from '../playwright.config';
 
@@ -9,8 +10,9 @@ function stripeSignature(payload: string, secret: string): string {
   return `t=${t},v1=${v1}`;
 }
 
-// ORDEN IMPORTA: el spec del webhook activa el pase de grupo-free, así que las
-// aserciones "sin pase" van antes (workers=1, orden de fichero).
+// El test de concesión del webhook usa grupo-webhook (grupo DEDICADO, se resetea a
+// impago cada run en global-setup): no toca la invariante "impago" de grupo-free, que
+// queda como fixture puro de navbar sin pase.
 
 test.describe('marca · grupo sin pase (flag e2e ON)', () => {
   test('navbar: nombre del grupo + atribución, sin ⭐ ni acento custom', async ({ page }) => {
@@ -38,13 +40,17 @@ test.describe('marca · grupo con pase (grupo-test)', () => {
         data: { g: 'grupo-test', accentColor: '#ff5500', logoUrl: null },
       });
       expect(res.ok()).toBeTruthy();
-      await page.goto('/g/grupo-test');
-      await expect(page.locator('[data-branding="custom"]').first()).toBeVisible();
-      // Limpieza (la DB de fichero se reutiliza entre runs locales).
-      const clear = await request.put('/api/groups/branding', {
-        data: { g: 'grupo-test', accentColor: null, logoUrl: null },
-      });
-      expect(clear.ok()).toBeTruthy();
+      try {
+        await page.goto('/g/grupo-test');
+        await expect(page.locator('[data-branding="custom"]').first()).toBeVisible();
+      } finally {
+        // Limpieza a prueba de fallos (la DB de fichero se reutiliza entre runs locales):
+        // aunque la aserción de arriba caiga, el acento #ff5500 NO debe quedar en grupo-test.
+        const clear = await request.put('/api/groups/branding', {
+          data: { g: 'grupo-test', accentColor: null, logoUrl: null },
+        });
+        expect(clear.ok()).toBeTruthy();
+      }
     });
 
     test('color inválido → 400', async ({ request }) => {
@@ -85,11 +91,12 @@ test.describe('marca · authz cross-grupo', () => {
 });
 
 test.describe('marca · webhook del Pase (Stripe)', () => {
-  test('checkout.session.completed (paid) activa el pase de grupo-free; reintento idempotente', async ({ page, request }) => {
+  test('checkout.session.completed (paid) activa el pase de grupo-webhook; reintento idempotente', async ({ page, request }) => {
+    const eventId = `evt_e2e_${Date.now()}`;
     const event = {
-      id: `evt_e2e_${Date.now()}`,
+      id: eventId,
       type: 'checkout.session.completed',
-      data: { object: { payment_status: 'paid', metadata: { groupId: 'grupo-free' } } },
+      data: { object: { payment_status: 'paid', metadata: { groupId: 'grupo-webhook' } } },
     };
     const payload = JSON.stringify(event);
     const headers = {
@@ -98,11 +105,32 @@ test.describe('marca · webhook del Pase (Stripe)', () => {
     };
     const res = await request.post('/api/billing/webhook', { data: payload, headers });
     expect(res.ok()).toBeTruthy();
-    // Reintento del MISMO event.id: 200 sin reaplicar.
+
+    // Idempotencia REAL (no solo "200 al reintentar"): leemos la DB de fichero directamente.
+    // paid_until tras la 1ª concesión.
+    const db = createClient({ url: TEST_ENV.DB_URL });
+    const afterFirst = await db.execute({
+      sql: `SELECT paid_until FROM groups WHERE id = 'grupo-webhook'`,
+    });
+    const paidAfterFirst = afterFirst.rows[0]?.paid_until as string | null;
+    expect(paidAfterFirst).toBeTruthy();
+
+    // Reintento del MISMO event.id: 200 sin reaplicar el efecto.
     const retry = await request.post('/api/billing/webhook', { data: payload, headers });
     expect(retry.ok()).toBeTruthy();
 
-    await page.goto('/g/grupo-free');
+    // paid_until NO se re-extiende (mismo valor) y el evento se registró UNA sola vez.
+    const afterRetry = await db.execute({
+      sql: `SELECT paid_until FROM groups WHERE id = 'grupo-webhook'`,
+    });
+    expect(afterRetry.rows[0]?.paid_until).toBe(paidAfterFirst);
+    const events = await db.execute({
+      sql: `SELECT COUNT(*) AS n FROM billing_events WHERE id = ?`,
+      args: [eventId],
+    });
+    expect(Number(events.rows[0]?.n)).toBe(1);
+
+    await page.goto('/g/grupo-webhook');
     await expect(page.getByLabel('Tour Oficial').first()).toBeVisible();
     await expect(page.getByText('hecho con Lomeros Padel Tour')).toHaveCount(0);
   });

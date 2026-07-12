@@ -179,15 +179,26 @@ export default async function globalSetup() {
 
   // Fase 3 (branding): grupo-test CON Pase vigente (fecha lejana, estable entre runs);
   // grupo-free SIN pase para probar atribución/sin-⭐/acento por defecto con el flag ON.
-  // El paid_until de grupo-free se RESETEA cada run: el spec del webhook lo activa.
+  // Reset simétrico de las columnas de marca de grupo-test cada run (a prueba de fallos:
+  // aunque un run anterior dejase un acento por un test caído, se limpia aquí); su
+  // paid_until sí se mantiene lejano.
   await db.execute({
-    sql: `UPDATE groups SET paid_until = ? WHERE id = 'grupo-test'`,
+    sql: `UPDATE groups SET paid_until = ?, logo_url = NULL, accent_color = NULL WHERE id = 'grupo-test'`,
     args: ['2100-01-01T00:00:00.000Z'],
   });
+  // grupo-free: fixture PURO de "navbar sin pase", NUNCA se muta (ningún spec le concede
+  // el pase), así que cualquier spec puede asumirlo impago.
   await db.execute({
     sql: `INSERT OR IGNORE INTO groups (id, slug, name) VALUES ('grupo-free', 'grupo-free', 'Grupo Free')`,
   });
   await db.execute(`UPDATE groups SET paid_until = NULL, logo_url = NULL, accent_color = NULL WHERE id = 'grupo-free'`);
+  // grupo-webhook: grupo DEDICADO que SOLO consume el test de concesión del webhook
+  // (le activa el pase mid-run). Se resetea cada run a impago, así que su invariante no
+  // contamina a grupo-free ni a ningún spec posterior.
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO groups (id, slug, name) VALUES ('grupo-webhook', 'grupo-webhook', 'Grupo Webhook')`,
+  });
+  await db.execute(`UPDATE groups SET paid_until = NULL, logo_url = NULL, accent_color = NULL WHERE id = 'grupo-webhook'`);
 
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
