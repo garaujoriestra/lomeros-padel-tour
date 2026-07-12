@@ -249,3 +249,100 @@ test.describe('paridad 2b · rankings, eventos y partidos del grupo', () => {
     await expect(page.locator('a[href="/g/grupo-test/matches/gt-match1"]').first()).toBeVisible();
   });
 });
+
+test.describe('paridad 2b · pozo y torneo públicos del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  test.describe('pozo del grupo (gt-tournament1, generado mínimamente por DB)', () => {
+    // Mismo arnés que 'eventos del grupo con un evento generado' (más arriba en
+    // este archivo): gt-tournament1 queda en 'draft' a propósito (usado por
+    // no-fuga-tournaments/tournaments-scoping), así que se "genera" mínimamente
+    // por DB para que aparezca en el listado público de eventos y se revierte en
+    // el afterAll. La fila insertada NO lleva phase_tag = 'pozo' (a propósito,
+    // igual que el arnés de eventos): listPozoMatches la filtra por phaseTag y la
+    // ignora, así que la página del pozo renderiza sin partidos — evita arriesgar
+    // un crash por slots incompletos; el objetivo de este test es la navegación
+    // y el gate de grupo, no el contenido en marcha del pozo (ya cubierto por
+    // pozo-public.spec.ts con un pozo generado de verdad vía el motor).
+    test.beforeAll(async () => {
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "UPDATE tournaments SET status = 'scheduled' WHERE id = 'gt-tournament1'" });
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO tournament_matches (id, tournament_id, round, status)
+          VALUES (?, ?, ?, ?)`,
+        args: ['gp-pozo-tmatch', 'gt-tournament1', 0, 'pending'],
+      });
+    });
+
+    test.afterAll(async () => {
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "DELETE FROM tournament_matches WHERE id = 'gp-pozo-tmatch'" });
+      await db.execute({ sql: "UPDATE tournaments SET status = 'draft' WHERE id = 'gt-tournament1'" });
+    });
+
+    test('desde eventos del grupo se navega al pozo bajo /g/[slug]', async ({ page }) => {
+      await page.goto('/g/grupo-test/eventos');
+      await page.locator('a[href="/g/grupo-test/pozos/gt-tournament1"]').click();
+      await expect(page).toHaveURL('/g/grupo-test/pozos/gt-tournament1');
+      await expect(page.getByRole('heading', { name: 'Torneo GT' })).toBeVisible();
+    });
+  });
+
+  test('no-fuga inversa: un pozo de Lomeros no es visible bajo /g/grupo-test', async ({ page }) => {
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/admin.json' });
+    const created = await admin.post('/api/tournaments', {
+      data: {
+        name: 'E2E Pozo Lomeros No Fuga', date: '2026-07-12', location: null, kind: 'pozo', format: 'americano',
+        config: { rounds: 1, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+        courts: [{ label: 'Central', order: 1, availableFrom: '17:00', availableTo: '20:00' }],
+        participantPlayerIds: ['pl1', 'pl2', 'pl3', 'pl4'],
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+    const { id } = await created.json();
+
+    try {
+      await page.goto(`/g/grupo-test/pozos/${id}`);
+      // Aserción positiva de not-found por UI (patrón de la Task 3: status no
+      // determinista con force-dynamic, la UI sí lo es) + ausencia del nombre.
+      await expect(page.getByText('Bola fuera')).toBeVisible();
+      await expect(page.getByText('E2E Pozo Lomeros No Fuga')).toHaveCount(0);
+    } finally {
+      await admin.delete(`/api/tournaments/${id}`);
+      await admin.dispose();
+    }
+  });
+
+  // No hay fixture de torneo (kind='torneo') en grupo-test: se crea uno vía API
+  // como gt-admin (patrón de tournaments-scoping.spec.ts), en draft (sin pairs ni
+  // generate — basta para ejercer el gate de grupo y el contenido determinista de
+  // un torneo sin generar), y se borra al final.
+  test('torneo del grupo (draft, creado por API) es visible bajo /g/[slug]', async ({ page }) => {
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+    const created = await admin.post('/api/tournaments', {
+      data: {
+        g: 'grupo-test',
+        name: 'E2E Torneo GT Público', date: '2026-08-05', location: null, kind: 'torneo', format: 'single_elim',
+        config: { matchFormat: { kind: 'best_of_3' }, thirdPlace: false },
+        courts: [{ label: 'Central', order: 1, availableFrom: '17:00', availableTo: '23:00' }],
+        participantPlayerIds: ['gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4'],
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+    const { id } = await created.json();
+
+    try {
+      await page.goto(`/g/grupo-test/torneos/${id}`);
+      await expect(page.getByRole('heading', { name: 'E2E Torneo GT Público' })).toBeVisible();
+      await expect(page.getByText('El torneo aún no se ha generado.')).toBeVisible();
+    } finally {
+      await admin.delete(`/api/tournaments/${id}?g=grupo-test`);
+      await admin.dispose();
+    }
+  });
+
+  test('no-fuga inversa: un torneo inexistente bajo /g/grupo-test da not-found', async ({ page }) => {
+    await page.goto('/g/grupo-test/torneos/no-existe-este-id');
+    await expect(page.getByText('Bola fuera')).toBeVisible();
+  });
+});
