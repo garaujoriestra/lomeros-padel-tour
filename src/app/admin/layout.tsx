@@ -3,6 +3,7 @@ import { Navbar } from '@/components/shared/navbar';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { getSession } from '@/lib/auth/session';
 import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
+import { getSwitcherGroups } from '@/lib/auth/group-switcher';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Gate de admin server-side con el rol DEL GRUPO (raíz = grupo por defecto). El middleware
@@ -15,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh">
-      <Navbar session={navSessionFromContext(ctx)} />
+      <Navbar session={navSessionFromContext(ctx)} switcher={await getSwitcherGroups(ctx.groupId)} />
       <div className="lpt-container" style={{ paddingTop: 'calc(22px * var(--sp))', paddingBottom: 'calc(48px * var(--sp))' }}>
         <div className="flex flex-col md:flex-row gap-4 md:gap-8">
           <AdminSidebar />

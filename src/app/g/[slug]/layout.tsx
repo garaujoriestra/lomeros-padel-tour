@@ -1,6 +1,7 @@
 import { permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/shared/navbar';
 import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
+import { getSwitcherGroups } from '@/lib/auth/group-switcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,12 @@ export default async function GroupLayout({
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <Navbar session={navSessionFromContext(ctx)} basePath={ctx.basePath} links={[]} />
+      <Navbar
+        session={navSessionFromContext(ctx)}
+        basePath={ctx.basePath}
+        links={[]}
+        switcher={await getSwitcherGroups(ctx.groupId)}
+      />
       <main className="screen">
         <div className="lpt-container">{children}</div>
       </main>

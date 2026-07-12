@@ -17,7 +17,7 @@ vi.mock('@/lib/auth/group-context', () => ({
 vi.mock('@/lib/players/queries', () => ({ getPlayerInGroup: (g: string, p: string) => getPlayerInGroup(g, p) }));
 vi.mock('next/navigation', () => ({ notFound: () => notFound() }));
 
-import { resolvePageContext } from './page-context';
+import { resolvePageContext, navSessionFromContext, type PageContext } from './page-context';
 
 beforeEach(() => { [getGroupBySlug, getDefaultGroupId, getGroupContext, getGroupById, getPlayerInGroup, notFound].forEach((f) => f.mockReset()); });
 
@@ -60,6 +60,13 @@ describe('resolvePageContext', () => {
     expect(ctx.groupId).toBe('gt');
     expect(ctx.role).toBeNull();
     expect(ctx.player).toBeNull();
+  });
+
+  it('navSessionFromContext: super_admin → sesión sin ficha (logout/engranaje, no visitante)', () => {
+    const base = { groupId: 'gt', group: GT, player: null, basePath: '/g/grupo-test' as const };
+    expect(navSessionFromContext({ ...base, role: 'super_admin', isSuperAdmin: true } as PageContext))
+      .toEqual({ role: 'super_admin', player: null });
+    expect(navSessionFromContext({ ...base, role: null, isSuperAdmin: false } as PageContext)).toBeNull();
   });
 
   it('slug del grupo por defecto → basePath vacío (para que el layout redirija a la raíz)', async () => {
