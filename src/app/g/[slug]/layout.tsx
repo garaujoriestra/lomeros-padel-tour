@@ -44,9 +44,9 @@ export default async function GroupLayout({
               '--acc': accent,
               '--acc-text': `color-mix(in oklab, ${accent} 55%, var(--ink))`,
               '--primary': accent,
-              // --on-acc por defecto es casi negro; sobre un acento oscuro sería
-              // dark-on-dark → solo entonces se pasa a blanco.
-              ...(isDarkColor(accent) ? { '--on-acc': '#ffffff' } : {}),
+              // --on-acc (y --primary-foreground, que en :root se computa de él) es casi
+              // negro por defecto; sobre un acento oscuro sería dark-on-dark → blanco.
+              ...(isDarkColor(accent) ? { '--on-acc': '#ffffff', '--primary-foreground': '#ffffff' } : {}),
             } as React.CSSProperties)
           : undefined
       }
