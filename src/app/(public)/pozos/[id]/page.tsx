@@ -14,11 +14,10 @@ import { NextMatchCard } from '@/components/tournament/next-match-card';
 
 export const dynamic = 'force-dynamic';
 
-// Réplica de (public)/pozos/[id]/page.tsx bajo /g/[slug] (Task 5, paridad 2b): 72
-// líneas por debajo del umbral de extracción de body compartido, se copia con
-// sustituciones (getDefaultGroupId→ctx.groupId, resolvePageContext(slug) en el
-// wrapper de grupo, href de vuelta con ctx.basePath). Ver torneo-public-body.tsx
-// (81 líneas, sí extraído) para la contraparte que sí superó el umbral.
+// Este archivo tiene una réplica bajo /g/[slug]/pozos/[id] (copiada, <80 líneas:
+// por debajo del umbral de extracción de body compartido — Task 5, paridad 2b);
+// cambios aquí deben espejarse allí. La contraparte de torneo sí superó el
+// umbral y vive extraída en torneo-public-body.tsx.
 export default async function PublicPozoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ctx = await resolvePageContext();

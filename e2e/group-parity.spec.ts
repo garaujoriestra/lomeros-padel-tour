@@ -298,17 +298,18 @@ test.describe('paridad 2b · pozo y torneo públicos del grupo', () => {
         participantPlayerIds: ['pl1', 'pl2', 'pl3', 'pl4'],
       },
     });
-    expect(created.ok()).toBeTruthy();
-    const { id } = await created.json();
-
+    let id: string | undefined;
     try {
+      expect(created.ok()).toBeTruthy();
+      ({ id } = await created.json());
+
       await page.goto(`/g/grupo-test/pozos/${id}`);
       // Aserción positiva de not-found por UI (patrón de la Task 3: status no
       // determinista con force-dynamic, la UI sí lo es) + ausencia del nombre.
       await expect(page.getByText('Bola fuera')).toBeVisible();
       await expect(page.getByText('E2E Pozo Lomeros No Fuga')).toHaveCount(0);
     } finally {
-      await admin.delete(`/api/tournaments/${id}`);
+      if (id) await admin.delete(`/api/tournaments/${id}`);
       await admin.dispose();
     }
   });
@@ -328,15 +329,16 @@ test.describe('paridad 2b · pozo y torneo públicos del grupo', () => {
         participantPlayerIds: ['gt-pl1', 'gt-pl2', 'gt-pl3', 'gt-pl4'],
       },
     });
-    expect(created.ok()).toBeTruthy();
-    const { id } = await created.json();
-
+    let id: string | undefined;
     try {
+      expect(created.ok()).toBeTruthy();
+      ({ id } = await created.json());
+
       await page.goto(`/g/grupo-test/torneos/${id}`);
       await expect(page.getByRole('heading', { name: 'E2E Torneo GT Público' })).toBeVisible();
       await expect(page.getByText('El torneo aún no se ha generado.')).toBeVisible();
     } finally {
-      await admin.delete(`/api/tournaments/${id}?g=grupo-test`);
+      if (id) await admin.delete(`/api/tournaments/${id}?g=grupo-test`);
       await admin.dispose();
     }
   });
