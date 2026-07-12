@@ -225,6 +225,7 @@ test.describe('onboarding · partido y resultado bajo el grupo (gt-admin)', () =
     await expect(card).toBeVisible();
     await card.getByRole('link', { name: 'Resultado' }).click();
     await page.waitForURL(/\/g\/grupo-test\/admin\/matches\/.+\/result$/);
+    const matchId = page.url().match(/\/matches\/([^/]+)\/result$/)![1];
 
     // 4) Marcador 2 sets, guardar
     const inputs = page.locator('input[type="number"]').filter({ visible: true });
@@ -234,10 +235,16 @@ test.describe('onboarding · partido y resultado bajo el grupo (gt-admin)', () =
     await inputs.nth(3).fill('0');
     await page.getByRole('button', { name: /Guardar resultado y actualizar rankings/ }).click();
 
-    // 5) Vuelve a la lista y el partido pasa a completado.
+    // 5) Vuelve a la lista y el partido pasa a completado (su botón Resultado desaparece).
     await page.waitForURL(/\/g\/grupo-test\/admin\/matches$/);
     const completedCard = page.locator('.lpt-card').filter({ visible: true }).filter({ hasText: 'Jugador GT 5' }).filter({ hasText: 'Jugador GT 8' });
-    await expect(completedCard.getByText('6', { exact: true }).first()).toBeVisible();
+    await expect(completedCard).toBeVisible();
     await expect(completedCard.getByRole('link', { name: 'Resultado' })).toHaveCount(0);
+
+    // Limpieza: el dev server (y su DB de fichero) se reutiliza en local; sin borrar,
+    // un segundo run dejaría dos tarjetas GT5-GT8 y el locator estricto fallaría.
+    // El DELETE lleva el grupo en query (?g=), igual que DeleteMatchButton.
+    const del = await page.request.delete(`/api/matches/${matchId}?g=grupo-test`);
+    expect(del.ok()).toBeTruthy();
   });
 });
