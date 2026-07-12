@@ -137,8 +137,50 @@ test.describe('paridad 2b · ficha de jugador del grupo', () => {
     await expect(page.getByText('Historial', { exact: true })).toHaveCount(0);
   });
 
+  test('el historial de la ficha enlaza a los partidos bajo /g/[slug] (basePath)', async ({ page }) => {
+    // Partido COMPLETADO efímero para gt-pl5..8 (POST con sets crea completado
+    // directo). gt-match1 NO se completa: gt-bet1 y no-fuga-timba dependen de que
+    // siga 'scheduled'. OJO deliberado: DELETE de un partido completado NO revierte
+    // Elo/wins/pair_stats de los jugadores (solo apuestas vía reverseSettlement;
+    // rating_history sí cae por ON DELETE CASCADE) — es el mismo drift que ya
+    // acepta onboarding.spec con estos 4 jugadores, y ningún spec asume Elo
+    // virgen de gt-pl5..8.
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+    const created = await admin.post('/api/matches', {
+      data: {
+        g: 'grupo-test',
+        date: '2026-02-01',
+        team1Player1Id: 'gt-pl5',
+        team1Player2Id: 'gt-pl6',
+        team2Player1Id: 'gt-pl7',
+        team2Player2Id: 'gt-pl8',
+        sets: [
+          { setNumber: 1, team1Games: 6, team2Games: 3 },
+          { setNumber: 2, team1Games: 6, team2Games: 4 },
+        ],
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+    const match = (await created.json()) as { id: string };
+
+    try {
+      await page.goto('/g/grupo-test/players/gt-pl5');
+      await expect(page.getByText('Historial', { exact: true })).toBeVisible();
+      // El enlace del historial lleva el basePath del grupo (threading de la Task 3).
+      await expect(page.locator(`a[href="/g/grupo-test/matches/${match.id}"]`).first()).toBeVisible();
+    } finally {
+      await admin.delete(`/api/matches/${match.id}?g=grupo-test`);
+      await admin.dispose();
+    }
+  });
+
   test('no-fuga: la ficha de un jugador de Lomeros no es visible bajo /g/grupo-test', async ({ page }) => {
     await page.goto('/g/grupo-test/players/pl1');
+    // Aserción positiva de not-found por UI ("Bola fuera" = app/not-found.tsx):
+    // con force-dynamic el notFound() se streamea y el status del documento puede
+    // ser 200 (el server log lo confirma), así que el status no es determinista —
+    // la UI sí.
+    await expect(page.getByText('Bola fuera')).toBeVisible();
     await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
   });
 });
