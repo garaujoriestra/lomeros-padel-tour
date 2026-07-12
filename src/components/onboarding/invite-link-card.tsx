@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { Input } from '@/components/ui/input';
 
 // Tarjeta de súper-admin en el dashboard raíz: genera enlaces de invitación
 // para crear grupo (beta cerrada) y los deja listos para copiar.
@@ -32,7 +33,7 @@ export function InviteLinkCard() {
         Generar enlace de invitación
       </button>
       {url && (
-        <input readOnly value={url} aria-label="Enlace de invitación" onFocus={(e) => e.currentTarget.select()} />
+        <Input readOnly value={url} aria-label="Enlace de invitación" onFocus={(e) => e.currentTarget.select()} />
       )}
       {error && <p role="alert" className="small" style={{ color: 'var(--loss-text, var(--loss))', margin: 0 }}>{error}</p>}
     </section>

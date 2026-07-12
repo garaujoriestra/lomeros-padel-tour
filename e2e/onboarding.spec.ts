@@ -156,6 +156,9 @@ test.describe('onboarding · bloque de invitaciones en /admin', () => {
     await expect(gen).toBeVisible();
     await gen.click();
     await expect(page.getByLabel(/enlace de invitación/i).first()).toHaveValue(/crear-grupo\?t=/);
+    // Gate raíz: la tarjeta NO aparece bajo un grupo, ni siquiera para el súper-admin.
+    await page.goto('/g/grupo-test/admin');
+    await expect(page.getByRole('button', { name: /generar enlace/i })).toHaveCount(0);
     await ctx.close();
   });
 
