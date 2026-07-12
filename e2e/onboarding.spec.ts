@@ -146,3 +146,24 @@ test.describe('onboarding · página /crear-grupo', () => {
     await expect(page.getByLabel(/nombre del grupo/i)).toHaveValue('Duplicado');
   });
 });
+
+test.describe('onboarding · bloque de invitaciones en /admin', () => {
+  test('el dueño (admin Lomeros + súper-admin) ve el bloque en /admin raíz y genera un enlace', async ({ browser }) => {
+    const ctx = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
+    const page = await ctx.newPage();
+    await page.goto('/admin');
+    const gen = page.getByRole('button', { name: /generar enlace de invitación/i }).first();
+    await expect(gen).toBeVisible();
+    await gen.click();
+    await expect(page.getByLabel(/enlace de invitación/i).first()).toHaveValue(/crear-grupo\?t=/);
+    await ctx.close();
+  });
+
+  test('un admin de grupo no súper-admin no ve el bloque', async ({ browser }) => {
+    const ctx = await browser.newContext({ storageState: 'e2e/.auth/gt-admin.json' });
+    const page = await ctx.newPage();
+    await page.goto('/g/grupo-test/admin');
+    await expect(page.getByRole('button', { name: /generar enlace/i })).toHaveCount(0);
+    await ctx.close();
+  });
+});
