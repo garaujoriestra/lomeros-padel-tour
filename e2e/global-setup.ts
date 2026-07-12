@@ -23,7 +23,7 @@ export default async function globalSetup() {
   // 1) Migraciones de esquema (el dev server ya está arriba; estos endpoints no requieren auth).
   // (Las memberships de estos usuarios e2e se siembran en el paso 2, porque migrate-multitenant
   // corre aquí antes de que existan los usuarios.)
-  for (const ep of ['init-db', 'migrate-auth', 'migrate-tournaments', 'migrate-multitenant']) {
+  for (const ep of ['init-db', 'migrate-auth', 'migrate-tournaments', 'migrate-multitenant', 'migrate-branding']) {
     const res = await fetch(`${BASE_URL}/api/${ep}`, { method: 'POST' });
     if (!res.ok) throw new Error(`Migración /api/${ep} falló: ${res.status}`);
   }
@@ -176,6 +176,18 @@ export default async function globalSetup() {
     sql: 'INSERT OR IGNORE INTO users (id, email, role) VALUES (?, ?, ?)',
     args: [superUserId, TEST_ENV.SUPER_ADMIN_EMAIL, 'player'],
   });
+
+  // Fase 3 (branding): grupo-test CON Pase vigente (fecha lejana, estable entre runs);
+  // grupo-free SIN pase para probar atribución/sin-⭐/acento por defecto con el flag ON.
+  // El paid_until de grupo-free se RESETEA cada run: el spec del webhook lo activa.
+  await db.execute({
+    sql: `UPDATE groups SET paid_until = ? WHERE id = 'grupo-test'`,
+    args: ['2100-01-01T00:00:00.000Z'],
+  });
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO groups (id, slug, name) VALUES ('grupo-free', 'grupo-free', 'Grupo Free')`,
+  });
+  await db.execute(`UPDATE groups SET paid_until = NULL, logo_url = NULL, accent_color = NULL WHERE id = 'grupo-free'`);
 
   // 3) storageStates con cookies de sesión forjadas.
   await mkdir('e2e/.auth', { recursive: true });
