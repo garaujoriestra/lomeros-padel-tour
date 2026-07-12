@@ -83,7 +83,7 @@ export function Navbar({
           )}
           <span className="brand-name">{brand?.name ?? 'Lomeros Padel Tour'}</span>
           {brand?.star && (
-            <span title="Tour Oficial" aria-label="Tour Oficial" style={{ fontSize: 14 }}>
+            <span role="img" title="Tour Oficial" aria-label="Tour Oficial" style={{ fontSize: 14 }}>
               ⭐
             </span>
           )}
