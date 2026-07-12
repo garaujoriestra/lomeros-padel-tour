@@ -4,6 +4,9 @@ import { groupIdFromValue } from '@/lib/groups/request-group';
 import { getGroupById } from '@/lib/groups/queries';
 import { getStripe } from '@/lib/billing/stripe';
 
+// Stripe usa el crypto de Node.
+export const runtime = 'nodejs';
+
 // POST /api/billing/checkout — crea la sesión de pago del Pase de Temporada
 // (pago único anual; admin DEL grupo; body.g). Dormido tras BILLING_ENABLED.
 export async function POST(request: NextRequest) {
@@ -12,6 +15,10 @@ export async function POST(request: NextRequest) {
       { error: 'El Pase de Temporada está incluido durante la beta' },
       { status: 503 },
     );
+  }
+  if (!process.env.STRIPE_PRICE_ID) {
+    console.error('STRIPE_PRICE_ID no configurada');
+    return NextResponse.json({ error: 'Pago no configurado' }, { status: 503 });
   }
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });

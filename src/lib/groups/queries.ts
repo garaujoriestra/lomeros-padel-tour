@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { groups, memberships } from '@/lib/db/schema';
 
@@ -43,6 +43,23 @@ export async function updateGroupBranding(
 // Vigencia del Pase de Temporada (la escribe SOLO el webhook de Stripe).
 export async function setGroupPaidUntil(id: string, paidUntil: string): Promise<void> {
   await db.update(groups).set({ paidUntil }).where(eq(groups.id, id));
+}
+
+// Extiende el Pase +1 año de forma ATÓMICA (una sola UPDATE, sin read-modify-write):
+// base = max(paid_until vigente, ahora). Así dos pagos concurrentes DISTINTOS no leen
+// el mismo paid_until y se pisan. Único escritor: el webhook de Stripe.
+// El formato de salida debe coincidir byte a byte con extendedPaidUntil (toISOString):
+// strftime('%Y-%m-%dT%H:%M:%fZ', ...) da milisegundos y sufijo 'Z' idénticos.
+export async function extendGroupPass(id: string, now: Date = new Date()): Promise<void> {
+  const nowIso = now.toISOString();
+  await db
+    .update(groups)
+    .set({
+      paidUntil: sql`strftime('%Y-%m-%dT%H:%M:%fZ',
+        CASE WHEN ${groups.paidUntil} IS NOT NULL AND ${groups.paidUntil} > ${nowIso}
+             THEN ${groups.paidUntil} ELSE ${nowIso} END, '+1 year')`,
+    })
+    .where(eq(groups.id, id));
 }
 
 // ¿Es una violación de UNIQUE de SQLite/libsql? El error puede venir envuelto
