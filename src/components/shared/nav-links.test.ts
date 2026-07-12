@@ -17,4 +17,8 @@ describe('isNavActive (basePath-aware)', () => {
     expect(isNavActive('/g/gt/matches', '/g/gt/matches/abc')).toBe(true);
     expect(isNavActive('/g/gt/eventos', '/g/gt/pozos/xyz')).toBe(true);
   });
+  it('grupo: nunca activo si el pathname no comparte el prefijo /g/<slug>', () => {
+    expect(isNavActive('/g/gt/rankings', '/g/gt2/rankings')).toBe(false);
+    expect(isNavActive('/g/x', '/g/xy')).toBe(false);
+  });
 });

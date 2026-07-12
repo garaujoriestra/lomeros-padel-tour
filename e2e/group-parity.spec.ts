@@ -13,6 +13,14 @@ test.describe('paridad 2b · navegación de grupo', () => {
     await expect(nav.getByRole('link', { name: 'Partidos', exact: true })).toHaveAttribute('href', '/g/grupo-test/matches');
     await expect(nav.getByRole('link', { name: 'Eventos', exact: true })).toHaveAttribute('href', '/g/grupo-test/eventos');
     await expect(nav.getByRole('link', { name: 'Info', exact: true })).toHaveCount(0);
+
+    // BottomNav (móvil) también montado bajo el grupo, con hrefs prefijados.
+    // En viewport de escritorio (por defecto) la barra está display:none
+    // (globals.css, media ≥760px), así que sus links no aparecen en el árbol
+    // de accesibilidad: se asierta a nivel DOM (locator CSS), no con getByRole.
+    const bottomNav = page.locator('nav[aria-label="Navegación inferior"]');
+    await expect(bottomNav).toHaveCount(1);
+    await expect(bottomNav.locator('a', { hasText: 'La Timba' })).toHaveAttribute('href', '/g/grupo-test/rankings/tokens');
   });
 
   test('la raíz mantiene sus tabs de siempre', async ({ page }) => {
