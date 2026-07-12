@@ -17,12 +17,12 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     await expect(page.getByRole('link', { name: /Añadir jugador|Registrar partido|Notificaciones/ })).toHaveCount(0);
   });
 
-  test('players lista jugadores del grupo, no de Lomeros; sin alta/edición', async ({ page }) => {
+  test('players lista jugadores del grupo, no de Lomeros; con alta/edición (Task 10)', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/players');
     await expect(page.getByText('Jugador GT', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Nuevo' })).toHaveCount(0);
-    await expect(page.getByLabel(/^Editar a /)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Nuevo' }).first()).toBeVisible();
+    await expect(page.getByLabel(/^Editar a /).first()).toBeVisible();
   });
 
   test('crear jugador vía API (body.g), verlo en la lista y borrarlo (?g=)', async ({ page, request }) => {

@@ -170,3 +170,32 @@ test.describe('onboarding · bloque de invitaciones en /admin', () => {
     await ctx.close();
   });
 });
+
+test.describe('onboarding · alta de jugadores bajo el grupo (gt-admin)', () => {
+  test.use({ storageState: 'e2e/.auth/gt-admin.json' });
+
+  test('alta con email desde la UI del grupo → aparece en la lista; el invitado aterriza en el grupo', async ({ page, request }) => {
+    const name = `Invitado ${Date.now()}`;
+    const email = `inv-${Date.now()}@test.com`;
+    await page.goto('/g/grupo-test/admin/players');
+    await page.getByRole('link', { name: /nuevo/i }).first().click();
+    await expect(page).toHaveURL(/\/g\/grupo-test\/admin\/players\/new$/);
+    await page.getByLabel(/nombre/i).first().fill(name);
+    await page.getByLabel(/email/i).fill(email);
+    await page.getByRole('button', { name: /crear|guardar/i }).click();
+    await expect(page).toHaveURL(/\/g\/grupo-test\/admin\/players$/);
+    await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
+
+    // El invitado entra (dev-login) y su grupo-hogar es grupo-test.
+    const login = await request.post('/api/auth/dev-login', { data: { email } });
+    expect(((await login.json()) as { home: string }).home).toBe('/g/grupo-test/me');
+  });
+
+  test('edición: el botón Editar existe bajo grupo y guarda con el grupo correcto', async ({ page }) => {
+    await page.goto('/g/grupo-test/admin/players');
+    await page.getByLabel(/^Editar a /).first().click();
+    await expect(page).toHaveURL(/\/g\/grupo-test\/admin\/players\/.+\/edit$/);
+    await page.getByRole('button', { name: /guardar/i }).click();
+    await expect(page).toHaveURL(/\/g\/grupo-test\/admin\/players$/);
+  });
+});
