@@ -92,9 +92,11 @@ test.describe('paridad 2b · detalle de partido del grupo', () => {
       await page.getByRole('button', { name: /Apostar al ganador/i }).click();
       await expect(page.locator('[data-testid="bet-balance"]:visible')).toContainText('470');
     } finally {
-      await admin.delete(`/api/matches/${match.id}?g=grupo-test`);
+      // La penalty se restaura PRIMERO: debe volver a 'pending' aunque el
+      // DELETE del partido falle (otros specs dependen de esa fixture).
       const db = createClient({ url: TEST_ENV.DB_URL });
       await db.execute({ sql: "UPDATE penalties SET status = 'pending' WHERE id = 'gt-penalty1'" });
+      await admin.delete(`/api/matches/${match.id}?g=grupo-test`);
     }
   });
 
