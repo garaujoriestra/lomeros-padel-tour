@@ -2,8 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const DEFAULT_ACCENT = '#c8f03c'; // --acc por defecto (globals.css)
+
+// Extrae el mensaje de error específico de la API si lo hay (respuesta no-JSON → null).
+async function apiError(res: Response): Promise<string | null> {
+  const data = await res.json().catch(() => null);
+  return data?.error ?? null;
+}
 
 export function BrandingForm({
   slug,
@@ -17,7 +24,7 @@ export function BrandingForm({
   const router = useRouter();
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
@@ -28,23 +35,38 @@ export function BrandingForm({
       fd.set('g', slug);
       fd.set('file', file);
       const res = await fetch('/api/upload/logo', { method: 'POST', body: fd });
+      if (!res.ok) {
+        toast.error((await apiError(res)) ?? 'No se pudo subir el logo');
+        return;
+      }
       const data = await res.json();
-      if (res.ok) setLogoUrl(data.url);
-      else setStatus('error');
+      setLogoUrl(data.url);
+    } catch {
+      toast.error('Error de red al subir el logo');
     } finally {
       setUploading(false);
     }
   }
 
   async function save() {
-    setStatus('saving');
-    const res = await fetch('/api/groups/branding', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ g: slug, logoUrl, accentColor }),
-    });
-    setStatus(res.ok ? 'saved' : 'error');
-    if (res.ok) router.refresh();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/groups/branding', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ g: slug, logoUrl, accentColor }),
+      });
+      if (!res.ok) {
+        toast.error((await apiError(res)) ?? 'No se pudo guardar la marca');
+        return;
+      }
+      toast.success('Guardado');
+      router.refresh();
+    } catch {
+      toast.error('Error de red al guardar');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function buyPass() {
@@ -55,9 +77,15 @@ export function BrandingForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ g: slug }),
       });
+      if (!res.ok) {
+        toast.error((await apiError(res)) ?? 'No se pudo iniciar el pago');
+        return;
+      }
       const data = await res.json();
-      if (res.ok && data.url) window.location.assign(data.url);
-      else setStatus('error');
+      if (data?.url) window.location.assign(data.url);
+      else toast.error('No se pudo iniciar el pago');
+    } catch {
+      toast.error('Error de red al iniciar el pago');
     } finally {
       setCheckingOut(false);
     }
@@ -78,11 +106,18 @@ export function BrandingForm({
           )}
           <label className="lpt-btn" style={{ cursor: 'pointer' }}>
             {uploading ? 'Subiendo…' : 'Subir logo'}
+            {/* sr-only (no hidden) para que el input siga siendo enfocable con teclado */}
             <input
               type="file"
               accept="image/*"
-              hidden
-              onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+              className="sr-only"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0];
+                // Resetea el input para que re-seleccionar el mismo fichero dispare onChange.
+                e.currentTarget.value = '';
+                if (file) uploadLogo(file);
+              }}
             />
           </label>
           {logoUrl && (
@@ -132,11 +167,9 @@ export function BrandingForm({
       </section>
 
       <div className="flex items-center gap-3">
-        <button className="lpt-btn primary" onClick={save} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Guardando…' : 'Guardar'}
+        <button className="lpt-btn primary" onClick={save} disabled={saving || uploading}>
+          {saving ? 'Guardando…' : 'Guardar'}
         </button>
-        {status === 'saved' && <span className="muted text-sm">Guardado ✓</span>}
-        {status === 'error' && <span className="text-sm" style={{ color: 'var(--loss-text)' }}>Error al guardar</span>}
       </div>
     </div>
   );
