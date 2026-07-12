@@ -348,3 +348,47 @@ test.describe('paridad 2b · pozo y torneo públicos del grupo', () => {
     await expect(page.getByText('Bola fuera')).toBeVisible();
   });
 });
+
+test.describe('paridad 2b · cartera y edición de perfil del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  test.beforeEach(async ({ page }) => {
+    // El recordatorio de notificaciones push es un modal que tapa la UI; se silencia.
+    await page.addInitScript(() => sessionStorage.setItem('lpt-notif-reminder-dismissed', 'true'));
+  });
+
+  test('el enlace de cartera en /g/grupo-test/me lleva a la cartera bajo /g/[slug]', async ({ page }) => {
+    await page.goto('/g/grupo-test/me');
+    const link = page.locator('a[href="/g/grupo-test/me/tokens"]');
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL('/g/grupo-test/me/tokens');
+    // Saldo variable (otros specs de este mismo fichero mueven fichas de gt-pl1):
+    // basta con un heading/estable de la cartera, no el número exacto.
+    await expect(page.getByRole('heading', { name: /Mi cartera/ })).toBeVisible();
+    // "fichas" aparece varias veces en la página (apuestas, premios); el rótulo
+    // junto al saldo grande es exacto y único.
+    await expect(page.getByText('fichas', { exact: true })).toBeVisible();
+  });
+
+  test('el enlace de editar perfil en /g/grupo-test/me apunta a /g/grupo-test/me/edit', async ({ page }) => {
+    await page.goto('/g/grupo-test/me');
+    await expect(page.locator('a[href="/g/grupo-test/me/edit"]')).toBeVisible();
+  });
+
+  test('edita el apodo en /g/grupo-test/me/edit y persiste al volver a /g/grupo-test/me', async ({ page }) => {
+    const nickname = `E2E-${Date.now()}`;
+    try {
+      await page.goto('/g/grupo-test/me/edit');
+      await page.getByLabel('Apodo').fill(nickname);
+      await page.getByRole('button', { name: 'Guardar cambios' }).click();
+      await expect(page).toHaveURL('/g/grupo-test/me');
+      await expect(page.getByText(nickname)).toBeVisible();
+    } finally {
+      // Apodo idempotente: se restaura a vacío (null) vía la misma API group-aware.
+      await page.request.patch('/api/me', {
+        data: { g: 'grupo-test', nickname: '', avatarUrl: '', isLeftHanded: false },
+      });
+    }
+  });
+});

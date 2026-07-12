@@ -109,7 +109,7 @@ export function PlayerProfileView({
                 text={`${displayName(player)} — Elo ${Math.round(player.eloRating)}${rank != null ? ` · #${rank} del ranking` : ''} · Lomeros Padel Tour`}
               />
               {editable && (
-                <Link href="/me/edit" className="lpt-badge">
+                <Link href={`${basePath}/me/edit`} className="lpt-badge">
                   <Pencil size={11} /> Editar perfil
                 </Link>
               )}

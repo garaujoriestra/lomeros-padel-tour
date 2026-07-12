@@ -18,10 +18,12 @@ export function RedeemButton({
   rewardId,
   cost,
   disabled,
+  groupSlug,
 }: {
   rewardId: string;
   cost: number;
   disabled: boolean;
+  groupSlug?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -33,7 +35,7 @@ export function RedeemButton({
       const res = await fetch('/api/redemptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rewardId }),
+        body: JSON.stringify({ rewardId, ...(groupSlug ? { g: groupSlug } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al canjear');
