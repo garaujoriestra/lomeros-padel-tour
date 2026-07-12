@@ -482,6 +482,9 @@ test.describe('paridad 2b · admin de pozos y torneos del grupo', () => {
       ({ id } = await created.json());
 
       await page.goto('/g/grupo-test/admin/pozos');
+      // Ancla positiva: confirma que la lista de pozos del grupo renderizó de verdad
+      // (un redirect/404 daría count 0 en la aserción negativa = falso positivo).
+      await expect(page.getByRole('heading', { name: 'Pozos' })).toBeVisible();
       await expect(page.getByText('E2E Pozo Lomeros Admin No Fuga')).toHaveCount(0);
     } finally {
       if (id) await lomerosAdmin.delete(`/api/tournaments/${id}`);
