@@ -6,20 +6,43 @@ export interface GroupRow {
   id: string;
   slug: string;
   name: string;
+  logoUrl: string | null;
+  accentColor: string | null;
+  paidUntil: string | null;
 }
 
-// Todos los grupos. Lo usa el cron (itera por grupo) y la futura vista cross-grupo.
+const groupColumns = {
+  id: groups.id,
+  slug: groups.slug,
+  name: groups.name,
+  logoUrl: groups.logoUrl,
+  accentColor: groups.accentColor,
+  paidUntil: groups.paidUntil,
+};
+
+// Todos los grupos. Lo usa el cron (itera por grupo), el conmutador del súper-admin
+// y la futura vista cross-grupo.
 export async function listGroups(): Promise<GroupRow[]> {
-  return db.select({ id: groups.id, slug: groups.slug, name: groups.name }).from(groups);
+  return db.select(groupColumns).from(groups);
 }
 
-// Un grupo por id (o null). Fuente del nombre de marca (OG y, en Fase 3, branding).
+// Un grupo por id (o null). Fuente del nombre de marca (OG y branding Fase 3).
 export async function getGroupById(id: string): Promise<GroupRow | null> {
-  const [g] = await db
-    .select({ id: groups.id, slug: groups.slug, name: groups.name })
-    .from(groups)
-    .where(eq(groups.id, id));
+  const [g] = await db.select(groupColumns).from(groups).where(eq(groups.id, id));
   return g ?? null;
+}
+
+// Branding editable por el admin del grupo (Fase 3). null = volver al valor por defecto.
+export async function updateGroupBranding(
+  id: string,
+  branding: { logoUrl: string | null; accentColor: string | null },
+): Promise<void> {
+  await db.update(groups).set(branding).where(eq(groups.id, id));
+}
+
+// Vigencia del Pase de Temporada (la escribe SOLO el webhook de Stripe).
+export async function setGroupPaidUntil(id: string, paidUntil: string): Promise<void> {
+  await db.update(groups).set({ paidUntil }).where(eq(groups.id, id));
 }
 
 // ¿Es una violación de UNIQUE de SQLite/libsql? El error puede venir envuelto

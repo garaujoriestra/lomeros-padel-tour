@@ -12,6 +12,10 @@ export const groups = sqliteTable('groups', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
+  // Fase 3 (branding + Pase de Temporada). Columnas físicas creadas por /api/migrate-branding.
+  logoUrl: text('logo_url'),
+  accentColor: text('accent_color'),
+  paidUntil: text('paid_until'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
@@ -312,6 +316,16 @@ export const plannerSlots = sqliteTable('planner_slots', {
   unique().on(t.weekStart, t.day, t.subjectType, t.subjectId),
 ]));
 
+// ─── BILLING (Fase 3) ────────────────────────────────────────────────────────
+// Un registro por evento de Stripe procesado: el webhook hace INSERT .onConflictDoNothing
+// y solo aplica el efecto si la fila es nueva (idempotencia por event.id).
+export const billingEvents = sqliteTable('billing_events', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').notNull(),
+  type: text('type').notNull(),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+});
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -354,3 +368,5 @@ export type Court = typeof courts.$inferSelect;
 export type NewCourt = typeof courts.$inferInsert;
 export type PlannerSlotRow = typeof plannerSlots.$inferSelect;
 export type NewPlannerSlot = typeof plannerSlots.$inferInsert;
+export type BillingEventRow = typeof billingEvents.$inferSelect;
+export type NewBillingEvent = typeof billingEvents.$inferInsert;

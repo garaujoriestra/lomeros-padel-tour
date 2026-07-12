@@ -16,7 +16,14 @@ export { RESERVED_SLUGS, isValidGroupSlug, slugFromName } from './slug';
 export async function getGroupBySlug(slug: string): Promise<GroupRow | null> {
   if (!isValidGroupSlug(slug)) return null;
   const [g] = await db
-    .select({ id: groups.id, slug: groups.slug, name: groups.name })
+    .select({
+      id: groups.id,
+      slug: groups.slug,
+      name: groups.name,
+      logoUrl: groups.logoUrl,
+      accentColor: groups.accentColor,
+      paidUntil: groups.paidUntil,
+    })
     .from(groups)
     .where(eq(groups.slug, slug));
   return g ?? null;
