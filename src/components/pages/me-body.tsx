@@ -39,7 +39,7 @@ export async function MeBody({ ctx }: { ctx: PageContext }) {
 
   return (
     <div className="space-y-6">
-      <PlayerProfileView data={data} editable={isRoot} />
+      <PlayerProfileView data={data} editable={isRoot} basePath={basePath} />
       {isRoot && (
         <Link href="/me/tokens" className="lpt-card flex items-center justify-between" style={{ padding: 14 }}>
           <span>🪙 Mi cartera de La Timba</span>

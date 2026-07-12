@@ -10,7 +10,15 @@ import { AchievementsCard } from '@/components/shared/achievements-card';
 import type { RivalryStats } from '@/lib/rating/head-to-head';
 import type { PlayerProfileData } from '@/lib/players/profile-data';
 
-export function PlayerProfileView({ data, editable = false }: { data: PlayerProfileData; editable?: boolean }) {
+export function PlayerProfileView({
+  data,
+  editable = false,
+  basePath = '',
+}: {
+  data: PlayerProfileData;
+  editable?: boolean;
+  basePath?: string;
+}) {
   const {
     player,
     completedMatches,
@@ -249,7 +257,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
               <SectionHead icon={Swords} title="Head-to-head" />
               <div className="lpt-card" style={{ overflow: 'hidden' }}>
                 {rivalries.map((r) => (
-                  <RivalryRow key={r.opponentId} rivalry={r} />
+                  <RivalryRow key={r.opponentId} rivalry={r} basePath={basePath} />
                 ))}
               </div>
             </div>
@@ -262,13 +270,13 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
             <div className="section">
               <SectionHead icon={Users} title="Compañeros" />
               <div style={{ display: 'grid', gap: 10 }}>
-                <PartnerCard variant="best" partner={bestPartnerPlayer} pairStat={bestPartner} />
+                <PartnerCard variant="best" partner={bestPartnerPlayer} pairStat={bestPartner} basePath={basePath} />
                 {showWorstCard && worstPartner && worstPartnerPlayer && (
-                  <PartnerCard variant="worst" partner={worstPartnerPlayer} pairStat={worstPartner} />
+                  <PartnerCard variant="worst" partner={worstPartnerPlayer} pairStat={worstPartner} basePath={basePath} />
                 )}
               </div>
               <div style={{ marginTop: 10 }}>
-                <UnplayedPartnersCard unplayed={unplayed} totalCandidates={totalCandidates} />
+                <UnplayedPartnersCard unplayed={unplayed} totalCandidates={totalCandidates} basePath={basePath} />
               </div>
             </div>
           )}
@@ -295,7 +303,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
                     : [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
                   const delta = eloChangeByMatch[match.id];
                   return (
-                    <Link key={match.id} href={`/matches/${match.id}`} className="rank-row" style={{ display: 'flex', gap: 10 }}>
+                    <Link key={match.id} href={`${basePath}/matches/${match.id}`} className="rank-row" style={{ display: 'flex', gap: 10 }}>
                       <span className={`form-dot ${won ? 'w' : 'l'}`}>{won ? 'V' : 'D'}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -311,7 +319,7 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
               </div>
               {completedMatches.length > 10 && (
                 <div style={{ textAlign: 'center', marginTop: 10 }}>
-                  <Link href="/matches" className="sec-link">Ver todos los partidos</Link>
+                  <Link href={`${basePath}/matches`} className="sec-link">Ver todos los partidos</Link>
                 </div>
               )}
             </div>
@@ -322,10 +330,10 @@ export function PlayerProfileView({ data, editable = false }: { data: PlayerProf
   );
 }
 
-function RivalryRow({ rivalry }: { rivalry: RivalryStats }) {
+function RivalryRow({ rivalry, basePath }: { rivalry: RivalryStats; basePath: string }) {
   const winPct = Math.round(rivalry.winRate * 100);
   return (
-    <Link href={`/players/${rivalry.opponentId}`} className="rank-row" style={{ display: 'flex' }}>
+    <Link href={`${basePath}/players/${rivalry.opponentId}`} className="rank-row" style={{ display: 'flex' }}>
       <LptAvatar player={{ id: rivalry.opponentId, name: rivalry.opponentName, avatarUrl: rivalry.opponentAvatarUrl }} size={30} />
       <span style={{ flex: 1, fontWeight: 700, fontSize: 13.5, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {rivalry.opponentName}

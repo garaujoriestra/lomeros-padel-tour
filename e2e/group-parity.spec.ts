@@ -112,3 +112,33 @@ test.describe('paridad 2b · detalle de partido del grupo', () => {
     await expect(page.getByText(/Jugador \d/)).toHaveCount(0);
   });
 });
+
+test.describe('paridad 2b · ficha de jugador del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  test.beforeEach(async ({ page }) => {
+    // El recordatorio de notificaciones push es un modal que tapa la UI; se silencia.
+    await page.addInitScript(() => sessionStorage.setItem('lpt-notif-reminder-dismissed', 'true'));
+  });
+
+  test('desde el detalle del partido se navega a la ficha del jugador bajo /g/[slug]', async ({ page }) => {
+    await page.goto('/g/grupo-test/matches/gt-match1');
+    // El nombre accesible del link de jugador incluye Elo/proyección ("J Jugador GT
+    // 1500 Elo ▲ +20 ▼ -20"), así que se localiza por href exacto (gt-pl1) en vez de
+    // por texto — evita además matchear 'Jugador GT 2'/'3'/'4', también en el equipo.
+    await page.locator('a[href="/g/grupo-test/players/gt-pl1"]').first().click();
+    await expect(page).toHaveURL('/g/grupo-test/players/gt-pl1');
+    await expect(page.getByRole('heading', { name: 'Jugador GT' })).toBeVisible();
+
+    // gt-match1 (el único partido de gt-pl1 en fixtures) está 'scheduled', no 'completed':
+    // el bloque de Historial de la ficha solo lista partidos completados, así que no
+    // sale. Se asierta su ausencia de forma determinista en vez de forzar un enlace
+    // que no existe con estos fixtures (ver nota de la Task 3 del plan).
+    await expect(page.getByText('Historial', { exact: true })).toHaveCount(0);
+  });
+
+  test('no-fuga: la ficha de un jugador de Lomeros no es visible bajo /g/grupo-test', async ({ page }) => {
+    await page.goto('/g/grupo-test/players/pl1');
+    await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
+  });
+});

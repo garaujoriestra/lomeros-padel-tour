@@ -11,16 +11,17 @@ interface PartnerCardProps {
     losses: number;
     synergyScore?: number;
   };
+  basePath?: string;
 }
 
-export function PartnerCard({ variant, partner, pairStat }: PartnerCardProps) {
+export function PartnerCard({ variant, partner, pairStat, basePath = '' }: PartnerCardProps) {
   const winRate = Math.round((pairStat.wins / pairStat.matchesPlayed) * 100);
   const isBest = variant === 'best';
   const tone = isBest ? 'var(--win)' : 'var(--loss)';
   const synergyPct = pairStat.synergyScore != null ? Math.round(pairStat.synergyScore * 100) : null;
 
   return (
-    <Link href={`/players/${partner.id}`} className="lpt-card card-pad clickable" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <Link href={`${basePath}/players/${partner.id}`} className="lpt-card card-pad clickable" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <LptAvatar player={partner} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="kicker" style={{ fontSize: 9.5, color: tone }}>
