@@ -53,8 +53,23 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
 });
 
 test.describe('paridad · /g/[slug]/admin · gating de rol por grupo', () => {
-  test.describe('admin de Lomeros (ajeno al grupo)', () => {
+  test.describe('admin de Lomeros (que además es súper-admin, como el dueño real)', () => {
     test.use({ storageState: 'e2e/.auth/admin.json' });
+    // Desde la Tarea 3 (conmutador) el súper-admin entra al admin de OTROS grupos en
+    // solo-lectura con banner (antes este fixture no era súper y se le redirigía).
+    test('entra en solo-lectura con banner, y la API le rechaza escrituras', async ({ page, request }) => {
+      await page.goto('/g/grupo-test/admin');
+      await expect(page.getByRole('heading', { name: 'Administración' }).first()).toBeVisible();
+      await expect(page.getByText('Solo lectura', { exact: false }).first()).toBeVisible();
+      const res = await request.post('/api/players', { data: { g: 'grupo-test', name: 'Intruso Dueño' } });
+      expect(res.status()).toBe(403);
+    });
+  });
+
+  // Variante multi-membership: el rol se resuelve contra el grupo de la URL aunque
+  // el usuario tenga otras memberships (player en Lomeros Y en grupo-test).
+  test.describe('miembro player multi-grupo (no admin de grupo-test)', () => {
+    test.use({ storageState: 'e2e/.auth/multi.json' });
     test('redirige a /g/grupo-test/me', async ({ page }) => {
       await page.goto('/g/grupo-test/admin');
       await expect(page).toHaveURL(/\/g\/grupo-test\/me$/);
