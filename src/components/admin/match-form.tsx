@@ -275,6 +275,7 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
         <PairingSuggestions
           selectedIds={[...team1, ...team2]}
           players={players}
+          groupSlug={groupSlug}
           onApply={applyCombo}
         />
       )}

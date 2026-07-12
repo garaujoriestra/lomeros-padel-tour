@@ -24,8 +24,14 @@ export async function POST(request: NextRequest) {
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
   if (!name) return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
+  if (name.length > 80) {
+    return NextResponse.json({ error: 'El nombre es demasiado largo (máx. 80)' }, { status: 400 });
+  }
   if (!isValidGroupSlug(slug)) {
     return NextResponse.json({ error: 'Nombre corto inválido (minúsculas, números y guiones)' }, { status: 400 });
+  }
+  if (slug.length > 40) {
+    return NextResponse.json({ error: 'Nombre corto demasiado largo (máx. 40)' }, { status: 400 });
   }
 
   const result = await createGroupWithAdmin({ slug, name, userId: session.userId });

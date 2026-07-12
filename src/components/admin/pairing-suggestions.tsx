@@ -20,6 +20,7 @@ interface PairHistoryEntry {
 interface PairingSuggestionsProps {
   selectedIds: string[];
   players: Player[];
+  groupSlug?: string;
   onApply: (
     team1: [string, string],
     team2: [string, string],
@@ -44,7 +45,7 @@ function sideForPlayer(rec: PairingOption['team1SideRec'], pid: string): Side {
   return '';
 }
 
-export function PairingSuggestions({ selectedIds, players, onApply }: PairingSuggestionsProps) {
+export function PairingSuggestions({ selectedIds, players, groupSlug, onApply }: PairingSuggestionsProps) {
   const [options, setOptions] = useState<PairingOption[] | null>(null);
   const [history, setHistory] = useState<PairHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,7 +65,7 @@ export function PairingSuggestions({ selectedIds, players, onApply }: PairingSug
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch(`/api/pairings/preview?ids=${encodeURIComponent(distinct.join(','))}`)
+    fetch(`/api/pairings/preview?ids=${encodeURIComponent(distinct.join(','))}${groupSlug ? `&g=${encodeURIComponent(groupSlug)}` : ''}`)
       .then(async (res) => {
         if (!res.ok) throw new Error((await res.json()).error || 'Error');
         return res.json();

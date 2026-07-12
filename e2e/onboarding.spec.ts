@@ -76,6 +76,8 @@ test.describe('onboarding · crear grupo (API)', () => {
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'admin', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'grupo-test', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: '  ', slug: `b-${Date.now()}`, t } })).status()).toBe(400);
+    // Cap de longitud: slug de 41 chars con forma válida → 400 (no se crea nada).
+    expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'a'.repeat(41), t } })).status()).toBe(400);
   });
 });
 
@@ -217,6 +219,12 @@ test.describe('onboarding · partido y resultado bajo el grupo (gt-admin)', () =
     await page.getByLabel('🔵 Equipo 1 — Jugador 2').selectOption({ label: 'Jugador GT 6' });
     await page.getByLabel('🔴 Equipo 2 — Jugador 1').selectOption({ label: 'Jugador GT 7' });
     await page.getByLabel('🔴 Equipo 2 — Jugador 2').selectOption({ label: 'Jugador GT 8' });
+
+    // El recomendador de parejas es group-aware (?g=): muestra las sugerencias,
+    // no un error de autorización.
+    await expect(page.getByRole('button', { name: 'Aplicar esta combinación' }).first()).toBeVisible();
+    await expect(page.getByText('No autorizado')).toHaveCount(0);
+
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(/\/g\/grupo-test\/admin\/matches$/);
 
