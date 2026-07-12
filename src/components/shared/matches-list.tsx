@@ -19,7 +19,7 @@ const TABS = [
   ['jugados', 'Jugados'],
 ] as const;
 
-export function MatchesList({ items }: { items: MatchListItem[] }) {
+export function MatchesList({ items, basePath = '' }: { items: MatchListItem[]; basePath?: string }) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('todos');
   // El stagger solo debe correr en la carga inicial: al cambiar de pestaña las
   // cards se re-montan y sin esto la cascada de entrada se repite en cada tap.
@@ -33,7 +33,7 @@ export function MatchesList({ items }: { items: MatchListItem[] }) {
   const grid = (list: MatchListItem[]) => (
     <div className={entered ? 'grid-2' : 'grid-2 stagger'} style={{ marginTop: 14 }}>
       {list.map(({ match, team1, team2, sets }) => (
-        <MatchCard key={match.id} match={match} team1={team1} team2={team2} sets={sets} href={`/matches/${match.id}`} />
+        <MatchCard key={match.id} match={match} team1={team1} team2={team2} sets={sets} href={`${basePath}/matches/${match.id}`} />
       ))}
     </div>
   );

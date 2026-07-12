@@ -184,3 +184,68 @@ test.describe('paridad 2b · ficha de jugador del grupo', () => {
     await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
   });
 });
+
+test.describe('paridad 2b · rankings, eventos y partidos del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  test('el ranking del grupo lista solo sus jugadores, con la tab activa', async ({ page }) => {
+    await page.goto('/g/grupo-test/rankings');
+    await expect(page.getByText('Jugador GT', { exact: true })).toBeVisible();
+    await expect(page.getByText('Jugador 1', { exact: true })).toHaveCount(0);
+
+    // Tab activa: el navbar marca el link con la clase `active` (globals.css
+    // .nav-tab.active) según isNavActive(pathname) — aserción robusta porque
+    // ese mecanismo ya se ejerce en el describe de navegación de este mismo
+    // archivo (no depende de estilos computados, solo de la clase CSS).
+    const nav = page.getByRole('navigation').first();
+    await expect(nav.getByRole('link', { name: 'Ranking', exact: true })).toHaveClass(/active/);
+  });
+
+  test('ranking de parejas y clasificación de La Timba del grupo responden con su heading', async ({ page }) => {
+    await page.goto('/g/grupo-test/rankings/pairs');
+    await expect(page.getByRole('heading', { name: 'Ranking de parejas' })).toBeVisible();
+
+    await page.goto('/g/grupo-test/rankings/tokens');
+    await expect(page.getByRole('heading', { name: 'La Timba — clasificación' })).toBeVisible();
+  });
+
+  test.describe('eventos del grupo con un evento generado', () => {
+    // gt-tournament1 (fixture del global-setup) queda en 'draft' a propósito
+    // (usado por no-fuga-tournaments/tournaments-scoping): el listado público
+    // filtra los borradores, así que aquí se lo "genera" mínimamente por DB
+    // (sin pasar por el motor real, que exige parejas/participantes) para
+    // ejercer el listado público — y se revierte en el afterAll para no
+    // afectar a esos otros specs.
+    test.beforeAll(async () => {
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "UPDATE tournaments SET status = 'scheduled' WHERE id = 'gt-tournament1'" });
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO tournament_matches (id, tournament_id, round, status)
+          VALUES (?, ?, ?, ?)`,
+        args: ['gp-eventos-tmatch', 'gt-tournament1', 0, 'pending'],
+      });
+    });
+
+    test.afterAll(async () => {
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "DELETE FROM tournament_matches WHERE id = 'gp-eventos-tmatch'" });
+      await db.execute({ sql: "UPDATE tournaments SET status = 'draft' WHERE id = 'gt-tournament1'" });
+    });
+
+    test('la lista de eventos del grupo enlaza al torneo bajo /g/[slug]', async ({ page }) => {
+      await page.goto('/g/grupo-test/eventos');
+      const link = page.locator('a[href="/g/grupo-test/pozos/gt-tournament1"]');
+      await expect(link).toBeVisible();
+      await expect(link.getByText('Torneo GT')).toBeVisible();
+    });
+  });
+
+  test('la lista de partidos del grupo muestra solo los suyos, con el link bajo /g/[slug]', async ({ page }) => {
+    await page.goto('/g/grupo-test/matches');
+    await expect(page.getByText('Jugador GT', { exact: true }).first()).toBeVisible();
+    // Los jugadores de Lomeros se llaman "Jugador <N>" (dígito); ver nota de
+    // no-fuga inversa más arriba en este mismo archivo.
+    await expect(page.getByText(/Jugador \d/)).toHaveCount(0);
+    await expect(page.locator('a[href="/g/grupo-test/matches/gt-match1"]').first()).toBeVisible();
+  });
+});

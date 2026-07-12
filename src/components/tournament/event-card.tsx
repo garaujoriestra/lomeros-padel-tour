@@ -6,9 +6,9 @@ import { eventLiveState, kindLabel, eventDetailHref } from '@/lib/tournament/eve
 import type { EventSummary } from '@/lib/tournament/event-store';
 
 // Tarjeta clicable de un evento (pozo/torneo) para los listados públicos.
-export function EventCard({ event }: { event: EventSummary }) {
+export function EventCard({ event, basePath = '' }: { event: EventSummary; basePath?: string }) {
   const state = eventLiveState(event);
-  const href = eventDetailHref(event.kind, event.id);
+  const href = eventDetailHref(event.kind, event.id, basePath);
 
   return (
     <Link

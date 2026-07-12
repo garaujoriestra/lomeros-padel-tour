@@ -15,7 +15,8 @@ export function kindLabel(kind: EventKind): string {
   return kind === 'pozo' ? 'Pozo' : 'Torneo';
 }
 
-// Ruta del detalle público según el kind.
-export function eventDetailHref(kind: EventKind, id: string): string {
-  return kind === 'pozo' ? `/pozos/${id}` : `/torneos/${id}`;
+// Ruta del detalle público según el kind, prefijada con el `basePath` del grupo
+// ('' en la raíz por defecto).
+export function eventDetailHref(kind: EventKind, id: string, basePath = ''): string {
+  return kind === 'pozo' ? `${basePath}/pozos/${id}` : `${basePath}/torneos/${id}`;
 }
