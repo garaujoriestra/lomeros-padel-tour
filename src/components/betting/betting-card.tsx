@@ -21,6 +21,7 @@ export interface PublicBet {
 
 interface BettingCardProps {
   matchId: string;
+  groupSlug?: string;      // undefined en la raíz; slug del grupo bajo /g/[slug]
   team1Label: string;
   team2Label: string;
   pools: MatchPools;
@@ -93,6 +94,7 @@ export function BettingCard(props: BettingCardProps) {
         body: JSON.stringify({
           matchId: props.matchId, market, predictedTeam,
           predictedScore: market === 'exact_score' ? predictedScore : undefined, amount,
+          ...(props.groupSlug && { g: props.groupSlug }),
         }),
       });
       const data = await res.json();
@@ -107,7 +109,8 @@ export function BettingCard(props: BettingCardProps) {
   async function cancelBet(m: 'winner' | 'exact_score') {
     setLoading(true);
     try {
-      const res = await fetch(`/api/bets?matchId=${props.matchId}&market=${m}`, { method: 'DELETE' });
+      const g = props.groupSlug ? `&g=${encodeURIComponent(props.groupSlug)}` : '';
+      const res = await fetch(`/api/bets?matchId=${props.matchId}&market=${m}${g}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al cancelar');
       toast.success('Apuesta cancelada y fichas devueltas');

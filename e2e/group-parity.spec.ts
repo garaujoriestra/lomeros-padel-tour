@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as pwRequest } from '@playwright/test';
+import { createClient } from '@libsql/client';
+import { BASE_URL, TEST_ENV } from '../playwright.config';
 
 // Tarea 2b: paridad completa bajo /g/[slug]. Este spec crece por tasks (navegación,
 // públicas, me, admin, no-fuga).
@@ -28,5 +30,83 @@ test.describe('paridad 2b · navegación de grupo', () => {
     const nav = page.getByRole('navigation').first();
     await expect(nav.getByRole('link', { name: 'Partidos', exact: true })).toHaveAttribute('href', '/matches');
     await expect(nav.getByRole('link', { name: 'Info', exact: true })).toHaveAttribute('href', '/info');
+  });
+});
+
+test.describe('paridad 2b · detalle de partido del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  // Este spec no comparte proceso con otros: sin un partido propio de Lomeros
+  // (pl1..pl4, seeded globalmente sin match asociado), no hay id real que usar
+  // para la aserción de no-fuga inversa.
+  test.beforeAll(async () => {
+    const db = createClient({ url: TEST_ENV.DB_URL });
+    await db.execute({
+      sql: `INSERT OR IGNORE INTO matches
+        (id, group_id, date, time, team1_player1_id, team1_player2_id, team2_player1_id, team2_player2_id, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: ['gp-lomeros-match', 'lomeros', '2027-01-01', '20:00', 'pl1', 'pl2', 'pl3', 'pl4', 'scheduled'],
+    });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    // El recordatorio de notificaciones push es un modal que tapa la UI; se silencia.
+    await page.addInitScript(() => sessionStorage.setItem('lpt-notif-reminder-dismissed', 'true'));
+  });
+
+  test('desde la home del grupo se navega al detalle del partido bajo /g/[slug]', async ({ page }) => {
+    await page.goto('/g/grupo-test');
+    await page.getByRole('link', { name: /Jugador GT/ }).first().click();
+    await expect(page).toHaveURL('/g/grupo-test/matches/gt-match1');
+    await expect(page.getByText('Jugador GT').first()).toBeVisible();
+  });
+
+  test('flujo de apostar por UI baja el saldo visible (partido nuevo con timba abierta)', async ({ page }) => {
+    // gt-match1 es del 2026-01-01 (pasado): su timba ya está cerrada. Se crea un
+    // partido nuevo con fecha muy futura para poder ejercer el flujo de apostar.
+    // Crear partidos requiere admin del grupo → contexto aparte con gt-admin.
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+    const created = await admin.post('/api/matches', {
+      data: {
+        g: 'grupo-test',
+        date: '2027-06-01',
+        time: '20:00',
+        team1Player1Id: 'gt-pl5',
+        team1Player2Id: 'gt-pl6',
+        team2Player1Id: 'gt-pl7',
+        team2Player2Id: 'gt-pl8',
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+    const match = await created.json();
+
+    try {
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "UPDATE players SET token_balance = 500 WHERE id = 'gt-pl1'" });
+      // gt-pl1 tiene una penalización pendiente de fixture (gt-penalty1, usada por
+      // otros specs de redemptions/bancarrota): se resuelve aquí para poder apostar.
+      await db.execute({ sql: "UPDATE penalties SET status = 'resolved' WHERE id = 'gt-penalty1'" });
+
+      await page.goto(`/g/grupo-test/matches/${match.id}`);
+      await page.getByRole('spinbutton', { name: 'Fichas a apostar al ganador' }).fill('30');
+      await page.getByRole('button', { name: /Apostar al ganador/i }).click();
+      await expect(page.locator('[data-testid="bet-balance"]:visible')).toContainText('470');
+    } finally {
+      await admin.delete(`/api/matches/${match.id}?g=grupo-test`);
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "UPDATE penalties SET status = 'pending' WHERE id = 'gt-penalty1'" });
+    }
+  });
+
+  test('no-fuga inversa: un partido de Lomeros no revela sus jugadores bajo /g/grupo-test', async ({ page, request }) => {
+    const list = await request.get('/api/matches');
+    const matches = (await list.json()) as Array<{ id: string }>;
+    expect(matches.length).toBeGreaterThan(0);
+    const lomerosMatchId = matches[0].id;
+
+    await page.goto(`/g/grupo-test/matches/${lomerosMatchId}`);
+    // Los jugadores de Lomeros se llaman "Jugador <N>" (dígito); los de Grupo Test
+    // se llaman "Jugador GT" — el patrón no debe aparecer en la página 404.
+    await expect(page.getByText(/Jugador \d/)).toHaveCount(0);
   });
 });

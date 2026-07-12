@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import { matchSets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { getDefaultGroupId } from '@/lib/auth/group-context';
+import { getGroupBySlug } from '@/lib/groups/resolve-slug';
 import { getMatchInGroup } from '@/lib/matches/queries';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { resolvePageContext } from '@/lib/auth/page-context';
@@ -10,14 +10,19 @@ import { MatchDetailBody } from '@/components/pages/match-detail-body';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const groupId = await getDefaultGroupId();
-  const match = await getMatchInGroup(groupId, id);
+// Réplica del generateMetadata de la raíz, resolviendo el grupo directamente por
+// slug (sin pasar por resolvePageContext, que además dispararía notFound() aquí
+// en metadata — Next no lo permite de forma fiable en esta fase).
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; id: string }> }): Promise<Metadata> {
+  const { slug, id } = await params;
+  const group = await getGroupBySlug(slug);
+  if (!group) return { title: 'Partido no encontrado · LPT' };
+
+  const match = await getMatchInGroup(group.id, id);
   if (!match) {
     return { title: 'Partido no encontrado · LPT' };
   }
-  const allPlayers = await listAllPlayersInGroup(groupId);
+  const allPlayers = await listAllPlayersInGroup(group.id);
   const pMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
 
   const t1 = `${pMap[match.team1Player1Id]?.name ?? '?'}/${pMap[match.team1Player2Id]?.name ?? '?'}`;
@@ -32,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const setsStr = sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' / ');
     const description = `Resultado del partido del ${match.date}${match.location ? ` en ${match.location}` : ''}.`;
     return {
-      title: `${t1} vs ${t2} · ${setsStr} — LPT`,
+      title: `${t1} vs ${t2} · ${setsStr} — ${group.name}`,
       description,
       openGraph: {
         title: `${t1} vs ${t2} · ${setsStr}`,
@@ -47,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ? `Partido del ${match.date} no completado por lesión de ${injured}.`
       : `Partido del ${match.date} no completado por lesión.`;
     return {
-      title: `${t1} vs ${t2} · 🤕 No terminado — LPT`,
+      title: `${t1} vs ${t2} · 🤕 No terminado — ${group.name}`,
       description,
       openGraph: {
         title: `${t1} vs ${t2} · No terminado por lesión`,
@@ -58,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const description = `Partido programado${match.location ? ` en ${match.location}` : ''}.`;
   return {
-    title: `${t1} vs ${t2} · ${match.date} — LPT`,
+    title: `${t1} vs ${t2} · ${match.date} — ${group.name}`,
     description,
     openGraph: {
       title: `${t1} vs ${t2} · ${match.date}`,
@@ -67,8 +72,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const ctx = await resolvePageContext();
+export default async function GroupMatchDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string; id: string }>;
+}) {
+  const { slug, id } = await params;
+  const ctx = await resolvePageContext(slug);
   return <MatchDetailBody ctx={ctx} matchId={id} />;
 }
