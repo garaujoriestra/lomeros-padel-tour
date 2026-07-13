@@ -1,5 +1,6 @@
 import { permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/shared/navbar';
+import { BottomNav } from '@/components/shared/bottom-nav';
 import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
 import { getSwitcherGroups } from '@/lib/auth/group-switcher';
 import { hasSeasonPass, isPaidGroup } from '@/lib/billing/paid';
@@ -51,16 +52,19 @@ export default async function GroupLayout({
           : undefined
       }
     >
+      {/* Sin prop `links`: Navbar los calcula de `basePath` en cliente (ver comentario
+          en navbar.tsx) — pasarlos ya resueltos desde aquí (Server Component) rompería
+          la serialización RSC de los iconos. Paridad 2b: el grupo tiene nav completa. */}
       <Navbar
         session={navSessionFromContext(ctx)}
         basePath={ctx.basePath}
-        links={[]}
         brand={brand}
         switcher={await getSwitcherGroups(ctx.groupId)}
       />
       <main className="screen">
         <div className="lpt-container">{children}</div>
       </main>
+      <BottomNav basePath={ctx.basePath} />
       {!paid && (
         <footer className="muted" style={{ textAlign: 'center', fontSize: 12, padding: '12px 0 20px' }}>
           hecho con Lomeros Padel Tour

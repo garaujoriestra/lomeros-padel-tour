@@ -7,8 +7,9 @@ import type { PageContext } from '@/lib/auth/page-context';
 
 // Cuerpo compartido de /me (raíz) y /g/[slug]/me. Recibe el contexto de página resuelto.
 // - Sin ficha en el grupo → mensaje de bienvenida (no redirect-loop; el edge ya exigió sesión).
-// - Con ficha → perfil del jugador EN ese grupo. Cartera de La Timba y edición solo en raíz
-//   (rutas /me/tokens y /me/edit no existen bajo /g/[slug]; La Timba es modo test solo-Lomeros).
+// - Con ficha → perfil del jugador EN ese grupo, con cartera de La Timba y edición de
+//   perfil bajo el mismo basePath (paridad 2b, Task 6: /me/tokens y /me/edit existen
+//   también bajo /g/[slug]).
 export async function MeBody({ ctx }: { ctx: PageContext }) {
   const { player, groupId, basePath } = ctx;
   const isRoot = basePath === '';
@@ -39,13 +40,11 @@ export async function MeBody({ ctx }: { ctx: PageContext }) {
 
   return (
     <div className="space-y-6">
-      <PlayerProfileView data={data} editable={isRoot} />
-      {isRoot && (
-        <Link href="/me/tokens" className="lpt-card flex items-center justify-between" style={{ padding: 14 }}>
-          <span>🪙 Mi cartera de La Timba</span>
-          <span className="font-semibold">{player.tokenBalance} tk →</span>
-        </Link>
-      )}
+      <PlayerProfileView data={data} editable basePath={basePath} />
+      <Link href={`${basePath}/me/tokens`} className="lpt-card flex items-center justify-between" style={{ padding: 14 }}>
+        <span>🪙 Mi cartera de La Timba</span>
+        <span className="font-semibold">{player.tokenBalance} tk →</span>
+      </Link>
       <PushNotificationsToggle />
     </div>
   );

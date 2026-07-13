@@ -22,13 +22,15 @@ interface EditResultFormProps {
   winnerTeam: 1 | 2;
   initialSets: { team1Games: number; team2Games: number }[];
   initialPhotoUrl: string | null;
+  groupSlug?: string;
 }
 
 // Corrección de un resultado ya registrado: juegos (sin cambiar el ganador) y foto.
 export function EditResultForm({
-  matchId, date, location, team1Name, team2Name, winnerTeam, initialSets, initialPhotoUrl,
+  matchId, date, location, team1Name, team2Name, winnerTeam, initialSets, initialPhotoUrl, groupSlug,
 }: EditResultFormProps) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -108,6 +110,7 @@ export function EditResultForm({
     setLoading(true);
 
     const payload: Record<string, unknown> = {};
+    if (groupSlug) payload.g = groupSlug;
     if (setsDirty) {
       payload.sets = sets.map((s, i) => ({
         setNumber: i + 1,
@@ -125,7 +128,7 @@ export function EditResultForm({
 
     if (res.ok) {
       toast.success('Resultado corregido ✓');
-      router.push('/admin/matches');
+      router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -268,7 +271,7 @@ export function EditResultForm({
         >
           {loading ? 'Guardando...' : '✓ Guardar corrección'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push(`${basePath}/admin/matches`)}>
           Cancelar
         </Button>
       </div>

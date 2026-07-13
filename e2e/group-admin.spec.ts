@@ -7,14 +7,17 @@ import { test, expect } from '@playwright/test';
 test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => {
   test.use({ storageState: 'e2e/.auth/gt-admin.json' });
 
-  test('dashboard 200 con contadores; sin acciones a sub-rutas diferidas', async ({ page }) => {
+  test('dashboard 200 con contadores y acciones rápidas bajo basePath (Tarea 2b)', async ({ page }) => {
     const res = await page.goto('/g/grupo-test/admin');
     expect(res?.status()).toBe(200);
     // .first(): el dev server de Next puede dejar una copia <div hidden> de la página
     // en el DOM (flake documentado) que rompe el strict mode sin afectar al usuario.
     await expect(page.getByRole('heading', { name: 'Administración' }).first()).toBeVisible();
     await expect(page.getByText('Partidos jugados', { exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Añadir jugador|Registrar partido|Notificaciones/ })).toHaveCount(0);
+    // Paridad completa (Tarea 2b): las acciones rápidas ya existen bajo grupo, con basePath.
+    await expect(page.locator('a[href="/g/grupo-test/admin/players/new"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/admin/matches/new"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/admin/notifications"]').first()).toBeVisible();
   });
 
   test('players lista jugadores del grupo, no de Lomeros; con alta/edición (Task 10)', async ({ page }) => {
@@ -39,7 +42,7 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     expect(del.ok()).toBeTruthy();
   });
 
-  test('matches lista el partido del grupo; con nuevo/resultado, sin lados/editar', async ({ page }) => {
+  test('matches lista el partido del grupo; con nuevo/resultado/lados, bajo basePath', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/matches');
     await expect(page.getByRole('heading', { name: 'Partidos', exact: true })).toBeVisible();
     await expect(page.getByText('Jugador GT', { exact: false }).first()).toBeVisible();
@@ -47,8 +50,9 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     await expect(page.getByRole('link', { name: 'Partido', exact: true }).first()).toBeVisible();
     // gt-match1 está scheduled: su botón de Resultado debe existir.
     await expect(page.getByRole('link', { name: 'Resultado' }).first()).toBeVisible();
-    // Lados y Editar siguen diferidos, solo-raíz.
-    await expect(page.getByRole('link', { name: /^(Lados|Editar)$/ })).toHaveCount(0);
+    // Task 9: Lados ya vive bajo /g/[slug]/admin también (gt-match1 está scheduled,
+    // sin Editar todavía — ese requiere un partido completado; ver group-parity.spec.ts).
+    await expect(page.locator('a[href="/g/grupo-test/admin/matches/gt-match1/sides"]')).toBeVisible();
   });
 });
 

@@ -9,9 +9,12 @@ test.describe('paridad · /g/[slug]/me · jugador del grupo', () => {
     await expect(page.getByRole('heading', { name: 'Jugador GT', exact: true })).toBeVisible();
   });
 
-  test('no muestra la cartera de La Timba bajo grupo', async ({ page }) => {
+  test('muestra la cartera de La Timba bajo grupo, con enlace a /g/[slug]/me/tokens', async ({ page }) => {
+    // Paridad 2b (Task 6): /me/tokens y /me/edit existen también bajo /g/[slug],
+    // así que el enlace de la cartera ya no se gatea a la raíz (ver group-parity.spec.ts).
     await page.goto('/g/grupo-test/me');
-    await expect(page.getByText('Mi cartera de La Timba')).toHaveCount(0);
+    await expect(page.getByText('Mi cartera de La Timba')).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/me/tokens"]')).toBeVisible();
   });
 });
 

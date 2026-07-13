@@ -2,14 +2,15 @@
 import { useState } from 'react';
 import { Share2 } from 'lucide-react';
 
-interface Props { id: string; kind: 'pozo' | 'torneo' }
+interface Props { id: string; kind: 'pozo' | 'torneo'; groupSlug?: string }
 
-export function ShareEventButton({ id, kind }: Props) {
+export function ShareEventButton({ id, kind, groupSlug }: Props) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function share() {
-    const url = `${window.location.origin}${kind === 'pozo' ? '/pozos/' : '/torneos/'}${id}`;
+    const basePath = groupSlug ? `/g/${groupSlug}` : '';
+    const url = `${window.location.origin}${basePath}${kind === 'pozo' ? '/pozos/' : '/torneos/'}${id}`;
     setError(null);
     try {
       if (navigator.share) {

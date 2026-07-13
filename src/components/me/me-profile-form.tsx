@@ -11,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MeProfileFormProps {
   initial: { name: string; nickname: string | null; avatarUrl: string | null; isLeftHanded: boolean | null };
+  groupSlug?: string;
 }
 
-export function MeProfileForm({ initial }: MeProfileFormProps) {
+export function MeProfileForm({ initial, groupSlug }: MeProfileFormProps) {
   const router = useRouter();
+  const basePath = groupSlug ? `/g/${groupSlug}` : '';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -50,11 +52,11 @@ export function MeProfileForm({ initial }: MeProfileFormProps) {
     const res = await fetch('/api/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, ...(groupSlug ? { g: groupSlug } : {}) }),
     });
     if (res.ok) {
       toast.success('Perfil actualizado');
-      router.push('/me');
+      router.push(`${basePath}/me`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -129,7 +131,7 @@ export function MeProfileForm({ initial }: MeProfileFormProps) {
             <Button type="submit" disabled={loading || uploading} className="min-h-11 px-4 text-sm">
               {loading ? 'Guardando...' : 'Guardar cambios'}
             </Button>
-            <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/me')}>
+            <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push(`${basePath}/me`)}>
               Cancelar
             </Button>
           </div>

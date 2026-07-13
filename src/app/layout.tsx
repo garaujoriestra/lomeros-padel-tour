@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/shared/theme-provider";
 import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { NotificationReminderGate } from "@/components/shared/notification-reminder-gate";
 import { SHIELD_PATH, crestInkMarkup } from "@/components/shared/crest-svg";
+import { resolvePageContext } from "@/lib/auth/page-context";
 import "./globals.css";
 
 // Splash de marca que se pinta al instante (estilos inline, sin esperar al CSS
@@ -59,11 +60,14 @@ export const viewport: Viewport = {
   themeColor: "#0c1715",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Root layout: no slug disponible aquí (envuelve TODAS las rutas, / y /g/[slug]
+  // por igual), así que resolver sin slug es legítimo — es la raíz de la app.
+  const ctx = await resolvePageContext();
   return (
     <html lang="es" className={`${archivo.variable} ${barlow.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
@@ -97,7 +101,10 @@ export default function RootLayout({
             mobileOffset={{ top: "calc(env(safe-area-inset-top) + 66px)" }}
           />
           <Suspense fallback={null}>
-            <NotificationReminderGate />
+            {/* hasPlayer se resuelve contra el grupo por defecto (root layout sin slug).
+                Con varios grupos, el gate correcto sería "ficha en CUALQUIER grupo";
+                hoy es inocuo (grupo único; la suscripción push es por usuario/global). */}
+            <NotificationReminderGate hasPlayer={!!ctx.player} />
           </Suspense>
         </ThemeProvider>
         <ServiceWorkerRegister />

@@ -15,7 +15,7 @@ export default async function AdminTimbaPage() {
     db.select().from(penalties).where(eq(penalties.status, 'pending')),
     db.select({ playerId: tokenLedger.playerId, reason: tokenLedger.reason })
       .from(tokenLedger).where(inArray(tokenLedger.reason, ['buyin', 'rebuy'])),
-    potEuros(),
+    potEuros(groupId),
   ]);
   const bankrupt = new Set(pendingPen.map((p) => p.playerId));
   const entered = new Set(entries.map((e) => e.playerId));

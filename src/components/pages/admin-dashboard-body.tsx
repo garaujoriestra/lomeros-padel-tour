@@ -7,11 +7,10 @@ import { InviteLinkCard } from '@/components/onboarding/invite-link-card';
 
 // Cuerpo compartido de /admin (raíz) y /g/[slug]/admin. El gating de rol lo hace el
 // layout correspondiente (session.role en raíz; ctx.role del grupo bajo /g/[slug]).
-// Bajo grupo se omiten las acciones/enlaces a sub-rutas diferidas del MVP
-// (players/new, matches/new, notifications) para no enlazar 404s.
+// Tras la paridad completa (Tarea 2b) todas las sub-rutas existen bajo grupo, así que
+// las acciones rápidas y los enlaces se muestran por igual con basePath.
 export async function AdminDashboardBody({ ctx }: { ctx: PageContext }) {
   const { groupId, basePath } = ctx;
-  const isRoot = basePath === '';
   const [playerCount, matchCount] = await Promise.all([
     countPlayersInGroup(groupId),
     countMatchesInGroup(groupId),
@@ -21,9 +20,7 @@ export async function AdminDashboardBody({ ctx }: { ctx: PageContext }) {
     { href: `${basePath}/admin/players`, icon: Users, label: 'Jugadores', desc: 'Gestionar el equipo y autorizar cuentas' },
     { href: `${basePath}/admin/matches`, icon: Swords, label: 'Partidos', desc: 'Ver, programar o registrar resultados' },
     { href: basePath || '/', icon: BarChart3, label: 'Dashboard público', desc: 'Rankings y estadísticas del tour' },
-    ...(isRoot
-      ? [{ href: '/admin/notifications', icon: Bell, label: 'Notificaciones', desc: 'Enviar avisos y ver quién las tiene activadas' }]
-      : []),
+    { href: `${basePath}/admin/notifications`, icon: Bell, label: 'Notificaciones', desc: 'Enviar avisos y ver quién las tiene activadas' },
   ];
 
   return (
@@ -45,16 +42,14 @@ export async function AdminDashboardBody({ ctx }: { ctx: PageContext }) {
         ))}
       </div>
 
-      {isRoot && (
-        <div className="flex flex-wrap gap-2.5">
-          <Link href="/admin/players/new" className="lpt-btn primary">
-            <UserPlus size={15} /> Añadir jugador
-          </Link>
-          <Link href="/admin/matches/new" className="lpt-btn">
-            <Swords size={15} /> Registrar partido
-          </Link>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2.5">
+        <Link href={`${basePath}/admin/players/new`} className="lpt-btn primary">
+          <UserPlus size={15} /> Añadir jugador
+        </Link>
+        <Link href={`${basePath}/admin/matches/new`} className="lpt-btn">
+          <Swords size={15} /> Registrar partido
+        </Link>
+      </div>
 
       <div className="lpt-card">
         {quickLinks.map((q) => {

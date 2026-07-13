@@ -7,9 +7,10 @@ interface Props {
   tournamentId: string;
   participants: Participant[];
   initialPairs: [string, string][];
+  groupSlug?: string;
 }
 
-export function PairsEditor({ tournamentId, participants, initialPairs }: Props) {
+export function PairsEditor({ tournamentId, participants, initialPairs, groupSlug }: Props) {
   const router = useRouter();
   const [pairs, setPairs] = useState<[string, string][]>(initialPairs);
   const [a, setA] = useState('');
@@ -35,7 +36,7 @@ export function PairsEditor({ tournamentId, participants, initialPairs }: Props)
     setSaving(true); setError(null);
     const res = await fetch(`/api/tournaments/${tournamentId}/pairs`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pairs }),
+      body: JSON.stringify({ ...(groupSlug && { g: groupSlug }), pairs }),
     });
     if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || 'Error'); setSaving(false); return; }
     setSaving(false); setSaved(true);

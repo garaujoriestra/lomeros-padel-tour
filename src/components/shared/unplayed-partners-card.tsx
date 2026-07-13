@@ -10,9 +10,10 @@ interface PartnerLike {
 interface UnplayedPartnersCardProps {
   unplayed: PartnerLike[];
   totalCandidates: number;
+  basePath?: string;
 }
 
-export function UnplayedPartnersCard({ unplayed, totalCandidates }: UnplayedPartnersCardProps) {
+export function UnplayedPartnersCard({ unplayed, totalCandidates, basePath = '' }: UnplayedPartnersCardProps) {
   if (unplayed.length === 0) return null;
 
   return (
@@ -23,7 +24,7 @@ export function UnplayedPartnersCard({ unplayed, totalCandidates }: UnplayedPart
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {unplayed.map((p) => (
-          <Link key={p.id} href={`/players/${p.id}`} className="lpt-badge" style={{ padding: '4px 10px 4px 4px' }}>
+          <Link key={p.id} href={`${basePath}/players/${p.id}`} className="lpt-badge" style={{ padding: '4px 10px 4px 4px' }}>
             <LptAvatar player={p} size={20} />
             {p.name}
           </Link>
