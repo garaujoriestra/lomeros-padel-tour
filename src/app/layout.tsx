@@ -47,7 +47,6 @@ const barlow = Barlow_Condensed({
 export const metadata: Metadata = {
   title: {
     default: PLATFORM_NAME,
-    template: `%s · ${PLATFORM_NAME}`,
   },
   description: "Ranking Elo, partidos y apuestas de tu grupo de pádel",
   appleWebApp: {

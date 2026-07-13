@@ -9,6 +9,7 @@ import { LptAvatar, type LptPlayer } from '@/components/lpt/ui';
 import type { SwitcherGroup } from '@/lib/auth/group-switcher';
 import { GroupSwitcher } from './group-switcher';
 import Crest from './crest';
+import { LOMEROS_GROUP_NAME } from '@/lib/groups/constants';
 
 export interface NavSession {
   role: 'admin' | 'player' | 'super_admin';
@@ -84,9 +85,9 @@ export function Navbar({
               style={{ borderRadius: 8, objectFit: 'cover' }}
             />
           ) : (
-            <Crest size={34} className="brand-crest" title={brand?.name ?? 'Lomeros Padel Tour'} wordmark={false} />
+            <Crest size={34} className="brand-crest" title={brand?.name ?? LOMEROS_GROUP_NAME} wordmark={false} />
           )}
-          <span className="brand-name">{brand?.name ?? 'Lomeros Padel Tour'}</span>
+          <span className="brand-name">{brand?.name ?? LOMEROS_GROUP_NAME}</span>
           {brand?.star && (
             <span role="img" title="Tour Oficial" aria-label="Tour Oficial" style={{ fontSize: 14 }}>
               ⭐
