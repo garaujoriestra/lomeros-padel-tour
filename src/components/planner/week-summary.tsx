@@ -1,5 +1,6 @@
 import { formatMin } from '@/lib/planner/slots';
 import type { DaySegment } from '@/lib/planner/summary';
+import { EmptyState } from '@/components/shared/empty-state';
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -11,7 +12,11 @@ export function WeekSummary({ dates, summary }: { dates: string[]; summary: DayS
     <section className="section">
       <h2 className="sec-title" style={{ fontSize: 17, marginBottom: 8 }}>Quién puede esta semana</h2>
       {!hasAny ? (
-        <p className="muted small">Nadie ha marcado disponibilidad todavía. Pinta la tuya y da el primer paso.</p>
+        <EmptyState
+          emoji="🗓️"
+          title="Aún no hay disponibilidad"
+          hint="Cuando los jugadores marquen sus horas, verás aquí quién puede jugar esta semana."
+        />
       ) : (
         <div className="space-y-3">
           {summary.map((segments, day) =>
