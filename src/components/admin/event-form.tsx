@@ -1,8 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/empty-state';
 
 interface RosterPlayer { id: string; name: string; nickname: string | null }
 
@@ -32,6 +35,21 @@ export function EventForm({ kind, roster, groupSlug }: { kind: 'pozo' | 'torneo'
   }
   function removeCourt(i: number) {
     setCourts((cs) => cs.filter((_, j) => j !== i));
+  }
+
+  if (roster.length === 0) {
+    return (
+      <EmptyState
+        emoji="👤"
+        title="Aún no hay jugadores"
+        hint="Añade jugadores al grupo antes de crear un pozo o torneo."
+        action={
+          <Link href={`${basePath}/admin/players/new`}>
+            <Button>Añadir jugador</Button>
+          </Link>
+        }
+      />
+    );
   }
 
   function buildConfig() {
