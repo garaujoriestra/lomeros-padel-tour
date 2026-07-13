@@ -16,7 +16,12 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      # npm install (no npm ci): el lock arrastra una inconsistencia preexistente en
+      # una dep OPCIONAL wasm (@rolldown/binding-wasm32-wasi → @emnapi/core) que el
+      # npm estricto de Node 24 rechaza en `npm ci`. `npm install` la reconcilia e
+      # instala las opcionales que sí hacen falta (esbuild de vitest, etc.) — es lo
+      # mismo que hace el build de Vercel, que despliega sin problema.
+      - run: npm install --no-audit --no-fund
 
       - run: npx tsc --noEmit
 
