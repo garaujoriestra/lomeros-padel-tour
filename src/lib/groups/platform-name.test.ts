@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PLATFORM_NAME } from './constants';
 
@@ -27,6 +27,29 @@ describe('marca de plataforma neutralizada', () => {
 
   it.each(PLATFORM_FILES)('%s no contiene el literal «Lomeros»', (file) => {
     // Case-sensitive: los comentarios con «/g/lomeros» (minúscula) son legítimos.
+    expect(repoFile(file)).not.toMatch(/Lomeros/);
+  });
+});
+
+// Directorios de PLATAFORMA creados en la landing: NINGÚN .tsx debe mencionar «Lomeros».
+const PLATFORM_DIRS = ['src/app/padelo', 'src/app/legal', 'src/components/marketing'];
+
+function walkTsx(relDir: string): string[] {
+  const abs = fileURLToPath(new URL(`../../../${relDir}`, import.meta.url));
+  const out: string[] = [];
+  for (const entry of readdirSync(abs)) {
+    const rel = `${relDir}/${entry}`;
+    const absEntry = fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
+    if (statSync(absEntry).isDirectory()) out.push(...walkTsx(rel));
+    else if (entry.endsWith('.tsx') || entry.endsWith('.ts')) out.push(rel);
+  }
+  return out;
+}
+
+describe('superficies de la landing sin literal «Lomeros»', () => {
+  const files = PLATFORM_DIRS.flatMap(walkTsx);
+  it('hay ficheros que comprobar', () => expect(files.length).toBeGreaterThan(0));
+  it.each(files)('%s no contiene el literal «Lomeros»', (file) => {
     expect(repoFile(file)).not.toMatch(/Lomeros/);
   });
 });
