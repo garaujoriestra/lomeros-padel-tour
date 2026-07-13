@@ -12,7 +12,7 @@ export default function PadeloLayout({ children }: { children: React.ReactNode }
             <Crest size={26} wordmark={false} title={PLATFORM_NAME} />
             <span className="display" style={{ fontSize: 20 }}>{PLATFORM_NAME}</span>
           </Link>
-          <Link className="lpt-btn primary" href="/crear-grupo" style={{ minHeight: 40 }}>Crea tu grupo</Link>
+          <Link className="lpt-btn primary" href="/crear-grupo">Crea tu grupo</Link>
         </div>
       </header>
       <main style={{ flex: 1 }}>{children}</main>

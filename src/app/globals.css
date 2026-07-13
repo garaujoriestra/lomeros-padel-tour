@@ -695,6 +695,9 @@
   --ink-2: oklch(0.82 0.02 150);
   --ink-3: oklch(0.62 0.025 170);
   --loss-text: oklch(0.66 0.17 25);
+  /* Verde-victoria COMO TEXTO: subido en L para superar AA sobre los tintes
+     verdes/lima de las filas destacadas (mismo patrón que --loss vs --loss-text). */
+  --mkt-win-text: oklch(0.72 0.17 150);
   --acc-text: var(--acc);
   --card-border: 1px solid var(--line);
   --card-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px oklch(0 0 0 / 0.25);
@@ -776,9 +779,12 @@
 .mkt-name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mkt-elo { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
 .mkt-delta { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; min-width: 46px; justify-content: flex-end; }
-.mkt-delta.up { color: var(--win); }
+.mkt-delta.up { color: var(--mkt-win-text); }
 .mkt-delta.down { color: var(--loss-text); }
-.mkt-row--lead { position: relative; background: color-mix(in oklab, var(--acc) 12%, transparent); }
+/* Líder: la identidad la dan el filete lima + los números lima (abajo). El fondo
+   se mantiene NEUTRO-elevado (no lima) para que el delta verde y el texto sigan
+   siendo AA — un lavado lima haría ilegible el verde encima (verde sobre lima). */
+.mkt-row--lead { position: relative; background: color-mix(in oklab, var(--surface-2) 65%, var(--surface)); }
 .mkt-row--lead::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--acc); }
 .mkt-row--lead .mkt-pos, .mkt-row--lead .mkt-elo { color: var(--acc); }
 .mkt-board__foot {
@@ -835,10 +841,10 @@
 .mkt-team + .mkt-team { border-top: 1px solid var(--line); }
 .mkt-team--win { background: color-mix(in oklab, var(--win) 9%, transparent); }
 .mkt-team__names { font-weight: 800; font-size: 16px; }
-.mkt-team__meta { color: var(--ink-3); font-size: 12px; margin-top: 3px; display: flex; align-items: center; gap: 8px; }
+.mkt-team__meta { color: var(--ink-2); font-size: 12px; margin-top: 3px; display: flex; align-items: center; gap: 8px; }
 .mkt-sets { display: flex; gap: 8px; }
 .mkt-set { width: 34px; height: 42px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.mkt-set--w { background: color-mix(in oklab, var(--win) 18%, transparent); border-color: color-mix(in oklab, var(--win) 32%, transparent); color: var(--win); }
+.mkt-set--w { background: color-mix(in oklab, var(--win) 18%, transparent); border-color: color-mix(in oklab, var(--win) 32%, transparent); color: var(--mkt-win-text); }
 .mkt-match__foot { padding: 12px 18px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; background: color-mix(in oklab, var(--surface-2) 30%, transparent); }
 
 /* ── 5 · Planificador (rejilla de disponibilidad) ── */
@@ -897,9 +903,15 @@
 .mkt-footer { border-top: 1px solid var(--line); background: color-mix(in oklab, var(--surface) 30%, transparent); }
 .mkt-footer__in { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; justify-content: space-between; padding: 30px 0; }
 .mkt-footer__brand { display: flex; align-items: center; gap: 12px; }
-.mkt-footer__nav { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
-.mkt-footer__nav a { color: var(--ink-2); font-size: 13.5px; transition: color 0.15s ease; }
+.mkt-footer__nav { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-block: -10px; }
+/* Target táctil ≥44px sin inflar el layout (padding + margen negativo compensado). */
+.mkt-footer__nav a { display: inline-flex; align-items: center; min-height: 44px; padding-block: 10px; color: var(--ink-2); font-size: 13.5px; transition: color 0.15s ease; }
 .mkt-footer__nav a:hover { color: var(--ink); }
+.mkt-footer__nav a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
+
+/* "Nuevo" (badge global .lpt-badge.win) sobre el escenario oscuro: el verde-texto
+   base queda por debajo de AA a 11px; en la landing se sube al verde-texto legible. */
+.mkt-page .lpt-badge.win { color: var(--mkt-win-text); }
 
 /* ── Legal (misma escena, lectura tranquila) ── */
 .mkt-legal { line-height: 1.65; }
