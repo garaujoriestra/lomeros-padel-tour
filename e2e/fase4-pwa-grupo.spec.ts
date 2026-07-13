@@ -59,4 +59,9 @@ test.describe('PWA · manifest por grupo', () => {
     expect(icon512.ok()).toBeTruthy();
     expect(icon512.headers()['content-type']).toContain('image/png');
   });
+
+  test('icono de slug inexistente → 404', async ({ request }) => {
+    const res = await request.get('/g/no-existe-xyz/icon');
+    expect(res.status()).toBe(404);
+  });
 });

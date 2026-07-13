@@ -12,6 +12,7 @@ describe('buildGroupManifest', () => {
     expect(m.id).toBe('/');
     expect(m.scope).toBe('/');
     expect(m.theme_color).toBe(PLATFORM_BG);
+    expect(m.background_color).toBe('#0c1715');
     expect(m.icons?.map((i) => i.src)).toEqual(['/icon', '/icon-512', '/icon-maskable']);
   });
 
@@ -25,6 +26,7 @@ describe('buildGroupManifest', () => {
     expect(m.start_url).toBe('/g/cracks');
     expect(m.scope).toBe('/');
     expect(m.theme_color).toBe('#ff3366');
+    expect(m.background_color).toBe('#ff3366');
     expect(m.icons?.map((i) => i.src)).toEqual(['/g/cracks/icon', '/g/cracks/icon-512', '/g/cracks/icon-maskable']);
     expect(m.icons?.find((i) => i.purpose === 'maskable')?.src).toBe('/g/cracks/icon-maskable');
   });

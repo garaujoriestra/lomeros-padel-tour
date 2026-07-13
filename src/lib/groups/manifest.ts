@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { isValidAccentColor } from './branding';
+import { hasCustomBranding, isValidAccentColor } from './branding';
 
 const PLATFORM_BG = '#0c1715';
 
@@ -23,18 +23,21 @@ export function buildGroupManifest({
 }): MetadataRoute.Manifest {
   const start = basePath || '/';
   const accent = paid && isValidAccentColor(brand.accentColor) ? brand.accentColor : null;
-  const hasCustomBranding = paid && (!!accent || !!brand.logoUrl);
-  const iconBase = hasCustomBranding ? basePath : '';
+  const branded = hasCustomBranding(brand, paid);
+  const iconBase = branded ? basePath : '';
   return {
     id: start,
     name: brand.name,
     short_name: brand.name,
     description: `Ranking Elo, partidos y apuestas de ${brand.name}`,
     start_url: start,
+    // scope '/' (no basePath): la app tiene conmutador de grupos y rutas cross-grupo
+    // (/crear-grupo, /g/otro). Un scope /g/<slug> echaría al navegador del sistema al
+    // cambiar de grupo. La identidad del grupo va por id/start_url/name/icono, no por scope.
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: PLATFORM_BG,
+    background_color: accent ?? PLATFORM_BG,
     theme_color: accent ?? PLATFORM_BG,
     icons: [
       { src: `${iconBase}/icon`, sizes: '192x192', type: 'image/png' },

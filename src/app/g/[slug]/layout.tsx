@@ -5,7 +5,7 @@ import { BottomNav } from '@/components/shared/bottom-nav';
 import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
 import { getSwitcherGroups } from '@/lib/auth/group-switcher';
 import { hasSeasonPass, isPaidGroup } from '@/lib/billing/paid';
-import { isDarkColor, isValidAccentColor } from '@/lib/groups/branding';
+import { hasCustomBranding, isDarkColor, isValidAccentColor } from '@/lib/groups/branding';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 export const dynamic = 'force-dynamic';
@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const ctx = await resolvePageContext(slug);
   const paid = isPaidGroup(ctx.group);
-  const hasCustomBranding = paid && (isValidAccentColor(ctx.group.accentColor) || !!ctx.group.logoUrl);
+  const branded = hasCustomBranding(ctx.group, paid);
   return {
     title: { default: ctx.group.name, template: '%s' },
     manifest: `/g/${slug}/manifest.webmanifest`,
-    ...(hasCustomBranding ? { icons: { apple: `/g/${slug}/apple-icon` } } : {}),
+    ...(branded ? { icons: { apple: `/g/${slug}/apple-icon` } } : {}),
   };
 }
 

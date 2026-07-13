@@ -50,11 +50,15 @@ buildGroupManifest({ brand: BrandInput; basePath: '' | `/g/${string}`; paid: boo
 
 Produce:
 - `name` / `short_name` = `brand.name`.
-- `id` / `start_url` / `scope` = `basePath || '/'` (raíz para el grupo por defecto,
-  `/g/<slug>` para el resto → la app instalada ES el espacio del grupo).
+- `id` / `start_url` = `basePath || '/'` (raíz para el grupo por defecto, `/g/<slug>` para
+  el resto → la app instalada ES el espacio del grupo).
+- `scope` = **siempre `'/'`** (no `basePath`): la app tiene conmutador de grupos y rutas
+  cross-grupo (`/crear-grupo`, `/g/otro`); un scope `/g/<slug>` echaría al navegador del
+  sistema al cambiar de grupo. La identidad del grupo va por `id`/`start_url`/`name`/icono,
+  no por `scope`.
 - `display: 'standalone'`, `orientation: 'portrait'`.
 - `theme_color` / `background_color` = `accent` si `paid && isValidAccentColor(accentColor)`,
-  si no `'#0c1715'` (verde profundo de plataforma).
+  si no `'#0c1715'` (verde profundo de plataforma). Mismo gating para ambos.
 - `icons`: si `hasCustomBranding = paid && (isValidAccentColor(accentColor) || !!logoUrl)`
   → apunta a las rutas de icono del grupo (`${basePath}/icon`, `/icon-512`,
   `/icon-maskable`); si no → rutas de plataforma (`/icon`, `/icon-512`, `/icon-maskable`) —
@@ -108,13 +112,18 @@ request, así que no hay doble fetch.
 
 Rutas nuevas bajo `src/app/g/[slug]/`:
 - `icon/route.tsx` (192×192), `icon-512/route.tsx` (512), `icon-maskable/route.tsx` (512,
-  con safe-zone), `apple-icon/route.tsx` (180).
-- Cada una: resuelve el grupo por slug; si `paid && (accent||logo)`, renderiza con
-  `ImageResponse` un **monograma** (1ª letra de `group.name`, tipografía condensada,
-  `--on-acc` legible según `isDarkColor(accent)`) centrado sobre el **color de acento** (o el
-  logo del grupo si se embebe limpio); si no cumple branding, cae al **escudo de plataforma**
-  (reutiliza `crestDataUri`, mismo render que `/icon` actual). La variante maskable añade
-  padding de safe-zone (~10%).
+  con safe-zone), `apple-icon/route.tsx` (180). Todas delegan en `renderGroupIcon(slug, canvas,
+  safe)` (`src/lib/og/group-icon.tsx`), que devuelve 404 si el slug no existe.
+- Si `hasCustomBranding(group, paid)` es falso, cae al **escudo de plataforma** (reutiliza
+  `crestDataUri`, mismo render que `/icon` actual).
+- Si es true y el grupo tiene `logoUrl`: **se intenta embeber el logo** — `fetch(logoUrl)`,
+  y si responde OK se convierte a `data:` URI (base64) y se renderiza centrado con
+  `ImageResponse` sobre el **color de acento** (o `#0c1715` si no hay acento). Es
+  best-effort: cualquier fallo de red/formato cae silenciosamente al monograma.
+- Monograma (fallback, o cuando no hay `logoUrl`): 1ª letra de `group.name` (por grafema,
+  para no partir pares subrogados), tipografía condensada, color de texto legible según
+  `isDarkColor(accent)`, centrado sobre el color de acento (o `#0c1715`).
+- La variante maskable añade padding de safe-zone (~10%) en ambos casos (logo y monograma).
 
 ---
 
