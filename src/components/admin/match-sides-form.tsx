@@ -17,10 +17,12 @@ interface MatchSidesFormProps {
     team2Player1Side: string | null;
     team2Player2Side: string | null;
   };
+  groupSlug?: string;
 }
 
 export function MatchSidesForm(props: MatchSidesFormProps) {
   const router = useRouter();
+  const basePath = props.groupSlug ? `/g/${props.groupSlug}` : '';
   const [loading, setLoading] = useState(false);
   const [sides, setSides] = useState({
     team1Player1Side: props.initialSides.team1Player1Side ?? '',
@@ -36,6 +38,7 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        ...(props.groupSlug && { g: props.groupSlug }),
         team1Player1Side: sides.team1Player1Side || null,
         team1Player2Side: sides.team1Player2Side || null,
         team2Player1Side: sides.team2Player1Side || null,
@@ -44,7 +47,7 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
     });
     if (res.ok) {
       toast.success('Lados actualizados ✓');
-      router.push('/admin/matches');
+      router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
       const data = await res.json();
@@ -84,7 +87,7 @@ export function MatchSidesForm(props: MatchSidesFormProps) {
         <Button type="submit" disabled={loading} className="flex-1 min-h-11 px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
           {loading ? 'Guardando...' : '✓ Guardar lados'}
         </Button>
-        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push('/admin/matches')}>
+        <Button type="button" variant="outline" className="min-h-11 px-4 text-sm" onClick={() => router.push(`${basePath}/admin/matches`)}>
           Cancelar
         </Button>
       </div>

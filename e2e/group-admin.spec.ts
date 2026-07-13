@@ -39,7 +39,7 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     expect(del.ok()).toBeTruthy();
   });
 
-  test('matches lista el partido del grupo; con nuevo/resultado, sin lados/editar', async ({ page }) => {
+  test('matches lista el partido del grupo; con nuevo/resultado/lados, bajo basePath', async ({ page }) => {
     await page.goto('/g/grupo-test/admin/matches');
     await expect(page.getByRole('heading', { name: 'Partidos', exact: true })).toBeVisible();
     await expect(page.getByText('Jugador GT', { exact: false }).first()).toBeVisible();
@@ -47,8 +47,9 @@ test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => 
     await expect(page.getByRole('link', { name: 'Partido', exact: true }).first()).toBeVisible();
     // gt-match1 está scheduled: su botón de Resultado debe existir.
     await expect(page.getByRole('link', { name: 'Resultado' }).first()).toBeVisible();
-    // Lados y Editar siguen diferidos, solo-raíz.
-    await expect(page.getByRole('link', { name: /^(Lados|Editar)$/ })).toHaveCount(0);
+    // Task 9: Lados ya vive bajo /g/[slug]/admin también (gt-match1 está scheduled,
+    // sin Editar todavía — ese requiere un partido completado; ver group-parity.spec.ts).
+    await expect(page.locator('a[href="/g/grupo-test/admin/matches/gt-match1/sides"]')).toBeVisible();
   });
 });
 

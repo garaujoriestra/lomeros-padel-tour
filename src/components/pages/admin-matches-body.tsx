@@ -10,7 +10,7 @@ const smallBtn = { minHeight: 38, padding: '7px 13px', fontSize: 12.5 } as const
 
 // Cuerpo compartido de /admin/matches (raíz) y /g/[slug]/admin/matches.
 // Bajo grupo: nuevo partido y resultado ya viven en /g/[slug]/admin/matches/...
-// (Task 11); "Lados" y "Editar" siguen diferidas al MVP (solo-raíz).
+// (Task 11); "Lados" y "Editar" también, con basePath (Task 9, paridad 2b).
 // El borrado funciona vía API group-aware con ?g= explícito.
 export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
   const { groupId, basePath } = ctx;
@@ -79,11 +79,9 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
                       <Link href={`${basePath}/admin/matches/${match.id}/result`} className="lpt-btn primary" style={smallBtn}>
                         <ClipboardPen size={14} /> Resultado
                       </Link>
-                      {isRoot && (
-                        <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
-                          <RectangleVertical size={14} /> Lados
-                        </Link>
-                      )}
+                      <Link href={`${basePath}/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
+                        <RectangleVertical size={14} /> Lados
+                      </Link>
                       <DeleteMatchButton id={match.id} g={gSlug} />
                     </div>
                   </div>
@@ -107,16 +105,14 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
                       {meta(match)}
                       <div className="flex items-center gap-2">
                         {isInjury && <StatusPill status="injury_aborted" />}
-                        {isRoot && !isInjury && (
-                          <Link href={`/admin/matches/${match.id}/edit`} className="lpt-btn" style={smallBtn}>
+                        {!isInjury && (
+                          <Link href={`${basePath}/admin/matches/${match.id}/edit`} className="lpt-btn" style={smallBtn}>
                             <Pencil size={14} /> Editar
                           </Link>
                         )}
-                        {isRoot && (
-                          <Link href={`/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
-                            <RectangleVertical size={14} /> Lados
-                          </Link>
-                        )}
+                        <Link href={`${basePath}/admin/matches/${match.id}/sides`} className="lpt-btn" style={smallBtn}>
+                          <RectangleVertical size={14} /> Lados
+                        </Link>
                         <DeleteMatchButton id={match.id} g={gSlug} />
                       </div>
                     </div>

@@ -615,3 +615,67 @@ test.describe('paridad 2b · admin de avisos/premios/canjes/timba del grupo', ()
     }
   });
 });
+
+test.describe('paridad 2b · editar partido y lados del grupo', () => {
+  test.use({ storageState: 'e2e/.auth/gt-admin.json' });
+
+  // Partido efímero propio (gt-pl5..8, libres: gt-pl1..4 los ocupa gt-match1) en vez
+  // de mutar gt-match1: aunque los lados/edición no deberían afectar a gt-bet1/
+  // no-fuga-timba (son columnas propias del partido, no la apuesta), se prefiere no
+  // arriesgarlo. Se crea ya completado (POST con sets) para poder ejercer también
+  // Editar, que exige un partido con resultado registrado.
+  let matchId: string;
+
+  test.beforeAll(async () => {
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+    const created = await admin.post('/api/matches', {
+      data: {
+        g: 'grupo-test',
+        date: '2026-03-01',
+        team1Player1Id: 'gt-pl5',
+        team1Player2Id: 'gt-pl6',
+        team2Player1Id: 'gt-pl7',
+        team2Player2Id: 'gt-pl8',
+        sets: [
+          { setNumber: 1, team1Games: 6, team2Games: 2 },
+          { setNumber: 2, team1Games: 6, team2Games: 3 },
+        ],
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+    ({ id: matchId } = await created.json());
+    await admin.dispose();
+  });
+
+  test.afterAll(async () => {
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/gt-admin.json' });
+    await admin.delete(`/api/matches/${matchId}?g=grupo-test`);
+    await admin.dispose();
+  });
+
+  test('la lista de partidos muestra Lados y Editar con hrefs bajo /g/[slug]/admin', async ({ page }) => {
+    await page.goto('/g/grupo-test/admin/matches');
+    await expect(page.locator(`a[href="/g/grupo-test/admin/matches/${matchId}/sides"]`)).toBeVisible();
+    await expect(page.locator(`a[href="/g/grupo-test/admin/matches/${matchId}/edit"]`)).toBeVisible();
+    // gt-match1 (scheduled) también muestra Lados: el bloque de programados no está
+    // gateado a solo-completados.
+    await expect(page.locator('a[href="/g/grupo-test/admin/matches/gt-match1/sides"]')).toBeVisible();
+  });
+
+  test('asigna lados desde /g/grupo-test/admin/matches/<id>/sides y vuelve a la lista', async ({ page }) => {
+    await page.goto(`/g/grupo-test/admin/matches/${matchId}/sides`);
+    await expect(page.getByRole('heading', { name: 'Lados de pista' })).toBeVisible();
+    await page.locator('select').first().selectOption('drive');
+    await page.getByRole('button', { name: 'Guardar lados' }).click();
+    await expect(page).toHaveURL('/g/grupo-test/admin/matches');
+  });
+
+  test('edita el resultado desde /g/grupo-test/admin/matches/<id>/edit y vuelve a la lista', async ({ page }) => {
+    await page.goto(`/g/grupo-test/admin/matches/${matchId}/edit`);
+    await expect(page.getByRole('heading', { name: 'Corregir resultado' })).toBeVisible();
+    // Corrige el 2º set de 6-3 a 6-4: el ganador (equipo 1) no cambia.
+    await page.locator('input[type="number"]').nth(3).fill('4');
+    await page.getByRole('button', { name: 'Guardar corrección' }).click();
+    await expect(page).toHaveURL('/g/grupo-test/admin/matches');
+  });
+});
