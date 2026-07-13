@@ -89,3 +89,24 @@ test.describe('legal + footer', () => {
     await expect(page.getByRole('contentinfo').getByRole('link', { name: /términos/i })).toHaveAttribute('href', '/legal/terminos');
   });
 });
+
+test.describe('landing /padelo', () => {
+  test('hero y ambos CTAs enrutan bien', async ({ page }) => {
+    await page.goto('/padelo');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const crear = page.getByRole('link', { name: /crea tu grupo/i }).first();
+    await expect(crear).toHaveAttribute('href', '/crear-grupo');
+    await expect(page.getByRole('link', { name: /ver un tour en marcha/i }).first()).toHaveAttribute('href', '/');
+  });
+
+  test('la landing de plataforma NO contiene el literal «Lomeros»', async ({ page }) => {
+    await page.goto('/padelo');
+    const html = await page.content();
+    expect(html).not.toContain('Lomeros');
+  });
+
+  test('la raíz sigue siendo «Lomeros Padel Tour» (insignia intacta)', async ({ page }) => {
+    await page.goto('/');
+    expect(await page.content()).toContain('Lomeros');
+  });
+});
