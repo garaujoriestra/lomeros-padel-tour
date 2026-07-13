@@ -101,6 +101,9 @@ export default async function RootLayout({
             mobileOffset={{ top: "calc(env(safe-area-inset-top) + 66px)" }}
           />
           <Suspense fallback={null}>
+            {/* hasPlayer se resuelve contra el grupo por defecto (root layout sin slug).
+                Con varios grupos, el gate correcto sería "ficha en CUALQUIER grupo";
+                hoy es inocuo (grupo único; la suscripción push es por usuario/global). */}
             <NotificationReminderGate hasPlayer={!!ctx.player} />
           </Suspense>
         </ThemeProvider>

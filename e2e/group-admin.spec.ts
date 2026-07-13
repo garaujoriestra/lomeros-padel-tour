@@ -7,14 +7,17 @@ import { test, expect } from '@playwright/test';
 test.describe('paridad · /g/[slug]/admin · admin del grupo (gt-admin)', () => {
   test.use({ storageState: 'e2e/.auth/gt-admin.json' });
 
-  test('dashboard 200 con contadores; sin acciones a sub-rutas diferidas', async ({ page }) => {
+  test('dashboard 200 con contadores y acciones rápidas bajo basePath (Tarea 2b)', async ({ page }) => {
     const res = await page.goto('/g/grupo-test/admin');
     expect(res?.status()).toBe(200);
     // .first(): el dev server de Next puede dejar una copia <div hidden> de la página
     // en el DOM (flake documentado) que rompe el strict mode sin afectar al usuario.
     await expect(page.getByRole('heading', { name: 'Administración' }).first()).toBeVisible();
     await expect(page.getByText('Partidos jugados', { exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Añadir jugador|Registrar partido|Notificaciones/ })).toHaveCount(0);
+    // Paridad completa (Tarea 2b): las acciones rápidas ya existen bajo grupo, con basePath.
+    await expect(page.locator('a[href="/g/grupo-test/admin/players/new"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/admin/matches/new"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/g/grupo-test/admin/notifications"]').first()).toBeVisible();
   });
 
   test('players lista jugadores del grupo, no de Lomeros; con alta/edición (Task 10)', async ({ page }) => {

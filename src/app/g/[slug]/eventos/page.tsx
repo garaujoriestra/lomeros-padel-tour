@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // Réplica de (public)/eventos/page.tsx (34 líneas: por debajo del umbral de
 // extracción, se copia con sustituciones). `ctx.groupId` sustituye a
 // `getDefaultGroupId()`; `ctx.basePath` se enhebra a <EventCard> para que sus
-// hrefs (pozos/torneos) queden bajo el grupo — el destino aún 404 (Task 5).
+// hrefs (pozos/torneos) queden bajo el grupo (destino ya existente, Task 5).
 export default async function GroupEventosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await resolvePageContext(slug);

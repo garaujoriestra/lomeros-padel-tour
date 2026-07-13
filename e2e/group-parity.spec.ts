@@ -499,10 +499,13 @@ test.describe('paridad 2b · admin de avisos/premios/canjes/timba del grupo', ()
 
     test('el sidebar muestra Avisos, Premios, Canjes y Timba con hrefs bajo /g/grupo-test/admin', async ({ page }) => {
       await page.goto('/g/grupo-test/admin');
-      await expect(page.locator('a[href="/g/grupo-test/admin/notifications"]')).toBeVisible();
-      await expect(page.locator('a[href="/g/grupo-test/admin/rewards"]')).toBeVisible();
-      await expect(page.locator('a[href="/g/grupo-test/admin/redemptions"]')).toBeVisible();
-      await expect(page.locator('a[href="/g/grupo-test/admin/timba"]')).toBeVisible();
+      // Scope al <aside> del sidebar: el dashboard también enlaza Notificaciones
+      // como acción rápida (paridad 2b), así que a nivel de página habría 2 matches.
+      const sidebar = page.locator('aside');
+      await expect(sidebar.locator('a[href="/g/grupo-test/admin/notifications"]')).toBeVisible();
+      await expect(sidebar.locator('a[href="/g/grupo-test/admin/rewards"]')).toBeVisible();
+      await expect(sidebar.locator('a[href="/g/grupo-test/admin/redemptions"]')).toBeVisible();
+      await expect(sidebar.locator('a[href="/g/grupo-test/admin/timba"]')).toBeVisible();
     });
 
     test('envía un aviso desde /g/grupo-test/admin/notifications (200, con toast)', async ({ page }) => {
