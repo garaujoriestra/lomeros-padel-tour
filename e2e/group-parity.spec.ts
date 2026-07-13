@@ -679,3 +679,68 @@ test.describe('paridad 2b · editar partido y lados del grupo', () => {
     await expect(page).toHaveURL('/g/grupo-test/admin/matches');
   });
 });
+
+test.describe('paridad 2b · no-fuga transversal', () => {
+  test.use({ storageState: 'e2e/.auth/gt-player.json' });
+
+  // Matriz mínima de aislamiento cruzado (Task 10 del plan) para las superficies nuevas
+  // bajo /g/[slug]. La mayoría de celdas ya quedaron cubiertas 1:1 al implementar cada
+  // superficie (Tasks 3-9) o en los specs de no-fuga dedicados — se referencian aquí en
+  // vez de duplicarlas exactas:
+  //   - matches/[id]  Lomeros bajo /g/grupo-test/matches/<id>  → 'paridad 2b · detalle de
+  //     partido del grupo' › 'no-fuga inversa: un partido de Lomeros...' (más arriba).
+  //   - players/[id]  Lomeros bajo /g/grupo-test/players/pl1   → 'paridad 2b · ficha de
+  //     jugador del grupo' › 'no-fuga: la ficha de un jugador de Lomeros...' (más arriba).
+  //   - pozos/[id]    Lomeros bajo /g/grupo-test/pozos/<id>    → 'paridad 2b · pozo y
+  //     torneo públicos del grupo' › 'no-fuga inversa: un pozo de Lomeros...' (más arriba).
+  //   - rankings      /g/grupo-test/rankings sin 'Jugador 1'   → 'paridad 2b · rankings,
+  //     eventos y partidos del grupo' (más arriba); /rankings raíz sin 'Jugador GT' →
+  //     e2e/no-fuga-lecturas.spec.ts.
+  // Lo que faltaba (añadido abajo): matches/[id] de Grupo Test bajo /matches en la raíz
+  // (dirección inversa a la ya cubierta) y eventos/[grupo] sin eventos de Lomeros.
+
+  test('un partido de Grupo Test no revela sus jugadores bajo /matches en la raíz (Lomeros)', async ({ page }) => {
+    await page.goto('/matches/gt-match1');
+    await expect(page.getByText('Bola fuera')).toBeVisible();
+    await expect(page.getByText('Jugador GT')).toHaveCount(0);
+  });
+
+  test('la lista de eventos del grupo no incluye eventos de Lomeros', async ({ page }) => {
+    const admin = await pwRequest.newContext({ baseURL: BASE_URL, storageState: 'e2e/.auth/admin.json' });
+    const name = `E2E Pozo Lomeros No Fuga Eventos ${Date.now()}`;
+    let id: string | undefined;
+    try {
+      const created = await admin.post('/api/tournaments', {
+        data: {
+          name, date: '2026-07-22', location: null, kind: 'pozo', format: 'americano',
+          config: { rounds: 1, matchFormat: { kind: 'timed', minutes: 12, tieRule: 'golden_point' } },
+          courts: [{ label: 'Central', order: 1, availableFrom: '17:00', availableTo: '20:00' }],
+          participantPlayerIds: ['pl1', 'pl2', 'pl3', 'pl4'],
+        },
+      });
+      expect(created.ok()).toBeTruthy();
+      ({ id } = await created.json());
+
+      // Mismo arnés mínimo que 'eventos del grupo con un evento generado' (más arriba en
+      // este archivo): status 'scheduled' + una fila de tournament_matches bastan para
+      // que eventLiveState lo considere 'live' y aparezca en el listado público. Se borra
+      // entero vía DELETE /api/tournaments más abajo (deleteEvent limpia también esta fila).
+      const db = createClient({ url: TEST_ENV.DB_URL });
+      await db.execute({ sql: "UPDATE tournaments SET status = 'scheduled' WHERE id = ?", args: [id as string] });
+      await db.execute({
+        sql: `INSERT OR IGNORE INTO tournament_matches (id, tournament_id, round, status)
+          VALUES (?, ?, ?, ?)`,
+        args: ['gp-transversal-eventos-tmatch', id as string, 0, 'pending'],
+      });
+
+      await page.goto('/g/grupo-test/eventos');
+      // Ancla positiva: confirma que la lista de eventos del grupo renderizó de verdad
+      // (un redirect/404 daría count 0 en la aserción negativa = falso positivo).
+      await expect(page.getByRole('heading', { name: 'Eventos' })).toBeVisible();
+      await expect(page.getByText(name)).toHaveCount(0);
+    } finally {
+      if (id) await admin.delete(`/api/tournaments/${id}`);
+      await admin.dispose();
+    }
+  });
+});
