@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const paid = isPaidGroup(ctx.group);
   const hasCustomBranding = paid && (isValidAccentColor(ctx.group.accentColor) || !!ctx.group.logoUrl);
   return {
-    title: { default: ctx.group.name },
+    title: { default: ctx.group.name, template: '%s' },
     manifest: `/g/${slug}/manifest.webmanifest`,
     ...(hasCustomBranding ? { icons: { apple: `/g/${slug}/apple-icon` } } : {}),
   };
