@@ -9,15 +9,18 @@ import { UnplayedPartnersCard } from '@/components/shared/unplayed-partners-card
 import { AchievementsCard } from '@/components/shared/achievements-card';
 import type { RivalryStats } from '@/lib/rating/head-to-head';
 import type { PlayerProfileData } from '@/lib/players/profile-data';
+import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 export function PlayerProfileView({
   data,
   editable = false,
   basePath = '',
+  brandName = PLATFORM_NAME,
 }: {
   data: PlayerProfileData;
   editable?: boolean;
   basePath?: string;
+  brandName?: string;
 }) {
   const {
     player,
@@ -105,8 +108,8 @@ export function PlayerProfileView({
                 </span>
               )}
               <ShareProfileButton
-                title={`${displayName(player)} · LPT`}
-                text={`${displayName(player)} — Elo ${Math.round(player.eloRating)}${rank != null ? ` · #${rank} del ranking` : ''} · Lomeros Padel Tour`}
+                title={`${displayName(player)} · ${brandName}`}
+                text={`${displayName(player)} — Elo ${Math.round(player.eloRating)}${rank != null ? ` · #${rank} del ranking` : ''} · ${brandName}`}
               />
               {editable && (
                 <Link href={`${basePath}/me/edit`} className="lpt-badge">

@@ -5,6 +5,7 @@ import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-conte
 import { getSwitcherGroups } from '@/lib/auth/group-switcher';
 import { hasSeasonPass, isPaidGroup } from '@/lib/billing/paid';
 import { isDarkColor, isValidAccentColor } from '@/lib/groups/branding';
+import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,7 +68,7 @@ export default async function GroupLayout({
       <BottomNav basePath={ctx.basePath} />
       {!paid && (
         <footer className="muted" style={{ textAlign: 'center', fontSize: 12, padding: '12px 0 20px' }}>
-          hecho con Lomeros Padel Tour
+          hecho con {PLATFORM_NAME}
         </footer>
       )}
     </div>

@@ -26,7 +26,7 @@ export default async function GroupPlayerProfilePage({
         <Link href={`${ctx.basePath}/rankings`} transitionTypes={['nav-back']} className="sec-link" style={{ marginBottom: 14, display: 'inline-flex' }}>
           <ArrowLeft size={14} /> Ranking
         </Link>
-        <PlayerProfileView data={data} editable={false} basePath={ctx.basePath} />
+        <PlayerProfileView data={data} editable={false} basePath={ctx.basePath} brandName={ctx.group.name} />
       </div>
     </DirectionalTransition>
   );
