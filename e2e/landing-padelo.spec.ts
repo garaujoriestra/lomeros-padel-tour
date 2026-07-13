@@ -74,3 +74,18 @@ test.describe('alta abierta (UI /crear-grupo)', () => {
     await expect(link).toHaveAttribute('href', '/api/onboarding/intent');
   });
 });
+
+test.describe('legal + footer', () => {
+  test('/legal/privacidad y /legal/terminos renderizan', async ({ page }) => {
+    await page.goto('/legal/privacidad');
+    await expect(page.getByRole('heading', { name: /privacidad/i })).toBeVisible();
+    await page.goto('/legal/terminos');
+    await expect(page.getByRole('heading', { name: /términos/i })).toBeVisible();
+  });
+
+  test('el footer de /padelo enlaza la legal', async ({ page }) => {
+    await page.goto('/padelo');
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: /privacidad/i })).toHaveAttribute('href', '/legal/privacidad');
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: /términos/i })).toHaveAttribute('href', '/legal/terminos');
+  });
+});
