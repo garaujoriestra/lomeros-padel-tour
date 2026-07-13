@@ -15,6 +15,12 @@ export interface NavSession {
   player: LptPlayer | null;
 }
 
+export interface NavBrand {
+  name: string;
+  logoUrl: string | null; // ya viene gateado por isPaidGroup desde el layout
+  star: boolean; // ⭐ Tour Oficial (hasSeasonPass)
+}
+
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   // El icono se decide por CSS según la clase `.dark` del <html> (la pone el script
@@ -37,11 +43,13 @@ export function Navbar({
   session = null,
   basePath = '',
   links = navLinks,
+  brand = null,
   switcher = null,
 }: {
   session?: NavSession | null;
   basePath?: string;
   links?: NavLink[];
+  brand?: NavBrand | null;
   switcher?: SwitcherGroup[] | null;
 }) {
   const pathname = usePathname();
@@ -61,8 +69,24 @@ export function Navbar({
     >
       <div className="topbar-inner">
         <Link href={basePath || '/'} className="brand" aria-label="Inicio">
-          <Crest size={34} className="brand-crest" title="Lomeros Padel Tour" wordmark={false} />
-          <span className="brand-name">Lomeros Padel Tour</span>
+          {brand?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- blob externo, tamaño fijo
+            <img
+              src={brand.logoUrl}
+              alt=""
+              width={34}
+              height={34}
+              style={{ borderRadius: 8, objectFit: 'cover' }}
+            />
+          ) : (
+            <Crest size={34} className="brand-crest" title={brand?.name ?? 'Lomeros Padel Tour'} wordmark={false} />
+          )}
+          <span className="brand-name">{brand?.name ?? 'Lomeros Padel Tour'}</span>
+          {brand?.star && (
+            <span role="img" title="Tour Oficial" aria-label="Tour Oficial" style={{ fontSize: 14 }}>
+              ⭐
+            </span>
+          )}
         </Link>
 
         <nav className="nav-tabs" aria-label="Navegación principal">
