@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { groups, memberships, billingEvents } from '@/lib/db/schema';
 
@@ -110,4 +110,13 @@ export async function createGroupWithAdmin(input: {
     throw err;
   }
   return { ok: true };
+}
+
+// Nº de grupos que este usuario administra (rol admin). Para el cap del alta abierta.
+export async function countGroupsAdminedBy(userId: string): Promise<number> {
+  const rows = await db
+    .select({ n: count() })
+    .from(memberships)
+    .where(and(eq(memberships.userId, userId), eq(memberships.role, 'admin')));
+  return Number(rows[0]?.n ?? 0);
 }
