@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { groups } from '@/lib/db/schema';
-import type { GroupRow } from './queries';
+import { groupColumns, type GroupRow } from './queries';
 import { isValidGroupSlug } from './slug';
 
 // Los helpers PUROS (RESERVED_SLUGS, isValidGroupSlug, slugFromName) viven en ./slug
@@ -15,9 +15,6 @@ export { RESERVED_SLUGS, isValidGroupSlug, slugFromName } from './slug';
 // notFound() cuando devuelve null.
 export async function getGroupBySlug(slug: string): Promise<GroupRow | null> {
   if (!isValidGroupSlug(slug)) return null;
-  const [g] = await db
-    .select({ id: groups.id, slug: groups.slug, name: groups.name })
-    .from(groups)
-    .where(eq(groups.slug, slug));
+  const [g] = await db.select(groupColumns).from(groups).where(eq(groups.slug, slug));
   return g ?? null;
 }

@@ -18,6 +18,7 @@ describe('createGroupWithAdmin', () => {
     await client.batch([
       `CREATE TABLE groups (
          id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+         logo_url TEXT, accent_color TEXT, paid_until TEXT,
          created_at TEXT NOT NULL DEFAULT (datetime('now')))`,
       `CREATE TABLE memberships (
          id TEXT PRIMARY KEY, user_id TEXT NOT NULL, group_id TEXT NOT NULL,

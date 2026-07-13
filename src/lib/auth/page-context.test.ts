@@ -21,8 +21,8 @@ import { resolvePageContext, navSessionFromContext, type PageContext } from './p
 
 beforeEach(() => { [getGroupBySlug, getDefaultGroupId, getGroupContext, getGroupById, getPlayerInGroup, notFound].forEach((f) => f.mockReset()); });
 
-const GT = { id: 'gt', slug: 'grupo-test', name: 'Grupo Test' };
-const LOM = { id: 'lomeros', slug: 'lomeros', name: 'Lomeros Padel Tour' };
+const GT = { id: 'gt', slug: 'grupo-test', name: 'Grupo Test', logoUrl: null, accentColor: null, paidUntil: null };
+const LOM = { id: 'lomeros', slug: 'lomeros', name: 'Lomeros Padel Tour', logoUrl: null, accentColor: null, paidUntil: null };
 
 describe('resolvePageContext', () => {
   it('sin slug → grupo por defecto, basePath vacío', async () => {

@@ -1,4 +1,5 @@
 import type { Client } from '@libsql/client';
+import { migrateBranding } from '@/lib/db/migrations/branding';
 
 /**
  * Crea (idempotente) las tablas y columnas auxiliares que el schema drizzle espera
@@ -122,4 +123,7 @@ export async function ensureAuxTables(client: Client): Promise<void> {
     slots TEXT NOT NULL,
     UNIQUE (week_start, day, subject_type, subject_id)
   )`);
+
+  // Fase 3: columnas de branding/pase en groups + billing_events (idempotente).
+  await migrateBranding(client);
 }
