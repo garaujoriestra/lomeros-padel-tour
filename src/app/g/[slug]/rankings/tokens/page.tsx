@@ -10,16 +10,15 @@ export const dynamic = 'force-dynamic';
 // Réplica de (public)/rankings/tokens/page.tsx (44 líneas: por debajo del umbral
 // de extracción de body compartido, se copia con sustituciones — mismo patrón
 // documentado en matches/[id]/page.tsx y players/[id]/page.tsx). Sin hrefs
-// internos que requieran basePath. `potEuros()` sigue sumando fichas de TODOS
-// los grupos (mismo comportamiento que la raíz — La Timba es Lomeros-only hoy;
-// no se toca en esta task).
+// internos que requieran basePath. `potEuros(groupId)` scopea el bote a los
+// jugadores de este grupo (Task 8, paridad 2b — antes sumaba TODOS los grupos).
 export default async function GroupTokensRankingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await resolvePageContext(slug);
   const [ranked, pendingPenalties, pot] = await Promise.all([
     listPlayersByTokenBalance(ctx.groupId),
     listPendingPenaltiesInGroup(ctx.groupId),
-    potEuros(),
+    potEuros(ctx.groupId),
   ]);
   const bankruptIds = new Set(pendingPenalties.map((p) => p.playerId));
 

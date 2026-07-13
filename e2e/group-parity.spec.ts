@@ -492,3 +492,126 @@ test.describe('paridad 2b · admin de pozos y torneos del grupo', () => {
     }
   });
 });
+
+test.describe('paridad 2b · admin de avisos/premios/canjes/timba del grupo', () => {
+  test.describe('sidebar, avisos y timba (gt-admin)', () => {
+    test.use({ storageState: 'e2e/.auth/gt-admin.json' });
+
+    test('el sidebar muestra Avisos, Premios, Canjes y Timba con hrefs bajo /g/grupo-test/admin', async ({ page }) => {
+      await page.goto('/g/grupo-test/admin');
+      await expect(page.locator('a[href="/g/grupo-test/admin/notifications"]')).toBeVisible();
+      await expect(page.locator('a[href="/g/grupo-test/admin/rewards"]')).toBeVisible();
+      await expect(page.locator('a[href="/g/grupo-test/admin/redemptions"]')).toBeVisible();
+      await expect(page.locator('a[href="/g/grupo-test/admin/timba"]')).toBeVisible();
+    });
+
+    test('envía un aviso desde /g/grupo-test/admin/notifications (200, con toast)', async ({ page }) => {
+      await page.goto('/g/grupo-test/admin/notifications');
+      await page.getByLabel('Título del aviso').fill('Aviso 2b');
+      await page.getByLabel('Mensaje del aviso').fill('Mensaje de prueba paridad 2b');
+      const [response] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes('/api/push/broadcast') && res.request().method() === 'POST'),
+        page.getByRole('button', { name: 'Enviar' }).click(),
+      ]);
+      expect(response.status()).toBe(200);
+      // Sin VAPID en e2e no hay dispositivos suscritos de verdad: el broadcast
+      // igualmente responde 200 y el form muestra el toast de "enviado" (éxito o el
+      // aviso de "sin dispositivos suscritos" según sent), nunca el de error.
+      await expect(page.getByText(/Aviso enviado/)).toBeVisible();
+    });
+
+    test('la timba del grupo carga con el bote y los jugadores del grupo', async ({ page }) => {
+      await page.goto('/g/grupo-test/admin/timba');
+      await expect(page.getByRole('heading', { name: /La Timba/ })).toBeVisible();
+      await expect(page.getByText('Bote actual')).toBeVisible();
+      await expect(page.getByText('Jugador GT', { exact: false }).first()).toBeVisible();
+      // Los jugadores de Lomeros ("Jugador <dígito>") no deben aparecer aquí.
+      await expect(page.getByText(/Jugador \d/)).toHaveCount(0);
+    });
+  });
+
+  test('crea un premio, gt-player lo canjea desde su cartera y gt-admin lo entrega (hermético, no-fuga)', async ({ browser }) => {
+    const title = `Premio 2b ${Date.now()}`;
+    const cost = 30;
+    const db = createClient({ url: TEST_ENV.DB_URL });
+
+    const adminCtx = await browser.newContext({ storageState: 'e2e/.auth/gt-admin.json' });
+    const adminPage = await adminCtx.newPage();
+    const playerCtx = await browser.newContext({ storageState: 'e2e/.auth/gt-player.json' });
+    const playerPage = await playerCtx.newPage();
+
+    let rewardId: string | undefined;
+    let redemptionId: string | undefined;
+    let originalBalance: number | undefined;
+    let penaltyResolved = false;
+
+    try {
+      // 1) gt-admin crea el premio desde /g/grupo-test/admin/rewards.
+      await adminPage.goto('/g/grupo-test/admin/rewards');
+      await adminPage.getByLabel('Título').fill(title);
+      await adminPage.getByLabel('Coste (fichas)').fill(String(cost));
+      await adminPage.getByRole('button', { name: 'Crear premio' }).click();
+      await expect(adminPage.getByText(title)).toBeVisible();
+
+      const rewardRow = await db.execute({ sql: 'SELECT id FROM rewards WHERE title = ?', args: [title] });
+      rewardId = rewardRow.rows[0]?.id as string | undefined;
+      expect(rewardId).toBeTruthy();
+
+      // No-fuga: el premio recién creado en Grupo Test no aparece en /admin/rewards
+      // de Lomeros (aserción por contenido, no por id/count — otros specs también
+      // crean premios en ese catálogo).
+      const lomerosCtx = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
+      const lomerosPage = await lomerosCtx.newPage();
+      await lomerosPage.goto('/admin/rewards');
+      await expect(lomerosPage.getByText(title)).toHaveCount(0);
+      await lomerosCtx.close();
+
+      // 2) gt-pl1 (fixture) tiene una penalización pendiente (gt-penalty1) que bloquea
+      // el canje ("estás en bancarrota"): se resuelve temporalmente, igual que el
+      // arnés de "flujo de apostar por UI" más arriba en este mismo archivo, y se
+      // restaura en el finally. Saldo elevado temporalmente para poder pagar el coste.
+      const balRow = await db.execute({ sql: "SELECT token_balance FROM players WHERE id = 'gt-pl1'" });
+      originalBalance = balRow.rows[0]?.token_balance as number;
+      await db.execute({ sql: "UPDATE players SET token_balance = 100 WHERE id = 'gt-pl1'" });
+      await db.execute({ sql: "UPDATE penalties SET status = 'resolved' WHERE id = 'gt-penalty1'" });
+      penaltyResolved = true;
+
+      // 3) gt-player lo canjea desde su cartera (/g/grupo-test/me/tokens).
+      await playerPage.goto('/g/grupo-test/me/tokens');
+      const card = playerPage.getByText(title, { exact: true }).locator('..').locator('..');
+      await card.getByRole('button', { name: new RegExp(`Canjear · ${cost} fichas`) }).click();
+      await playerPage.getByRole('button', { name: `Sí, canjear ${cost} fichas` }).click();
+      await expect(playerPage.getByText('Canje solicitado', { exact: false })).toBeVisible();
+      // Saldo baja de 100 a 70 (único número "pelado" en la cartera: el resto de
+      // fichas siempre aparecen junto a texto, p.ej. "30 fichas" o "-30 → 70").
+      await expect(playerPage.getByText(String(100 - cost), { exact: true })).toBeVisible();
+
+      const redemptionRow = await db.execute({
+        sql: "SELECT id FROM redemptions WHERE reward_id = ? AND status = 'pending'",
+        args: [rewardId as string],
+      });
+      redemptionId = redemptionRow.rows[0]?.id as string | undefined;
+      expect(redemptionId).toBeTruthy();
+
+      // 4) gt-admin lo marca entregado desde /g/grupo-test/admin/redemptions.
+      await adminPage.goto('/g/grupo-test/admin/redemptions');
+      const pendingRow = adminPage.locator('li').filter({ hasText: title });
+      await expect(pendingRow).toBeVisible();
+      await pendingRow.getByRole('button', { name: 'Entregado' }).click();
+      await expect(adminPage.getByText('Canje marcado como entregado')).toBeVisible();
+    } finally {
+      // Restaura primero el estado compartido de gt-pl1 (penalty/saldo), aunque el
+      // borrado de las filas efímeras falle.
+      if (penaltyResolved) {
+        await db.execute({ sql: "UPDATE penalties SET status = 'pending' WHERE id = 'gt-penalty1'" });
+      }
+      if (originalBalance !== undefined) {
+        await db.execute({ sql: 'UPDATE players SET token_balance = ? WHERE id = ?', args: [originalBalance, 'gt-pl1'] });
+      }
+      if (redemptionId) await db.execute({ sql: 'DELETE FROM redemptions WHERE id = ?', args: [redemptionId] });
+      if (rewardId) await db.execute({ sql: 'DELETE FROM rewards WHERE id = ?', args: [rewardId] });
+      await adminCtx.close();
+      await playerCtx.close();
+    }
+  });
+});

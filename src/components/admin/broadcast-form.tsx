@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export function BroadcastForm() {
+export function BroadcastForm({ groupSlug }: { groupSlug?: string }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -15,7 +15,7 @@ export function BroadcastForm() {
       const res = await fetch('/api/push/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body }),
+        body: JSON.stringify({ title, body, ...(groupSlug ? { g: groupSlug } : {}) }),
       });
       if (!res.ok) throw new Error('failed');
       const data = await res.json();

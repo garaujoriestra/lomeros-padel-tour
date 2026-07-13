@@ -12,7 +12,7 @@ export default async function TokensRankingPage() {
   const [ranked, pendingPenalties, pot] = await Promise.all([
     listPlayersByTokenBalance(groupId),
     listPendingPenaltiesInGroup(groupId),
-    potEuros(),
+    potEuros(groupId),
   ]);
   const bankruptIds = new Set(pendingPenalties.map((p) => p.playerId));
 

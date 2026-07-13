@@ -14,7 +14,15 @@ export interface TimbaPlayerRow {
   bankrupt: boolean;     // penalización pendiente
 }
 
-export function TimbaEntries({ players, potEuros }: { players: TimbaPlayerRow[]; potEuros: number }) {
+export function TimbaEntries({
+  players,
+  potEuros,
+  groupSlug,
+}: {
+  players: TimbaPlayerRow[];
+  potEuros: number;
+  groupSlug?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -24,7 +32,7 @@ export function TimbaEntries({ players, potEuros }: { players: TimbaPlayerRow[];
       const res = await fetch('/api/timba/entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId }),
+        body: JSON.stringify({ playerId, ...(groupSlug ? { g: groupSlug } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');

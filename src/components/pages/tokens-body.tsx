@@ -31,9 +31,8 @@ const REDEMPTION_STATUS_LABEL: Record<string, string> = {
 // Body compartido entre me/tokens/page.tsx y g/[slug]/me/tokens/page.tsx (>80 líneas
 // → extracción, criterio del plan de paridad). El wrapper ya garantiza ctx.player
 // (redirect a `${basePath}/me` si no hay ficha); aquí se repite por seguridad de
-// tipos, no por flujo esperado. `potEuros()` sigue sumando fichas de TODOS los
-// grupos (mismo comportamiento que g/[slug]/rankings/tokens/page.tsx — La Timba es
-// Lomeros-only hoy; no se toca en esta task).
+// tipos, no por flujo esperado. `potEuros(groupId)` scopea el bote a los jugadores
+// de este grupo (Task 8, paridad 2b — antes sumaba TODOS los grupos).
 export async function TokensBody({ ctx }: { ctx: PageContext }) {
   const { player, groupId, basePath } = ctx;
   if (!player) redirect(`${basePath}/me`);
@@ -58,7 +57,7 @@ export async function TokensBody({ ctx }: { ctx: PageContext }) {
       .select()
       .from(penalties)
       .where(and(eq(penalties.playerId, player.id), eq(penalties.status, 'pending'))),
-    potEuros(),
+    potEuros(groupId),
   ]);
 
   const pendingPenalty = myPenalties[0] ?? null;

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import type { Reward } from '@/lib/db/schema';
 import { BETTING } from '@/lib/betting/config';
 
-export function RewardsManager({ rewards }: { rewards: Reward[] }) {
+export function RewardsManager({ rewards, groupSlug }: { rewards: Reward[]; groupSlug?: string }) {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -36,7 +36,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
   async function handleCreate() {
     const ok = await call(
       '/api/rewards',
-      { method: 'POST', body: JSON.stringify({ title, description, cost }) },
+      { method: 'POST', body: JSON.stringify({ title, description, cost, ...(groupSlug ? { g: groupSlug } : {}) }) },
       'Premio creado'
     );
     if (ok) {
@@ -115,7 +115,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
                   onClick={() =>
                     call(
                       `/api/rewards/${r.id}`,
-                      { method: 'PUT', body: JSON.stringify({ active: !r.active }) },
+                      { method: 'PUT', body: JSON.stringify({ active: !r.active, ...(groupSlug ? { g: groupSlug } : {}) }) },
                       r.active ? 'Premio desactivado' : 'Premio activado'
                     )
                   }

@@ -17,19 +17,17 @@ const adminLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin/timba', label: 'La Timba', icon: Coins },
 ];
 
-// Bajo /g/[slug] solo existen las páginas MVP de la paridad (dashboard/players/matches/
-// pozos/torneos); el resto de secciones (Avisos/Premios/Canjes/Timba, Task 8) se omite
-// para no enlazar 404s. Task 8 añadirá el resto y podrá eliminar el filtro. En raíz se
-// muestra todo.
-const GROUP_MVP_LINKS = new Set(['/admin', '/admin/players', '/admin/matches', '/admin/pozos', '/admin/torneos']);
-
+// Task 8 (paridad 2b) completó la última sección pendiente (Avisos/Premios/Canjes/
+// Timba); todas las secciones de adminLinks existen ya bajo /g/[slug]/admin, así que
+// el filtro MVP que las omitía (evitar enlazar 404s) ya no hace falta: raíz y grupo
+// muestran el mismo sidebar completo.
 function isActive(href: string, pathname: string) {
   return href.endsWith('/admin') ? pathname === href : pathname.startsWith(href);
 }
 
 export function AdminSidebar({ basePath = '' }: { basePath?: string }) {
   const pathname = usePathname();
-  const links = basePath ? adminLinks.filter((l) => GROUP_MVP_LINKS.has(l.href)) : adminLinks;
+  const links = adminLinks;
   return (
     <aside className="md:w-48 md:shrink-0">
       <nav className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0">

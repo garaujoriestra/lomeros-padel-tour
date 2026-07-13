@@ -15,7 +15,7 @@ export interface RedemptionRow {
   playerNickname: string | null;
 }
 
-export function RedemptionsManager({ redemptions }: { redemptions: RedemptionRow[] }) {
+export function RedemptionsManager({ redemptions, groupSlug }: { redemptions: RedemptionRow[]; groupSlug?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export function RedemptionsManager({ redemptions }: { redemptions: RedemptionRow
       const res = await fetch(`/api/redemptions/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...(groupSlug ? { g: groupSlug } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
