@@ -1,38 +1,14 @@
 import type { MetadataRoute } from 'next';
-import { PLATFORM_NAME } from '@/lib/groups/constants';
+import { buildGroupManifest } from '@/lib/groups/manifest';
+import { LOMEROS_GROUP_NAME, LOMEROS_GROUP_SLUG } from '@/lib/groups/constants';
 
+// La raíz `/` es el grupo insignia (Lomeros). Identidad estática desde constantes
+// (build-safe, sin DB): el grupo por defecto no tiene marca de pago propia. Un
+// despliegue con un grupo por defecto branded necesitaría leer DB (fuera de alcance).
 export default function manifest(): MetadataRoute.Manifest {
-  return {
-    name: PLATFORM_NAME,
-    short_name: PLATFORM_NAME,
-    description: 'Ranking Elo, partidos y apuestas de tu grupo de pádel · ' + PLATFORM_NAME,
-    start_url: '/',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#0c1715',
-    theme_color: '#0c1715',
-    icons: [
-      {
-        src: '/icon',
-        sizes: '192x192',
-        type: 'image/png',
-      },
-      {
-        src: '/apple-icon',
-        sizes: '180x180',
-        type: 'image/png',
-      },
-      {
-        src: '/icon-512',
-        sizes: '512x512',
-        type: 'image/png',
-      },
-      {
-        src: '/icon-maskable',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
-    ],
-  };
+  return buildGroupManifest({
+    brand: { name: LOMEROS_GROUP_NAME, slug: LOMEROS_GROUP_SLUG, logoUrl: null, accentColor: null },
+    basePath: '',
+    paid: true,
+  });
 }

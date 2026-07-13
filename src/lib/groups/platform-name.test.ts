@@ -10,9 +10,10 @@ const repoFile = (rel: string) =>
 // Ficheros de PLATAFORMA que un grupo ajeno ve y que NO deben mencionar «Lomeros»
 // (mayúscula). La raíz insignia — src/app/(public)/** y constants.ts — queda fuera:
 // ahí «Lomeros» es correcto.
+// NOTA: src/app/manifest.ts NO está aquí a propósito — desde Fase 4 · Pieza 2 el
+// manifest es la identidad del grupo (raíz = Lomeros insignia), no «Padelo».
 const PLATFORM_FILES = [
   'src/app/login/page.tsx',
-  'src/app/manifest.ts',
   'src/app/layout.tsx',
   'src/components/shared/crest.tsx',
   'src/app/g/[slug]/layout.tsx',
