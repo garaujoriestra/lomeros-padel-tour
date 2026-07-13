@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 // Form de creación de grupo. El slug se auto-deriva del nombre pero es editable;
 // una vez el usuario lo toca, deja de auto-derivarse.
-export function CreateGroupForm({ t }: { t: string }) {
+export function CreateGroupForm({ t }: { t?: string }) {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
@@ -22,7 +22,7 @@ export function CreateGroupForm({ t }: { t: string }) {
       const res = await fetch('/api/onboarding/create-group', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, t }),
+        body: JSON.stringify({ name, slug, ...(t ? { t } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {

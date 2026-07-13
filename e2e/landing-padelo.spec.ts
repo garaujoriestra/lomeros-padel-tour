@@ -49,3 +49,28 @@ test.describe('alta abierta (intent)', () => {
     expect(cookies.some((c) => c.name === 'signup_intent')).toBe(true);
   });
 });
+
+async function loginFreshPage(page: import('@playwright/test').Page, tag: string) {
+  const email = `padelo-ui-${tag}-${Date.now()}@test.com`;
+  const res = await page.request.post('/api/auth/dev-login', { data: { email } });
+  expect(res.status()).toBe(200);
+}
+
+test.describe('alta abierta (UI /crear-grupo)', () => {
+  test('con sesión y sin token → formulario visible; crea y aterriza en su admin', async ({ page }) => {
+    const slug = `ui-open-${Date.now()}`;
+    await loginFreshPage(page, 'open');
+    await page.goto('/crear-grupo');
+    await page.getByLabel(/nombre del grupo/i).fill('Panteras Abiertas');
+    await page.getByLabel(/nombre corto/i).fill(slug);
+    await page.getByRole('button', { name: /crear grupo/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/g/${slug}/admin$`));
+  });
+
+  test('sin sesión y sin token → botón "Entrar con Google" a la ruta intent', async ({ page }) => {
+    await page.goto('/crear-grupo');
+    const link = page.getByRole('link', { name: /entrar con google/i });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', '/api/onboarding/intent');
+  });
+});
