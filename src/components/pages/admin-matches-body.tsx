@@ -3,6 +3,7 @@ import { listAllPlayersInGroup } from '@/lib/players/queries';
 import Link from 'next/link';
 import { Calendar, MapPin, Plus, RectangleVertical, ClipboardPen, Pencil } from 'lucide-react';
 import { ScoreGrid, StatusPill, formatMatchDate } from '@/components/lpt/ui';
+import { EmptyState } from '@/components/shared/empty-state';
 import { DeleteMatchButton } from '@/app/admin/matches/delete-match-button';
 import type { PageContext } from '@/lib/auth/page-context';
 
@@ -54,11 +55,16 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
       </div>
 
       {allMatches.length === 0 ? (
-        <div className="text-center py-12 muted">
-          <p className="text-4xl mb-2">🎾</p>
-          <p>No hay partidos todavía.</p>
-          <Link href={`${basePath}/admin/matches/new`} className="lpt-btn primary mt-4 inline-flex">Registrar el primero</Link>
-        </div>
+        <EmptyState
+          emoji="🎾"
+          title="No hay partidos todavía"
+          hint="Registra el primer partido para empezar a mover el ranking."
+          action={
+            <Link href={`${basePath}/admin/matches/new`} className="lpt-btn primary inline-flex">
+              Registrar el primero
+            </Link>
+          }
+        />
       ) : (
         <div className="space-y-6">
           {/* Programados */}

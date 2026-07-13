@@ -12,6 +12,7 @@ import { loadTorneoMatches } from '@/lib/tournament/torneo-run';
 import { buildDisplayContext } from '@/lib/tournament/pozo-view';
 import { buildGroupsView, buildBracketView, torneoNextMatch } from '@/lib/tournament/torneo-view';
 import { TorneoBoard } from '@/components/tournament/torneo-board';
+import { EmptyState } from '@/components/shared/empty-state';
 import type { PageContext } from '@/lib/auth/page-context';
 
 // Cuerpo compartido de /torneos/[id] (raíz) y /g/[slug]/torneos/[id]. Recibe el
@@ -52,7 +53,13 @@ export async function TorneoPublicBody({ ctx, tournamentId: id }: { ctx: PageCon
         <p className="muted text-sm mt-1">{ev.date}{ev.location ? ` · ${ev.location}` : ''} · Torneo</p>
       </div>
 
-      {ev.status === 'draft' && <p className="text-ink-3 text-sm">El torneo aún no se ha generado.</p>}
+      {ev.status === 'draft' && (
+        <EmptyState
+          emoji="🏟️"
+          title="El cuadro aún no está generado"
+          hint="El organizador generará los partidos desde el panel de administración."
+        />
+      )}
 
       {next && (
         <div className="lpt-card card-pad flex items-center gap-3">

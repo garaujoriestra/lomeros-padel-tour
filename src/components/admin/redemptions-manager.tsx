@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/empty-state';
 
 export interface RedemptionRow {
   id: string;
@@ -51,7 +52,7 @@ export function RedemptionsManager({ redemptions, groupSlug }: { redemptions: Re
       <div className="lpt-card card-pad space-y-3">
         <h2 className="kicker">Pendientes ({pending.length})</h2>
         {pending.length === 0 ? (
-          <p className="muted text-sm">Nada pendiente. 🎉</p>
+          <EmptyState emoji="🧾" title="Nada pendiente" hint="No hay canjes esperando resolución." />
         ) : (
           <ul className="space-y-3">
             {pending.map((r) => (

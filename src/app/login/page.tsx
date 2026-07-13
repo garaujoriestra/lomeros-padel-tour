@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Crest from '@/components/shared/crest';
+import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 export default async function LoginPage({
   searchParams,
@@ -13,9 +14,9 @@ export default async function LoginPage({
     <div className="min-h-dvh flex items-center justify-center p-4" style={{ background: 'var(--hero-bg)' }}>
       <div className="lpt-card card-pad w-full max-w-sm" style={{ textAlign: 'center' }}>
         <div style={{ width: 44, margin: '6px auto 12px' }}>
-          <Crest size={44} title="Lomeros Padel Tour" />
+          <Crest size={44} title={PLATFORM_NAME} />
         </div>
-        <h1 className="display" style={{ fontSize: 26, margin: 0 }}>Lomeros Padel Tour</h1>
+        <h1 className="display" style={{ fontSize: 26, margin: 0 }}>{PLATFORM_NAME}</h1>
         <p className="small muted" style={{ margin: '6px 0 18px' }}>Inicia sesión para ver tu perfil</p>
         {error && (
           <p className="small" style={{ color: 'var(--loss)', marginBottom: 12 }}>

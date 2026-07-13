@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Trophy, Calendar, Users, CalendarCheck } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
 import { MatchCard } from '@/components/shared/match-card';
+import { EmptyState } from '@/components/shared/empty-state';
 import { SectionHead } from '@/components/lpt/ui';
 import { buildPodiumGroups } from '@/lib/rankings/podium-groups';
 import { listRankedPlayers, listAllPlayersInGroup } from '@/lib/players/queries';
@@ -89,9 +90,11 @@ export async function GroupHomeBody({
       )}
 
       {allPlayers.length === 0 && (
-        <p className="muted" style={{ textAlign: 'center', padding: '40px 0' }}>
-          Este grupo aún no tiene jugadores.
-        </p>
+        <EmptyState
+          icon={Users}
+          title="Este grupo está arrancando"
+          hint="Aún no hay jugadores ni partidos. En cuanto el organizador registre el primero, aparecerán aquí la clasificación y la jornada."
+        />
       )}
     </div>
   );

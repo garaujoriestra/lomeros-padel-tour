@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/shared/empty-state';
 import { DeletePlayerButton } from '@/app/admin/players/delete-player-button';
 import type { PageContext } from '@/lib/auth/page-context';
 
@@ -35,13 +36,16 @@ export async function AdminPlayersBody({ ctx }: { ctx: PageContext }) {
       </div>
 
       {allPlayers.length === 0 ? (
-        <div className="text-center py-12 text-ink-3">
-          <p className="text-4xl mb-2">👤</p>
-          <p>No hay jugadores todavía.</p>
-          <Link href={`${basePath}/admin/players/new`}>
-            <Button className="mt-4">Añadir el primero</Button>
-          </Link>
-        </div>
+        <EmptyState
+          emoji="👤"
+          title="No hay jugadores todavía"
+          hint="Añade a los miembros del grupo para empezar a registrar partidos."
+          action={
+            <Link href={`${basePath}/admin/players/new`}>
+              <Button>Añadir el primero</Button>
+            </Link>
+          }
+        />
       ) : (
         <div className="border rounded-lg overflow-hidden bg-card overflow-x-auto">
           <Table>

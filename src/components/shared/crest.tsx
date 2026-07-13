@@ -1,4 +1,5 @@
 import { VIEWBOX_W, VIEWBOX_H, crestInnerMarkup, crestInnerMarkupNoWordmark } from './crest-svg';
+import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 /**
  * Escudo de marca LPT como componente React (estático, sin animación).
@@ -9,7 +10,7 @@ import { VIEWBOX_W, VIEWBOX_H, crestInnerMarkup, crestInnerMarkupNoWordmark } fr
 export default function Crest({
   size = 96,
   className,
-  title = 'Lomeros Padel Tour',
+  title = PLATFORM_NAME,
   wordmark = true,
 }: {
   size?: number;

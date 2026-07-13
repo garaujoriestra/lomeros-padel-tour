@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getDefaultGroupId, getGroupContext } from '@/lib/auth/group-context';
 import { listEvents } from '@/lib/tournament/event-store';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,12 @@ export default async function TorneosPage() {
         <Link href="/admin/torneos/new"><Button>Nuevo torneo</Button></Link>
       </div>
       {torneos.length === 0 ? (
-        <p className="text-sm text-ink-3">Aún no hay torneos. Crea el primero con «Nuevo torneo».</p>
+        <EmptyState
+          emoji="🏆"
+          title="Aún no hay torneos"
+          hint="Crea el primero con «Nuevo torneo»."
+          action={<Link href="/admin/torneos/new"><Button>Nuevo torneo</Button></Link>}
+        />
       ) : (
         <ul className="space-y-2">
           {torneos.map((t) => (

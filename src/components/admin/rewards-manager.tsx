@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EmptyState } from '@/components/shared/empty-state';
 import type { Reward } from '@/lib/db/schema';
 import { BETTING } from '@/lib/betting/config';
 
@@ -96,7 +97,7 @@ export function RewardsManager({ rewards, groupSlug }: { rewards: Reward[]; grou
       <div className="lpt-card card-pad space-y-3">
         <h2 className="kicker">Catálogo</h2>
         {rewards.length === 0 ? (
-          <p className="muted text-sm">Sin premios todavía.</p>
+          <EmptyState emoji="🎁" title="Sin premios todavía" />
         ) : (
           <ul className="space-y-2">
             {rewards.map((r) => (

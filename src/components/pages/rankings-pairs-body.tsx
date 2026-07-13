@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Users, Info, Zap, ZapOff } from 'lucide-react';
 import { SectionHead, AvatarStack, StatBar } from '@/components/lpt/ui';
 import { DirectionalTransition } from '@/components/shared/view-transitions';
+import { EmptyState } from '@/components/shared/empty-state';
 import type { PageContext } from '@/lib/auth/page-context';
 
 // Body compartido entre (public)/rankings/pairs/page.tsx y g/[slug]/rankings/pairs/page.tsx
@@ -25,11 +26,11 @@ export async function RankingsPairsBody({ ctx }: { ctx: PageContext }) {
         </p>
 
         {pairs.length === 0 ? (
-          <div className="muted" style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 40, margin: '0 0 10px' }}>👥</p>
-            <p style={{ fontWeight: 600, margin: 0 }}>Aún no hay datos de parejas</p>
-            <p className="small" style={{ marginTop: 6 }}>Registra partidos para ver las estadísticas de pareja</p>
-          </div>
+          <EmptyState
+            emoji="👥"
+            title="Aún no hay datos de parejas"
+            hint="Registra partidos para ver las estadísticas de pareja"
+          />
         ) : (
           <div className="stagger" style={{ display: 'grid', gap: 'calc(10px * var(--sp))' }}>
             {pairs.map((pair, i) => {

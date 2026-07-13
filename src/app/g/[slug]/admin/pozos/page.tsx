@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { resolvePageContext } from '@/lib/auth/page-context';
 import { listEvents } from '@/lib/tournament/event-store';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,12 @@ export default async function GroupAdminPozosPage({ params }: { params: Promise<
         <Link href={`${basePath}/admin/pozos/new`}><Button>Nuevo pozo</Button></Link>
       </div>
       {pozos.length === 0 ? (
-        <p className="text-sm text-ink-3">Aún no hay pozos. Crea el primero con «Nuevo pozo».</p>
+        <EmptyState
+          emoji="🏟️"
+          title="Aún no hay pozos"
+          hint="Crea el primero con «Nuevo pozo»."
+          action={<Link href={`${basePath}/admin/pozos/new`}><Button>Nuevo pozo</Button></Link>}
+        />
       ) : (
         <ul className="space-y-2">
           {pozos.map((p) => (
