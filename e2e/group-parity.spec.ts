@@ -336,7 +336,7 @@ test.describe('paridad 2b · pozo y torneo públicos del grupo', () => {
 
       await page.goto(`/g/grupo-test/torneos/${id}`);
       await expect(page.getByRole('heading', { name: 'E2E Torneo GT Público' })).toBeVisible();
-      await expect(page.getByText('El torneo aún no se ha generado.')).toBeVisible();
+      await expect(page.getByText('El cuadro aún no está generado')).toBeVisible();
     } finally {
       if (id) await admin.delete(`/api/tournaments/${id}?g=grupo-test`);
       await admin.dispose();
