@@ -47,6 +47,10 @@ const barlow = Barlow_Condensed({
 export const metadata: Metadata = {
   title: {
     default: PLATFORM_NAME,
+    // template '%s' = passthrough: las páginas con título propio (p. ej. /matches,
+    // /offline) se muestran tal cual, SIN sufijo (evita el doble-marca), y el tipo
+    // DefaultTemplateString de Next queda satisfecho (`template` es string, no null).
+    template: '%s',
   },
   description: "Ranking Elo, partidos y apuestas de tu grupo de pádel",
   appleWebApp: {

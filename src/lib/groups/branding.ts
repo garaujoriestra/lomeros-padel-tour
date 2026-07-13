@@ -14,3 +14,13 @@ export function isDarkColor(hex: string): boolean {
   const l = 0.2126 * toLin((n >> 16) & 255) + 0.7152 * toLin((n >> 8) & 255) + 0.0722 * toLin(n & 255);
   return l < 0.4;
 }
+
+// ¿Aplica identidad de marca del grupo (logo/color/icono)? Espejo de Fase 3:
+// requiere pago Y (acento válido O logo). Fuente única — la usan el manifest,
+// el layout de grupo y las rutas de icono, para que nunca se desincronicen.
+export function hasCustomBranding(
+  group: { accentColor: string | null; logoUrl: string | null },
+  paid: boolean,
+): boolean {
+  return paid && (isValidAccentColor(group.accentColor) || !!group.logoUrl);
+}
