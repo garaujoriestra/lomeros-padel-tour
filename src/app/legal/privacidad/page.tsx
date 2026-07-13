@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: `Privacidad · ${PLATFORM_NAME}` };
 export default function PrivacidadPage() {
   return (
     <article>
-      <h1 className="display" style={{ fontSize: 30 }}>Privacidad</h1>
+      <h1 className="display">Privacidad</h1>
       <p className="small muted" style={{ marginTop: 4 }}>Aviso mínimo de la beta. No es asesoría legal.</p>
       <h2 className="sec-title" style={{ fontSize: 20, marginTop: 28 }}>Qué guardamos</h2>
       <p>Tu cuenta de Google (nombre, email y foto que Google comparte al iniciar sesión) y los

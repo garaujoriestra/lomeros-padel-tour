@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: `Términos · ${PLATFORM_NAME}` };
 export default function TerminosPage() {
   return (
     <article>
-      <h1 className="display" style={{ fontSize: 30 }}>Términos de uso</h1>
+      <h1 className="display">Términos de uso</h1>
       <p className="small muted" style={{ marginTop: 4 }}>Condiciones mínimas de la beta. No es asesoría legal.</p>
       <h2 className="sec-title" style={{ fontSize: 20, marginTop: 28 }}>Qué es {PLATFORM_NAME}</h2>
       <p>Una herramienta gratuita para llevar el ranking, los partidos y las apuestas con fichas de

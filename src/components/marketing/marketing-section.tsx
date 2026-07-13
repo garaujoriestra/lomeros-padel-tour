@@ -1,17 +1,35 @@
+/**
+ * Primitiva de sección de la landing "Broadcast elevado".
+ * Cabecera apilada (kicker opcional + título display + lead opcional) sobre el
+ * escenario oscuro-verde, seguida del cuerpo (children). Las secciones con
+ * maqueta a medida (hero, marcador, planificador) se construyen aparte.
+ */
 export function MarketingSection({
-  kicker, title, children, stage = false,
-}: { kicker: string; title: string; children: React.ReactNode; stage?: boolean }) {
+  kicker,
+  title,
+  lead,
+  children,
+  align = 'left',
+}: {
+  kicker?: string;
+  title: string;
+  lead?: React.ReactNode;
+  children?: React.ReactNode;
+  align?: 'left' | 'center';
+}) {
   return (
-    <section
-      style={{
-        padding: 'calc(64px * var(--sp)) 0',
-        ...(stage ? { background: 'var(--hero-bg)', color: 'oklch(0.97 0.008 120)' } : {}),
-      }}
-    >
+    <section className="mkt-section">
       <div className="lpt-container">
-        <p className="kicker" style={{ color: stage ? 'var(--acc)' : 'var(--ink-3)' }}>{kicker}</p>
-        <h2 className="display" style={{ fontSize: 'clamp(28px, 5vw, 44px)', marginTop: 10, maxWidth: 720 }}>{title}</h2>
-        <div style={{ marginTop: 20 }}>{children}</div>
+        <div className={align === 'center' ? 'mkt-head--center' : 'mkt-head'}>
+          {kicker && (
+            <p className="kicker mkt-kicker">
+              <span className="mkt-tick" aria-hidden /> {kicker}
+            </p>
+          )}
+          <h2 className="display mkt-h2">{title}</h2>
+          {lead && <p className="mkt-lead">{lead}</p>}
+        </div>
+        {children}
       </div>
     </section>
   );
