@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from "@/components/shared/service-worker-regist
 import { NotificationReminderGate } from "@/components/shared/notification-reminder-gate";
 import { SHIELD_PATH, crestInkMarkup } from "@/components/shared/crest-svg";
 import { resolvePageContext } from "@/lib/auth/page-context";
+import { PLATFORM_NAME } from "@/lib/groups/constants";
 import "./globals.css";
 
 // Splash de marca que se pinta al instante (estilos inline, sin esperar al CSS
@@ -44,11 +45,14 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Lomeros Padel Tour",
-  description: "El ranking oficial del grupo Lomeros · LPT",
+  title: {
+    default: PLATFORM_NAME,
+    template: `%s · ${PLATFORM_NAME}`,
+  },
+  description: "Ranking Elo, partidos y apuestas de tu grupo de pádel",
   appleWebApp: {
     capable: true,
-    title: "LPT",
+    title: PLATFORM_NAME,
     statusBarStyle: "black-translucent",
   },
 };

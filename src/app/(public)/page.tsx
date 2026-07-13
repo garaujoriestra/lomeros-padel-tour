@@ -18,6 +18,13 @@ import { listEventSummaries } from '@/lib/tournament/event-store';
 import { eventLiveState } from '@/lib/tournament/event-summary';
 import { EventCard } from '@/components/tournament/event-card';
 import { DirectionalTransition } from '@/components/shared/view-transitions';
+import type { Metadata } from 'next';
+import { LOMEROS_GROUP_NAME } from '@/lib/groups/constants';
+
+export const metadata: Metadata = {
+  title: { absolute: LOMEROS_GROUP_NAME },
+  description: `El ranking oficial de ${LOMEROS_GROUP_NAME}`,
+};
 
 export const dynamic = 'force-dynamic';
 

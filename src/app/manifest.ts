@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next';
+import { PLATFORM_NAME } from '@/lib/groups/constants';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Lomeros Padel Tour',
-    short_name: 'LPT',
-    description: 'El ranking oficial del grupo Lomeros · LPT',
+    name: PLATFORM_NAME,
+    short_name: PLATFORM_NAME,
+    description: 'Ranking Elo, partidos y apuestas de tu grupo de pádel · ' + PLATFORM_NAME,
     start_url: '/',
     display: 'standalone',
     orientation: 'portrait',
