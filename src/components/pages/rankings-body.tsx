@@ -3,6 +3,7 @@ import { listRatingHistoryInGroup } from '@/lib/rating/queries';
 import Link from 'next/link';
 import { Trophy, UserPlus, Users, Coins } from 'lucide-react';
 import { Podium } from '@/components/shared/podium';
+import { EmptyState } from '@/components/shared/empty-state';
 import { buildPodiumGroups, assignCompetitionRanks } from '@/lib/rankings/podium-groups';
 import { SectionHead, LptAvatar, Delta, Sparkline } from '@/components/lpt/ui';
 import { DirectionalTransition } from '@/components/shared/view-transitions';
@@ -63,10 +64,7 @@ export async function RankingsBody({ ctx }: { ctx: PageContext }) {
       <section className="section">
         <SectionHead icon={Trophy} title="Ranking individual" />
         {ranked.length === 0 ? (
-          <div className="muted" style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 40, margin: '0 0 10px' }}>🏆</p>
-            <p style={{ fontWeight: 600, margin: 0 }}>Aún no hay partidos registrados</p>
-          </div>
+          <EmptyState emoji="🏆" title="Aún no hay partidos registrados" />
         ) : (
           podiumGroups.length >= 3 && <Podium groups={podiumGroups} />
         )}

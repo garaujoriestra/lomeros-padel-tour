@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Swords } from 'lucide-react';
 import { MatchCard, type MatchCardData } from './match-card';
 import { Seg } from './seg';
+import { EmptyState } from './empty-state';
 import type { LptPlayer, ScoreSet } from '@/components/lpt/ui';
 
 export interface MatchListItem {
@@ -62,10 +63,7 @@ export function MatchesList({ items, basePath = '' }: { items: MatchListItem[]; 
         </>
       )}
       {showUpcoming.length === 0 && showPlayed.length === 0 && (
-        <div className="muted" style={{ textAlign: 'center', padding: '60px 0' }}>
-          <p style={{ fontSize: 40, margin: '0 0 10px' }}>🎾</p>
-          <p style={{ fontWeight: 600, margin: 0 }}>Aún no hay partidos registrados</p>
-        </div>
+        <EmptyState emoji="🎾" title="Aún no hay partidos registrados" />
       )}
     </section>
   );
