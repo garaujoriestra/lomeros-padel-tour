@@ -13,7 +13,13 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const ctx = await resolvePageContext(slug);
-  return { title: { default: ctx.group.name } };
+  const paid = isPaidGroup(ctx.group);
+  const hasCustomBranding = paid && (isValidAccentColor(ctx.group.accentColor) || !!ctx.group.logoUrl);
+  return {
+    title: { default: ctx.group.name },
+    manifest: `/g/${slug}/manifest.webmanifest`,
+    ...(hasCustomBranding ? { icons: { apple: `/g/${slug}/apple-icon` } } : {}),
+  };
 }
 
 export default async function GroupLayout({
