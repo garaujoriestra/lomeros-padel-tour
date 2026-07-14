@@ -3,10 +3,25 @@ import Link from 'next/link';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 import { MarketingSection } from '@/components/marketing/marketing-section';
 
+const TITLE = `${PLATFORM_NAME} — la liga de tu peña de pádel`;
+const DESCRIPTION =
+  'Convierte los partidos sueltos de tu grupo en una temporada con narrativa: ranking Elo 2vs2, apuestas con fichas, torneos, logros y planificador. Gratis para siempre.';
+
 export const metadata: Metadata = {
-  title: `${PLATFORM_NAME} — la liga de tu peña de pádel`,
-  description:
-    'Convierte los partidos sueltos de tu grupo en una temporada con narrativa: ranking Elo 2vs2, apuestas con fichas, torneos, logros y planificador. Gratis para siempre.',
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/padelo' },
+  // La tarjeta social la aporta opengraph-image.tsx (convención de fichero);
+  // aquí solo el resto de campos OG/Twitter para WhatsApp/Telegram/X.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: '/padelo',
+    siteName: PLATFORM_NAME,
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image' },
 };
 
 /* ── Datos de EJEMPLO para las maquetas de marcador (no son datos reales) ── */

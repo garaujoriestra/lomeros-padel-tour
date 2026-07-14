@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
+import { trackFunnel } from '@/lib/analytics/events';
 import { upsertPlayerUser } from '@/lib/auth/users';
 import { requireGroupAdmin } from '@/lib/auth/guard';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
@@ -47,6 +49,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 409 });
     }
 
+    // Funnel de captación: el grupo está invitando a su peña.
+    after(() => trackFunnel('jugador_anadido'));
     return NextResponse.json(player, { status: 201 });
   } catch (error) {
     console.error(error);

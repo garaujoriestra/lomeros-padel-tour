@@ -7,12 +7,24 @@ export function hasSeasonPass(
   return !!group.paidUntil && group.paidUntil > now.toISOString();
 }
 
-// ¿Se aplica la identidad de pago (logo, color, sin atribución)? Con el billing
-// APAGADO (beta) todos los grupos cuentan como de pago; encendido, manda el pase.
+// ¿Se aplica la identidad de pago (logo, color)? Con el billing APAGADO (beta)
+// todos los grupos cuentan como de pago; encendido, manda el pase.
 export function isPaidGroup(
   group: { paidUntil: string | null },
   now: Date = new Date(),
 ): boolean {
   if (process.env.BILLING_ENABLED !== 'true') return true;
   return hasSeasonPass(group, now);
+}
+
+// ¿Muestra el grupo la atribución «hecho con Padelo»? Gobernada por el pase
+// REAL (como la ⭐, ignora el flag): la atribución es el motor de crecimiento
+// orgánico —cada página de un grupo gratis enlaza a la landing—, así que la beta
+// regala el branding (isPaidGroup) pero no apaga este cartel; solo lo quita
+// comprar el pase.
+export function showsAttribution(
+  group: { paidUntil: string | null },
+  now: Date = new Date(),
+): boolean {
+  return !hasSeasonPass(group, now);
 }

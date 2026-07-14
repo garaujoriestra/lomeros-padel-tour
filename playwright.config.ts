@@ -8,6 +8,9 @@ const TEST_ADMIN_EMAIL = 'e2e-admin@test.com';
 const TEST_CRON_SECRET = 'e2e-cron-secret';
 const TEST_SUPER_ADMIN_EMAIL = 'e2e-super@test.com';
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_e2e';
+// Fase 0 captación: host de marketing ficticio para e2e'ar el rewrite '/' → /padelo
+// (se manda como cabecera Host contra localhost:3100).
+export const TEST_MARKETING_HOST = 'padelo.test';
 
 export default defineConfig({
   testDir: './e2e',
@@ -28,7 +31,7 @@ export default defineConfig({
     // Fase 3: BILLING_ENABLED=true ejercita el gating real (isPaidGroup respeta paid_until).
     // STRIPE_SECRET_KEY NO se define a propósito: el checkout no se e2e'a (necesita cuenta
     // Stripe real); solo el webhook, con firma forjada contra STRIPE_WEBHOOK_SECRET.
-    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL},${TEST_ADMIN_EMAIL} PUBLIC_SIGNUP_ENABLED=true BILLING_ENABLED=true STRIPE_WEBHOOK_SECRET=${TEST_STRIPE_WEBHOOK_SECRET} npm run dev:e2e`,
+    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL},${TEST_ADMIN_EMAIL} PUBLIC_SIGNUP_ENABLED=true BILLING_ENABLED=true STRIPE_WEBHOOK_SECRET=${TEST_STRIPE_WEBHOOK_SECRET} NEXT_PUBLIC_SITE_URL=${BASE_URL} MARKETING_HOST=${TEST_MARKETING_HOST} npm run dev:e2e`,
     // Readiness contra un endpoint sin DB (el manifest es estático): evita el huevo-y-gallina con las migraciones.
     url: `${BASE_URL}/manifest.webmanifest`,
     reuseExistingServer: !process.env.CI,

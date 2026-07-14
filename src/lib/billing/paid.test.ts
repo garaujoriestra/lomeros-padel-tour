@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { hasSeasonPass, isPaidGroup } from './paid';
+import { hasSeasonPass, isPaidGroup, showsAttribution } from './paid';
 
 const NOW = new Date('2026-07-12T00:00:00.000Z');
 const paid = { paidUntil: '2027-07-12T00:00:00.000Z' };
@@ -21,7 +21,21 @@ describe('hasSeasonPass (⭐: pase REAL, ignora el flag)', () => {
   });
 });
 
-describe('isPaidGroup (branding/atribución: flag-aware)', () => {
+describe('showsAttribution («hecho con Padelo»: pase real, ignora el flag)', () => {
+  it('sin pase o caducado → atribución visible', () => {
+    expect(showsAttribution(never, NOW)).toBe(true);
+    expect(showsAttribution(expired, NOW)).toBe(true);
+    expect(showsAttribution(paid, NOW)).toBe(false);
+  });
+
+  it('con el billing APAGADO (beta) sigue visible: el branding se regala, el motor viral no se apaga', () => {
+    vi.stubEnv('BILLING_ENABLED', '');
+    expect(isPaidGroup(never, NOW)).toBe(true); // branding gratis en beta…
+    expect(showsAttribution(never, NOW)).toBe(true); // …pero la atribución se muestra
+  });
+});
+
+describe('isPaidGroup (branding logo/color: flag-aware)', () => {
   it('flag apagado (o ausente) → todos de pago (beta)', () => {
     vi.stubEnv('BILLING_ENABLED', '');
     expect(isPaidGroup(never, NOW)).toBe(true);

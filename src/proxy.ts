@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { verifySession } from '@/lib/auth/jwt';
 import { decideAccess } from '@/lib/auth/authorize';
 import { getGroupBySlug } from '@/lib/groups/resolve-slug';
+import { isMarketingHost } from '@/lib/marketing/host';
 
 // Slug del grupo canónico en la raíz (env configurable, por defecto 'lomeros').
 // /g/<defaultSlug> → 308 a '/' para que la raíz sea el único canónico.
@@ -10,6 +11,17 @@ const DEFAULT_GROUP_SLUG = (process.env.DEFAULT_GROUP_SLUG ?? 'lomeros').trim();
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Dominio de marketing (MARKETING_HOST, p. ej. padelo.app): su raíz sirve la
+  // landing de plataforma en lugar del tour insignia. Solo se reescribe '/';
+  // el resto de rutas (crear-grupo, /g/<slug>, legal…) se comporta igual en
+  // cualquier host. Sin la env el bloque es inerte y '/' pasa de largo.
+  if (pathname === '/') {
+    if (isMarketingHost(request.headers.get('host'))) {
+      return NextResponse.rewrite(new URL('/padelo', request.url));
+    }
+    return NextResponse.next();
+  }
 
   // Rutas /g/[slug]: validar slug y redirigir ANTES del streaming para obtener
   // status HTTP correcto (notFound/permanentRedirect mid-stream devuelven 200).
@@ -42,5 +54,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/me/:path*', '/planificador/:path*', '/g/:slug', '/g/:slug/me/:path*', '/g/:slug/admin/:path*', '/g/:slug/planificador/:path*'],
+  matcher: ['/', '/admin/:path*', '/me/:path*', '/planificador/:path*', '/g/:slug', '/g/:slug/me/:path*', '/g/:slug/admin/:path*', '/g/:slug/planificador/:path*'],
 };
