@@ -47,7 +47,7 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  // Base para URLs relativas de OG/canonical (p. ej. la tarjeta de /padelo):
+  // Base para URLs relativas de OG/canonical (p. ej. la tarjeta de /bandejazo):
   // sin ella, los shares llevarían URLs relativas rotas fuera de localhost.
   metadataBase: siteUrl(),
   title: {
@@ -120,7 +120,7 @@ export default async function RootLayout({
           </Suspense>
         </ThemeProvider>
         <ServiceWorkerRegister />
-        {/* Pageviews del funnel de captación (/padelo → /crear-grupo → /g/<slug>).
+        {/* Pageviews del funnel de captación (/bandejazo → /crear-grupo → /g/<slug>).
             En dev/e2e no emite nada; requiere Web Analytics activado en Vercel. */}
         <Analytics />
       </body>

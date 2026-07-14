@@ -35,7 +35,7 @@ test.describe('PWA · manifest por grupo', () => {
     expect(manifest.scope).toBe('/');
     expect(typeof manifest.name).toBe('string');
     expect(manifest.name.length).toBeGreaterThan(0);
-    expect(manifest.name).not.toBe('Padelo');
+    expect(manifest.name).not.toBe('Bandejazo');
   });
 
   test('slug inexistente → 404', async ({ request }) => {

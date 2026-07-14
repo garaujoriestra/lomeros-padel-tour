@@ -1,7 +1,7 @@
 // e2e/fase4-first-run.spec.ts
 //
 // Fase 4 · Pieza 1 — verifica dos cosas de punta a punta:
-//   1) la marca de PLATAFORMA es «Padelo» (login, atribución de grupo), mientras
+//   1) la marca de PLATAFORMA es «Bandejazo» (login, atribución de grupo), mientras
 //      la raíz sigue siendo el grupo insignia «Lomeros Padel Tour» (preservado).
 //   2) un grupo recién creado, SIN jugadores ni partidos, renderiza sus empty
 //      states en home/rankings/admin·jugadores sin romperse (ni overlay de error).
@@ -28,10 +28,10 @@ async function expectNoRuntimeError(page: Page) {
   await expect(page.getByText('Unhandled Runtime Error', { exact: false })).toHaveCount(0);
 }
 
-test.describe('marca de plataforma «Padelo» vs grupo insignia', () => {
-  test('login muestra «Padelo», no «Lomeros»', async ({ page }) => {
+test.describe('marca de plataforma «Bandejazo» vs grupo insignia', () => {
+  test('login muestra «Bandejazo», no «Lomeros»', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading', { name: 'Padelo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Bandejazo' })).toBeVisible();
     const body = await page.locator('body').innerText();
     expect(body).not.toContain('Lomeros Padel Tour');
   });
@@ -43,7 +43,7 @@ test.describe('marca de plataforma «Padelo» vs grupo insignia', () => {
 });
 
 test.describe('primer arranque · grupo vacío (sin jugadores ni partidos)', () => {
-  test('un grupo recién creado renderiza sus empty states sin romperse, con marca «Padelo»', async ({ browser }) => {
+  test('un grupo recién creado renderiza sus empty states sin romperse, con marca «Bandejazo»', async ({ browser }) => {
     const slug = `vacio-${Date.now()}`;
     const email = `first-run-${Date.now()}@test.com`;
     const ctx = await browser.newContext();
@@ -79,13 +79,13 @@ test.describe('primer arranque · grupo vacío (sin jugadores ni partidos)', () 
     await expect(page.getByRole('link', { name: 'Añadir el primero' })).toBeVisible();
     await expectNoRuntimeError(page);
 
-    // Atribución de plataforma: si el footer "hecho con …" aparece, dice "Padelo";
+    // Atribución de plataforma: si el footer "hecho con …" aparece, dice "Bandejazo";
     // en ningún caso debe colarse "Lomeros" en las páginas del grupo.
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).not.toContain('Lomeros');
     const footer = page.getByText('hecho con', { exact: false });
     if (await footer.count() > 0) {
-      await expect(footer.first()).toContainText('Padelo');
+      await expect(footer.first()).toContainText('Bandejazo');
     }
 
     await ctx.close();

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Reutiliza el patrón dev-login de onboarding.spec: cada test mint una cuenta fresca.
 async function loginFresh(request: import('@playwright/test').APIRequestContext, tag: string) {
-  const email = `padelo-${tag}-${Date.now()}@test.com`;
+  const email = `bandejazo-${tag}-${Date.now()}@test.com`;
   const res = await request.post('/api/auth/dev-login', { data: { email } });
   expect(res.status()).toBe(200);
 }
@@ -51,7 +51,7 @@ test.describe('alta abierta (intent)', () => {
 });
 
 async function loginFreshPage(page: import('@playwright/test').Page, tag: string) {
-  const email = `padelo-ui-${tag}-${Date.now()}@test.com`;
+  const email = `bandejazo-ui-${tag}-${Date.now()}@test.com`;
   const res = await page.request.post('/api/auth/dev-login', { data: { email } });
   expect(res.status()).toBe(200);
 }
@@ -83,16 +83,16 @@ test.describe('legal + footer', () => {
     await expect(page.getByRole('heading', { name: /términos/i })).toBeVisible();
   });
 
-  test('el footer de /padelo enlaza la legal', async ({ page }) => {
-    await page.goto('/padelo');
+  test('el footer de /bandejazo enlaza la legal', async ({ page }) => {
+    await page.goto('/bandejazo');
     await expect(page.getByRole('contentinfo').getByRole('link', { name: /privacidad/i })).toHaveAttribute('href', '/legal/privacidad');
     await expect(page.getByRole('contentinfo').getByRole('link', { name: /términos/i })).toHaveAttribute('href', '/legal/terminos');
   });
 });
 
-test.describe('landing /padelo', () => {
+test.describe('landing /bandejazo', () => {
   test('hero y ambos CTAs enrutan bien', async ({ page }) => {
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const crear = page.getByRole('link', { name: /crea tu grupo/i }).first();
     await expect(crear).toHaveAttribute('href', '/crear-grupo');
@@ -100,7 +100,7 @@ test.describe('landing /padelo', () => {
   });
 
   test('la landing de plataforma NO contiene el literal «Lomeros»', async ({ page }) => {
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     const html = await page.content();
     expect(html).not.toContain('Lomeros');
   });
