@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
+import { trackFunnel } from '@/lib/analytics/events';
 import { getSession } from '@/lib/auth/session';
 import { verifyInviteToken } from '@/lib/onboarding/invite-token';
 import { isPublicSignupEnabled, MAX_GROUPS_PER_ADMIN } from '@/lib/onboarding/public-signup';
@@ -50,5 +52,8 @@ export async function POST(request: NextRequest) {
 
   const result = await createGroupWithAdmin({ slug, name, userId: session.userId });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+  // Funnel de captación: la conversión de la landing. `via` separa el alta
+  // abierta de las invitaciones firmadas (mide qué canal trae grupos).
+  after(() => trackFunnel('grupo_creado', { via: tokenOk ? 'invitacion' : 'alta_abierta' }));
   return NextResponse.json({ ok: true, slug });
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { Archivo, Barlow_Condensed } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
@@ -8,6 +9,7 @@ import { NotificationReminderGate } from "@/components/shared/notification-remin
 import { SHIELD_PATH, crestInkMarkup } from "@/components/shared/crest-svg";
 import { resolvePageContext } from "@/lib/auth/page-context";
 import { PLATFORM_NAME } from "@/lib/groups/constants";
+import { siteUrl } from "@/lib/marketing/site-url";
 import "./globals.css";
 
 // Splash de marca que se pinta al instante (estilos inline, sin esperar al CSS
@@ -45,6 +47,9 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
+  // Base para URLs relativas de OG/canonical (p. ej. la tarjeta de /padelo):
+  // sin ella, los shares llevarían URLs relativas rotas fuera de localhost.
+  metadataBase: siteUrl(),
   title: {
     default: PLATFORM_NAME,
     // template '%s' = passthrough: las páginas con título propio (p. ej. /matches,
@@ -115,6 +120,9 @@ export default async function RootLayout({
           </Suspense>
         </ThemeProvider>
         <ServiceWorkerRegister />
+        {/* Pageviews del funnel de captación (/padelo → /crear-grupo → /g/<slug>).
+            En dev/e2e no emite nada; requiere Web Analytics activado en Vercel. */}
+        <Analytics />
       </body>
     </html>
   );

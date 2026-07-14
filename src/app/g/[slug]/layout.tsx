@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/shared/navbar';
 import { BottomNav } from '@/components/shared/bottom-nav';
 import { navSessionFromContext, resolvePageContext } from '@/lib/auth/page-context';
 import { getSwitcherGroups } from '@/lib/auth/group-switcher';
-import { hasSeasonPass, isPaidGroup } from '@/lib/billing/paid';
+import { hasSeasonPass, isPaidGroup, showsAttribution } from '@/lib/billing/paid';
 import { hasCustomBranding, isDarkColor, isValidAccentColor } from '@/lib/groups/branding';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 
@@ -79,9 +80,16 @@ export default async function GroupLayout({
         <div className="lpt-container">{children}</div>
       </main>
       <BottomNav basePath={ctx.basePath} />
-      {!paid && (
+      {/* Atribución = motor de crecimiento: la quita el pase REAL (showsAttribution,
+          como la ⭐), no la beta — y enlaza a la landing para cerrar el bucle. */}
+      {showsAttribution(ctx.group) && (
         <footer className="muted" style={{ textAlign: 'center', fontSize: 12, padding: '12px 0 20px' }}>
-          hecho con {PLATFORM_NAME}
+          <Link
+            href="/padelo"
+            style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
+          >
+            hecho con {PLATFORM_NAME}
+          </Link>
         </footer>
       )}
     </div>

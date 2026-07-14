@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
+import { trackFunnel } from '@/lib/analytics/events';
 import { processMatchRatings } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
 import { requireGroupAdmin } from '@/lib/auth/guard';
@@ -107,6 +109,8 @@ export async function POST(request: NextRequest) {
       await notifyMatchResult({ ...match, winnerTeam: winnerTeam as 1 | 2 }, ratingResult);
     }
 
+    // Funnel de captación: partidos registrados = grupo ACTIVADO (métrica norte).
+    after(() => trackFunnel('partido_creado'));
     return NextResponse.json(match, { status: 201 });
   } catch (error) {
     console.error(error);
