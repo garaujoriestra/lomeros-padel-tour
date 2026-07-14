@@ -676,3 +676,261 @@
     animation-delay: 0s !important;
   }
 }
+
+/* ===== Landing Padelo (marketing) ===== */
+/* Dirección "Broadcast elevado": la landing ES el escenario de "Pista Central".
+   Todo aquí queda fijado al telón oscuro-verde de la marca — como el splash,
+   vive fuera del tema claro/oscuro a propósito. Clases con prefijo .mkt-.
+   NO se tocan los tokens globales: se redefinen SOLO dentro de .mkt-page. */
+
+.mkt-page {
+  /* Telón fijo: se aplican como override local los MISMOS valores del tema oscuro
+     ya documentados (.dark), para que la landing luzca idéntica en claro y oscuro. */
+  --bg: oklch(0.16 0.022 188);
+  --surface: oklch(0.205 0.024 186);
+  --surface-2: oklch(0.245 0.026 184);
+  --line: oklch(0.3 0.028 184);
+  --line-strong: oklch(0.38 0.03 182);
+  --ink: oklch(0.965 0.008 120);
+  --ink-2: oklch(0.82 0.02 150);
+  --ink-3: oklch(0.62 0.025 170);
+  --loss-text: oklch(0.66 0.17 25);
+  /* Verde-victoria COMO TEXTO: subido en L para superar AA sobre los tintes
+     verdes/lima de las filas destacadas (mismo patrón que --loss vs --loss-text). */
+  --mkt-win-text: oklch(0.72 0.17 150);
+  --acc-text: var(--acc);
+  --card-border: 1px solid var(--line);
+  --card-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px oklch(0 0 0 / 0.25);
+  --glow: 0 0 24px;
+  --hero-bg: linear-gradient(160deg, oklch(0.225 0.03 190) 0%, oklch(0.17 0.025 186) 60%);
+  --mkt-r: 20px;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* ── Ritmo de sección (aire generoso) ── */
+.mkt-section { position: relative; padding-block: clamp(58px, 8vw, 112px); }
+.mkt-section--tight { padding-block: clamp(46px, 6vw, 82px); }
+/* Segmentos de retransmisión: bandas con tinte de superficie muy sutil (mismo
+   tema, no invierte) + filete arriba/abajo. Dan ritmo y evitan el "vacío". */
+.mkt-section--panel { background: color-mix(in oklab, var(--surface) 26%, transparent); border-block: 1px solid var(--line); }
+.mkt-hr { height: 1px; border: 0; background: linear-gradient(90deg, transparent, var(--line), transparent); }
+
+.mkt-head { max-width: 680px; }
+.mkt-head--center { max-width: 760px; margin-inline: auto; text-align: center; }
+.mkt-kicker { color: var(--acc); margin-bottom: 15px; }
+.mkt-tick { display: inline-block; width: 15px; height: 3px; border-radius: 3px; background: var(--acc); }
+.mkt-h2 { font-size: clamp(30px, 4.9vw, 52px); line-height: 0.98; }
+.mkt-lead { margin-top: 18px; color: var(--ink-2); font-size: clamp(15.5px, 1.7vw, 18px); max-width: 58ch; }
+.mkt-strong { color: var(--ink); font-weight: 700; }
+
+/* ── 1 · HERO (asymmetric split: relato | marcador) ── */
+.mkt-hero { position: relative; overflow: clip; background: var(--hero-bg); }
+.mkt-hero::before { /* líneas de retransmisión, muy sutiles */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, oklch(1 0 0 / 0.013) 3px 4px);
+  -webkit-mask: linear-gradient(180deg, black, transparent 72%);
+  mask: linear-gradient(180deg, black, transparent 72%);
+}
+.mkt-hero::after { /* foco lima detrás del marcador */
+  content: ""; position: absolute; top: -12%; right: -8%; width: 56%; height: 128%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--acc) 15%, transparent), transparent 72%);
+}
+.mkt-hero__grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1.04fr 0.96fr; gap: clamp(28px, 4vw, 56px);
+  align-items: center; padding-block: clamp(58px, 7.5vw, 100px);
+}
+.mkt-hero__title { font-size: clamp(46px, 8.3vw, 96px); line-height: 0.9; margin-top: 16px; max-width: 12ch; }
+.mkt-hero__sub { margin-top: 20px; max-width: 46ch; font-size: clamp(16px, 2.1vw, 20px); color: var(--ink-2); }
+.mkt-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.mkt-cta--center { justify-content: center; }
+.mkt-hero__trust { margin-top: 18px; color: var(--ink-3); font-size: 12.5px; }
+@media (max-width: 900px) {
+  .mkt-hero__grid { grid-template-columns: 1fr; gap: 36px; }
+}
+
+/* ── Marcador "Pista Central" (dato con dramatismo) ── */
+.mkt-board {
+  background: color-mix(in oklab, var(--surface) 88%, var(--bg));
+  border: 1px solid var(--line); border-radius: var(--mkt-r);
+  box-shadow: var(--card-shadow), 0 0 46px color-mix(in oklab, var(--acc) 8%, transparent);
+  overflow: hidden;
+}
+.mkt-board__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 16px; border-bottom: 1px solid var(--line);
+  background: color-mix(in oklab, var(--surface-2) 55%, transparent);
+}
+.mkt-board__label { display: flex; align-items: center; gap: 9px; }
+.mkt-live { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
+.mkt-live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: mkt-ping 2.1s ease-out infinite; }
+.mkt-tag {
+  font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px;
+  font-variant-numeric: tabular-nums;
+}
+.mkt-row { display: grid; grid-template-columns: 22px 32px 1fr auto auto; gap: 12px; align-items: center; padding: 12px 16px; }
+.mkt-row + .mkt-row { border-top: 1px solid color-mix(in oklab, var(--line) 55%, transparent); }
+.mkt-pos { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 19px; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+.mkt-ava { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 12px; color: var(--on-acc); }
+.mkt-name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkt-elo { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.mkt-delta { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; min-width: 46px; justify-content: flex-end; }
+.mkt-delta.up { color: var(--mkt-win-text); }
+.mkt-delta.down { color: var(--loss-text); }
+/* Líder: la identidad la dan el filete lima + los números lima (abajo). El fondo
+   se mantiene NEUTRO-elevado (no lima) para que el delta verde y el texto sigan
+   siendo AA — un lavado lima haría ilegible el verde encima (verde sobre lima). */
+.mkt-row--lead { position: relative; background: color-mix(in oklab, var(--surface-2) 65%, var(--surface)); }
+.mkt-row--lead::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--acc); }
+.mkt-row--lead .mkt-pos, .mkt-row--lead .mkt-elo { color: var(--acc); }
+.mkt-board__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 16px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12px;
+  background: color-mix(in oklab, var(--surface-2) 35%, transparent);
+}
+
+/* ── 2 · Antes / Después (momento de segunda lectura) ── */
+.mkt-swap { display: grid; grid-template-columns: 1fr auto 1fr; gap: clamp(14px, 2.2vw, 26px); align-items: center; margin-top: clamp(30px, 4vw, 48px); }
+.mkt-swap__arrow { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(24px, 4vw, 34px); color: var(--acc); text-align: center; }
+.mkt-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 20px; box-shadow: var(--card-shadow); }
+.mkt-panel--after { border-color: color-mix(in oklab, var(--acc) 30%, var(--line)); }
+.mkt-cap { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+.mkt-chat { display: grid; gap: 8px; }
+.mkt-bubble { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; color: var(--ink-2); max-width: 90%; }
+.mkt-bubble--me { justify-self: end; background: color-mix(in oklab, var(--surface-2) 60%, var(--line)); }
+@media (max-width: 760px) {
+  .mkt-swap { grid-template-columns: 1fr; }
+  .mkt-swap__arrow { transform: rotate(90deg); }
+}
+
+/* ── 3 · Capa social (split + fichas/logros/parejas) ── */
+.mkt-split { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: clamp(28px, 4vw, 56px); align-items: center; }
+.mkt-split--rev > .mkt-split__visual { order: -1; }
+.mkt-tiles { display: grid; gap: 14px; }
+.mkt-tile { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 15px 18px; box-shadow: var(--card-shadow); }
+.mkt-tile__body { flex: 1; min-width: 0; }
+.mkt-tile__t { font-weight: 800; font-size: 15px; }
+.mkt-tile__d { color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+.mkt-tile__n { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mkt-ficha {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+  background: var(--acc); color: var(--on-acc);
+  font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 21px;
+  border: 3px dashed color-mix(in oklab, var(--on-acc) 38%, var(--acc));
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--acc) 32%, transparent);
+}
+.mkt-medal {
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-size: 20px;
+  background: color-mix(in oklab, var(--win) 16%, var(--surface-2)); border: 1px solid color-mix(in oklab, var(--win) 34%, transparent);
+}
+.mkt-duo { display: flex; }
+.mkt-duo .mkt-ava:not(:first-child) { margin-left: -10px; }
+@media (max-width: 860px) {
+  .mkt-split, .mkt-split--rev { grid-template-columns: 1fr; }
+  .mkt-split--rev > .mkt-split__visual { order: 0; }
+}
+
+/* ── 4 · Motor competitivo (marcador de partido a lo grande) ── */
+.mkt-match { background: var(--surface); border: 1px solid var(--line); border-radius: var(--mkt-r); box-shadow: var(--card-shadow); overflow: hidden; }
+.mkt-match__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); color: var(--ink-3); font-size: 12px; }
+.mkt-team { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 16px 18px; }
+.mkt-team + .mkt-team { border-top: 1px solid var(--line); }
+.mkt-team--win { background: color-mix(in oklab, var(--win) 9%, transparent); }
+.mkt-team__names { font-weight: 800; font-size: 16px; }
+.mkt-team__meta { color: var(--ink-2); font-size: 12px; margin-top: 3px; display: flex; align-items: center; gap: 8px; }
+.mkt-sets { display: flex; gap: 8px; }
+.mkt-set { width: 34px; height: 42px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 21px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.mkt-set--w { background: color-mix(in oklab, var(--win) 18%, transparent); border-color: color-mix(in oklab, var(--win) 32%, transparent); color: var(--mkt-win-text); }
+.mkt-match__foot { padding: 12px 18px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; background: color-mix(in oklab, var(--surface-2) 30%, transparent); }
+
+/* ── 5 · Planificador (rejilla de disponibilidad) ── */
+.mkt-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.mkt-daycol { display: grid; gap: 6px; padding: 8px 6px; border-radius: 12px; }
+.mkt-daycol--hot { background: color-mix(in oklab, var(--acc) 10%, transparent); outline: 1px solid color-mix(in oklab, var(--acc) 40%, transparent); }
+.mkt-daylabel { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; }
+.mkt-daycol--hot .mkt-daylabel { color: var(--acc); }
+.mkt-cell { height: 20px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); }
+.mkt-cell--on { background: color-mix(in oklab, var(--win) 52%, var(--surface)); border-color: transparent; }
+.mkt-daycol--hot .mkt-cell--on { background: color-mix(in oklab, var(--acc) 62%, transparent); }
+.mkt-weekcap { margin-top: 16px; color: var(--ink-3); font-size: 13px; }
+
+/* ── 6 · Cómo funciona (rail numerado, no cards idénticas) ── */
+.mkt-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 40px); margin-top: clamp(30px, 4vw, 50px); }
+.mkt-step { padding-top: 20px; border-top: 2px solid var(--line); }
+.mkt-step:first-child { border-top-color: var(--acc); }
+.mkt-step__n { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(40px, 5.5vw, 62px); line-height: 0.85; color: color-mix(in oklab, var(--ink) 26%, transparent); font-variant-numeric: tabular-nums; }
+.mkt-step__t { margin-top: 12px; font-weight: 800; font-size: 18px; }
+.mkt-step__d { margin-top: 6px; color: var(--ink-2); font-size: 14.5px; max-width: 34ch; }
+@media (max-width: 760px) { .mkt-steps { grid-template-columns: 1fr; gap: 26px; } }
+
+/* ── 7 · Precio honesto (dos planes, el gratis manda) ── */
+.mkt-price { display: grid; grid-template-columns: 1.12fr 0.88fr; gap: clamp(18px, 2.6vw, 30px); margin-top: clamp(30px, 4vw, 46px); align-items: stretch; }
+.mkt-plan { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--mkt-r); padding: clamp(22px, 3vw, 32px); box-shadow: var(--card-shadow); }
+.mkt-plan--pass { border-color: color-mix(in oklab, var(--acc) 42%, var(--line)); background: linear-gradient(180deg, color-mix(in oklab, var(--acc) 7%, var(--surface)), var(--surface)); }
+.mkt-plan__price { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(40px, 5.6vw, 62px); line-height: 0.9; }
+.mkt-plan__unit { color: var(--ink-3); font-size: 13px; margin-top: 6px; }
+.mkt-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 11px; }
+.mkt-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--ink-2); }
+.mkt-check { flex-shrink: 0; font-weight: 900; }
+.mkt-check--free { color: var(--win); }
+.mkt-check--pass { color: var(--acc); }
+.mkt-official { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-acc); background: var(--acc); border-radius: 999px; padding: 5px 11px; }
+@media (max-width: 820px) { .mkt-price { grid-template-columns: 1fr; } }
+
+/* ── 8 · Cierre (manifiesto centrado + podio de fondo) ── */
+.mkt-close { position: relative; overflow: clip; text-align: center; background: var(--hero-bg); }
+.mkt-close::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, oklch(1 0 0 / 0.012) 3px 4px);
+  -webkit-mask: radial-gradient(60% 60% at 50% 40%, black, transparent 75%);
+  mask: radial-gradient(60% 60% at 50% 40%, black, transparent 75%);
+}
+.mkt-podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-top: clamp(36px, 5vw, 56px); height: clamp(70px, 10vw, 108px); opacity: 0.9; }
+.mkt-podium span { width: clamp(40px, 7vw, 66px); border-radius: 8px 8px 0 0; border: 1px solid var(--line); border-bottom: 0; background: color-mix(in oklab, var(--surface) 70%, transparent); }
+.mkt-podium span:nth-child(1) { height: 62%; }
+.mkt-podium span:nth-child(2) { height: 100%; background: color-mix(in oklab, var(--acc) 22%, var(--surface)); border-color: color-mix(in oklab, var(--acc) 40%, var(--line)); }
+.mkt-podium span:nth-child(3) { height: 44%; }
+.mkt-close__title { font-size: clamp(38px, 6.6vw, 74px); line-height: 0.94; max-width: 16ch; margin-inline: auto; }
+
+/* ── Cabecera + pie del escenario ── */
+.mkt-topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); background: color-mix(in oklab, var(--bg) 82%, transparent); border-bottom: 1px solid var(--line); }
+.mkt-topbar__in { height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.mkt-brand { display: flex; align-items: center; gap: 9px; }
+.mkt-footer { border-top: 1px solid var(--line); background: color-mix(in oklab, var(--surface) 30%, transparent); }
+.mkt-footer__in { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; justify-content: space-between; padding: 30px 0; }
+.mkt-footer__brand { display: flex; align-items: center; gap: 12px; }
+.mkt-footer__nav { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-block: -10px; }
+/* Target táctil ≥44px sin inflar el layout (padding + margen negativo compensado). */
+.mkt-footer__nav a { display: inline-flex; align-items: center; min-height: 44px; padding-block: 10px; color: var(--ink-2); font-size: 13.5px; transition: color 0.15s ease; }
+.mkt-footer__nav a:hover { color: var(--ink); }
+.mkt-footer__nav a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
+
+/* "Nuevo" (badge global .lpt-badge.win) sobre el escenario oscuro: el verde-texto
+   base queda por debajo de AA a 11px; en la landing se sube al verde-texto legible. */
+.mkt-page .lpt-badge.win { color: var(--mkt-win-text); }
+
+/* ── Legal (misma escena, lectura tranquila) ── */
+.mkt-legal { line-height: 1.65; }
+.mkt-legal h1 { font-size: clamp(32px, 6vw, 46px); }
+.mkt-legal h2 { margin-top: 32px; }
+.mkt-legal p { color: var(--ink-2); max-width: 66ch; margin-top: 10px; }
+
+/* ── Cold-open del hero (entrada única en carga) + latido "en juego" ── */
+.mkt-anim { animation: mkt-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes mkt-rise { from { opacity: 0; transform: translateY(16px); } }
+@keyframes mkt-ping { 0% { transform: scale(1); opacity: 0.55; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .mkt-anim { animation: none; }
+  .mkt-live::after { animation: none; opacity: 0; }
+}
+
+/* ── Colapso móvil ── */
+@media (max-width: 640px) {
+  .mkt-week { gap: 5px; }
+  .mkt-set { width: 30px; height: 38px; font-size: 19px; }
+  .mkt-footer__in { padding: 24px 0; }
+}

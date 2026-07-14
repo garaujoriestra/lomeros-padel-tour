@@ -28,7 +28,7 @@ export default defineConfig({
     // Fase 3: BILLING_ENABLED=true ejercita el gating real (isPaidGroup respeta paid_until).
     // STRIPE_SECRET_KEY NO se define a propósito: el checkout no se e2e'a (necesita cuenta
     // Stripe real); solo el webhook, con firma forjada contra STRIPE_WEBHOOK_SECRET.
-    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL},${TEST_ADMIN_EMAIL} BILLING_ENABLED=true STRIPE_WEBHOOK_SECRET=${TEST_STRIPE_WEBHOOK_SECRET} npm run dev:e2e`,
+    command: `rm -f e2e/test.db && TURSO_DATABASE_URL=file:./e2e/test.db TURSO_AUTH_TOKEN= AUTH_SECRET=${TEST_AUTH_SECRET} ADMIN_EMAIL=${TEST_ADMIN_EMAIL} CRON_SECRET=${TEST_CRON_SECRET} SUPER_ADMIN_EMAILS=${TEST_SUPER_ADMIN_EMAIL},${TEST_ADMIN_EMAIL} PUBLIC_SIGNUP_ENABLED=true BILLING_ENABLED=true STRIPE_WEBHOOK_SECRET=${TEST_STRIPE_WEBHOOK_SECRET} npm run dev:e2e`,
     // Readiness contra un endpoint sin DB (el manifest es estático): evita el huevo-y-gallina con las migraciones.
     url: `${BASE_URL}/manifest.webmanifest`,
     reuseExistingServer: !process.env.CI,

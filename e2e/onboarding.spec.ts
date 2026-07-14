@@ -59,20 +59,22 @@ test.describe('onboarding · crear grupo (API)', () => {
     expect(check.status()).toBe(200);
   });
 
-  test('token caducado → 403', async ({ request }) => {
+  // Fase 4: alta abierta — el token deja de ser obligatorio; un token caducado ya no
+  // bloquea: el alta cae al modo abierto y crea el grupo igualmente (200).
+  test('token caducado con alta abierta → 200 (cae al modo abierto)', async ({ request }) => {
     await loginAsFreshUser(request, 'expired');
     const res = await request.post('/api/onboarding/create-group', {
       data: { name: 'X', slug: `onb2-${Date.now()}`, t: await inviteToken('-1h') },
     });
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(200);
   });
 
-  test('sin token → 403; slug reservado → 400; slug ocupado → 400; nombre vacío → 400', async ({ request }) => {
+  // Fase 4: alta abierta — el token deja de ser obligatorio. El caso "sin token → 200"
+  // vive en landing-padelo.spec; aquí solo la validación de slug/nombre, que no cambia:
+  // con token válido, un slug reservado/ocupado/inválido o un nombre vacío devuelve 400.
+  test('slug reservado → 400; slug ocupado → 400; nombre vacío → 400; slug largo → 400', async ({ request }) => {
     await loginAsFreshUser(request, 'validation');
     const t = await inviteToken();
-    expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: `a-${Date.now()}` } })).status()).toBe(403);
-    // Orden de validación: el token se comprueba ANTES que el slug (sin token + slug ocupado → 403, no 400).
-    expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'grupo-test' } })).status()).toBe(403);
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'admin', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: 'X', slug: 'grupo-test', t } })).status()).toBe(400);
     expect((await request.post('/api/onboarding/create-group', { data: { name: '  ', slug: `b-${Date.now()}`, t } })).status()).toBe(400);
@@ -91,9 +93,13 @@ test.describe('onboarding · crear grupo sin sesión', () => {
 });
 
 test.describe('onboarding · página /crear-grupo', () => {
-  test('sin token → mensaje de invitación necesaria, sin formulario', async ({ page }) => {
+  // Fase 4: alta abierta — el token deja de ser obligatorio. Sin token y sin sesión ya no
+  // aparece "necesitas una invitación": se ofrece entrar con Google (la cobertura completa
+  // del alta abierta por UI vive en landing-padelo.spec).
+  test('sin token y sin sesión → botón de Google, sin formulario', async ({ page }) => {
     await page.goto('/crear-grupo');
-    await expect(page.getByText(/necesitas una invitación/i).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /entrar con google/i })).toBeVisible();
+    await expect(page.getByText(/necesitas una invitación/i)).toHaveCount(0);
     await expect(page.getByLabel(/nombre del grupo/i)).toHaveCount(0);
   });
 
