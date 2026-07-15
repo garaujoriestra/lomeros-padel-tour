@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 import { MarketingSection } from '@/components/marketing/marketing-section';
+import { MarketingScrollFx } from '@/components/marketing/scroll-fx';
 
 const TITLE = `${PLATFORM_NAME} — la liga de tu peña de pádel`;
 const DESCRIPTION =
@@ -86,6 +87,7 @@ function Scoreboard() {
 export default function PadeloLanding() {
   return (
     <>
+      <MarketingScrollFx />
       {/* 1 · Hero broadcast — split asimétrico: relato | marcador */}
       <section className="mkt-hero">
         <div className="lpt-container mkt-hero__grid">
@@ -108,7 +110,10 @@ export default function PadeloLanding() {
             </div>
           </div>
           <div className="mkt-anim" style={{ animationDelay: '0.24s' }}>
-            <Scoreboard />
+            {/* El drift va en un wrapper propio: mkt-anim ya anima transform en la carga. */}
+            <div data-parallax="drift" data-parallax-speed="-44">
+              <Scoreboard />
+            </div>
           </div>
         </div>
       </section>
@@ -124,7 +129,7 @@ export default function PadeloLanding() {
             </p>
           </div>
           <div className="mkt-swap">
-            <div className="mkt-panel mkt-before">
+            <div className="mkt-panel mkt-before" data-parallax="expand">
               <p className="mkt-cap">Antes</p>
               <div className="mkt-chat">
                 <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
@@ -133,7 +138,7 @@ export default function PadeloLanding() {
               </div>
             </div>
             <div className="mkt-swap__arrow display" aria-hidden>▶</div>
-            <div className="mkt-panel mkt-panel--after">
+            <div className="mkt-panel mkt-panel--after" data-parallax="expand">
               <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
               <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
                 <div className="mkt-row mkt-row--lead">
@@ -170,7 +175,7 @@ export default function PadeloLanding() {
               enseñe la app a la siguiente.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-tiles">
+          <div className="mkt-split__visual mkt-tiles" data-parallax="expand">
             <div className="mkt-tile">
               <span className="mkt-ficha" aria-hidden>T</span>
               <div className="mkt-tile__body">
@@ -212,7 +217,7 @@ export default function PadeloLanding() {
               avanza como una competición de verdad, no como una lista de partidos.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-match">
+          <div className="mkt-split__visual mkt-match" data-parallax="expand">
             <div className="mkt-match__head">
               <span>Final · Torneo de primavera</span>
               <span className="num">6-4 · 4-6 · 7-5</span>
@@ -252,7 +257,12 @@ export default function PadeloLanding() {
       <section className="mkt-section mkt-section--panel">
         <div className="lpt-container mkt-split">
           <div className="mkt-split__visual">
-            <div className="mkt-week" role="img" aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña.">
+            <div
+              className="mkt-week"
+              data-parallax="expand"
+              role="img"
+              aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña."
+            >
               {[
                 { d: 'L', on: [1, 0, 0, 1, 0, 0] },
                 { d: 'M', on: [0, 1, 0, 0, 1, 0] },
@@ -315,7 +325,7 @@ export default function PadeloLanding() {
             </p>
           </div>
           <div className="mkt-price">
-            <div className="mkt-plan">
+            <div className="mkt-plan" data-parallax="expand">
               <p className="mkt-plan__price">Gratis</p>
               <p className="mkt-plan__unit">para siempre</p>
               <ul className="mkt-list">
@@ -325,7 +335,7 @@ export default function PadeloLanding() {
                 <li><span className="mkt-check mkt-check--free">✓</span> Se instala como app en el móvil</li>
               </ul>
             </div>
-            <div className="mkt-plan mkt-plan--pass">
+            <div className="mkt-plan mkt-plan--pass" data-parallax="expand">
               <span className="mkt-official">⭐ Tour Oficial</span>
               <p className="mkt-plan__price" style={{ marginTop: 16 }}>~20&nbsp;€</p>
               <p className="mkt-plan__unit">al año · Pase de Temporada</p>
@@ -347,7 +357,7 @@ export default function PadeloLanding() {
             <h2 className="display mkt-close__title">Empieza la temporada de tu peña</h2>
             <Cta center />
           </div>
-          <div className="mkt-podium" aria-hidden>
+          <div className="mkt-podium" data-parallax="expand" aria-hidden>
             <span /><span /><span />
           </div>
         </div>
