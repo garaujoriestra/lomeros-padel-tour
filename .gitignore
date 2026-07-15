@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/promo/node_modules
+/promo/out
 /.pnp
 .pnp.*
 .yarn/*
