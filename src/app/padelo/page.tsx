@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 import { MarketingSection } from '@/components/marketing/marketing-section';
 import { MarketingScrollFx } from '@/components/marketing/scroll-fx';
+import { Ball3DLazy } from '@/components/marketing/ball3d-lazy';
 
 const TITLE = `${PLATFORM_NAME} — la liga de tu peña de pádel`;
 const DESCRIPTION =
@@ -88,6 +89,7 @@ export default function PadeloLanding() {
   return (
     <>
       <MarketingScrollFx />
+      <Ball3DLazy />
       {/* 1 · Hero broadcast — split asimétrico: relato | marcador */}
       <section className="mkt-hero">
         <div className="lpt-container mkt-hero__grid">
@@ -110,8 +112,8 @@ export default function PadeloLanding() {
             </div>
           </div>
           <div className="mkt-anim" style={{ animationDelay: '0.24s' }}>
-            {/* El drift va en un wrapper propio: mkt-anim ya anima transform en la carga. */}
-            <div data-parallax="drift" data-parallax-speed="-44">
+            {/* Drift y tilt van en un wrapper propio: mkt-anim ya anima transform en la carga. */}
+            <div data-parallax="drift" data-parallax-speed="-44" data-tilt>
               <Scoreboard />
             </div>
           </div>
@@ -175,7 +177,7 @@ export default function PadeloLanding() {
               enseñe la app a la siguiente.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-tiles" data-parallax="expand">
+          <div className="mkt-split__visual mkt-tiles" data-parallax="expand" data-tilt>
             <div className="mkt-tile">
               <span className="mkt-ficha" aria-hidden>T</span>
               <div className="mkt-tile__body">
@@ -217,7 +219,7 @@ export default function PadeloLanding() {
               avanza como una competición de verdad, no como una lista de partidos.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-match" data-parallax="expand">
+          <div className="mkt-split__visual mkt-match" data-parallax="expand" data-tilt>
             <div className="mkt-match__head">
               <span>Final · Torneo de primavera</span>
               <span className="num">6-4 · 4-6 · 7-5</span>

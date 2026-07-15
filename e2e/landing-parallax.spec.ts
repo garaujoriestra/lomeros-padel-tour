@@ -66,6 +66,28 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     await expect(page.locator(sel)).toBeVisible();
   });
 
+  test('pelota 3D: el wrapper se monta y su progreso avanza con el scroll', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    const ball = page.locator('[data-ball3d]');
+    await expect(ball).toHaveCount(1); // espera al dynamic import
+    // El runner puede no tener WebGL; el wrapper lo declara y el canvas solo existe si hay contexto.
+    if ((await ball.getAttribute('data-webgl')) === '1') {
+      await expect(ball.locator('canvas')).toBeVisible();
+    }
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect
+      .poll(async () => parseFloat((await ball.getAttribute('data-progress')) ?? '0'), { timeout: 5_000 })
+      .toBeGreaterThan(0.9);
+  });
+
+  test('con prefers-reduced-motion la pelota 3D no se monta', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/padelo');
+    await page.waitForLoadState('networkidle'); // deja cargar el chunk dinámico
+    await expect(page.locator('[data-ball3d]')).toHaveCount(0);
+  });
+
   test('el motion no rompe la landing: CTAs y secciones siguen operativos tras scrollear', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');

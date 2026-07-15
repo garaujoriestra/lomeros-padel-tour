@@ -919,6 +919,13 @@
 .mkt-legal h2 { margin-top: 32px; }
 .mkt-legal p { color: var(--ink-2); max-width: 66ch; margin-top: 10px; }
 
+/* ── Pelota de pádel 3D (capa fija entre fondo y contenido) ──
+   Canvas por encima de los fondos de sección (z:1) y contenedores de contenido
+   por encima del canvas (z:2): la pelota pasa por detrás de las tarjetas y
+   nunca tapa texto. La topbar (z:20) queda siempre por encima. */
+.mkt-ball3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.mkt-page .lpt-container { position: relative; z-index: 2; }
+
 /* ── Cold-open del hero (entrada única en carga) + latido "en juego" ── */
 .mkt-anim { animation: mkt-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes mkt-rise { from { opacity: 0; transform: translateY(16px); } }

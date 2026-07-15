@@ -48,6 +48,33 @@ export function MarketingScrollFx() {
       }
     });
 
+    // Tilt 3D al puntero en las tarjetas clave: solo con puntero fino y hover
+    // real (en táctil no existe el gesto) y sin reduced-motion.
+    mm.add('(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)', () => {
+      const cleanups: (() => void)[] = [];
+      for (const el of gsap.utils.toArray<HTMLElement>('[data-tilt]')) {
+        gsap.set(el, { transformPerspective: 900 });
+        const rotX = gsap.quickTo(el, 'rotationX', { duration: 0.4, ease: 'power2.out' });
+        const rotY = gsap.quickTo(el, 'rotationY', { duration: 0.4, ease: 'power2.out' });
+        const onMove = (e: PointerEvent) => {
+          const r = el.getBoundingClientRect();
+          rotY(((e.clientX - r.left) / r.width - 0.5) * 10);
+          rotX(((e.clientY - r.top) / r.height - 0.5) * -8);
+        };
+        const onLeave = () => {
+          rotX(0);
+          rotY(0);
+        };
+        el.addEventListener('pointermove', onMove);
+        el.addEventListener('pointerleave', onLeave);
+        cleanups.push(() => {
+          el.removeEventListener('pointermove', onMove);
+          el.removeEventListener('pointerleave', onLeave);
+        });
+      }
+      return () => cleanups.forEach((fn) => fn());
+    });
+
     return () => mm.revert();
   }, []);
 
