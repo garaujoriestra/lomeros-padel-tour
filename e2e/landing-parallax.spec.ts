@@ -81,11 +81,48 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
       .toBeGreaterThan(0.9);
   });
 
-  test('con prefers-reduced-motion la pelota 3D no se monta', async ({ page }) => {
+  test('con prefers-reduced-motion la pelota 3D no se monta (ni el pin del rally)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/padelo');
     await page.waitForLoadState('networkidle'); // deja cargar el chunk dinámico
     await expect(page.locator('[data-ball3d]')).toHaveCount(0);
+    await expect(page.locator('.pin-spacer')).toHaveCount(0);
+  });
+
+  test('cold-open: el saque inicial termina y lo marca (data-intro=done)', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    const ball = page.locator('[data-ball3d]');
+    await expect(ball).toHaveCount(1);
+    await expect(ball).toHaveAttribute('data-intro', 'pending'); // el saque arranca en vuelo
+    await expect(ball).toHaveAttribute('data-intro', 'done', { timeout: 10_000 });
+  });
+
+  test('rally: la sección Antes/Después queda pineada por ScrollTrigger', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    await expect(page.locator('[data-ball3d]')).toHaveCount(1);
+    await expect(page.locator('.pin-spacer')).toHaveCount(1);
+    // La sección y sus paneles siguen visibles/operativos dentro del pin.
+    await page.locator('[data-rally]').evaluate((el) => el.scrollIntoView());
+    await expect(page.locator('[data-rally] .mkt-panel--after')).toBeVisible();
+  });
+
+  test('peloteo: golpear la pelota muestra el contador y encadena toques', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    const ball = page.locator('[data-ball3d]');
+    await expect(ball).toHaveCount(1);
+    test.skip((await ball.getAttribute('data-webgl')) !== '1', 'el runner no tiene WebGL');
+    await expect(ball).toHaveAttribute('data-intro', 'done', { timeout: 10_000 });
+
+    const x = parseInt((await ball.getAttribute('data-ball-x'))!, 10);
+    const y = parseInt((await ball.getAttribute('data-ball-y'))!, 10);
+    await page.mouse.click(x, y);
+    const chip = page.locator('.mkt-peloteo');
+    await expect(chip).toHaveText(/×\s*1/);
+    await page.mouse.click(x, y); // segundo toque dentro de la ventana de combo (2s)
+    await expect(chip).toHaveText(/×\s*2/);
   });
 
   test('el motion no rompe la landing: CTAs y secciones siguen operativos tras scrollear', async ({ page }) => {

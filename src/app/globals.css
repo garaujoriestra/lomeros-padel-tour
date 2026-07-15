@@ -925,6 +925,20 @@
    nunca tapa texto. La topbar (z:20) queda siempre por encima. */
 .mkt-ball3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .mkt-page .lpt-container { position: relative; z-index: 2; }
+/* La sección del rally necesita su propio z: al pinearla, GSAP le pone un
+   transform (stacking context nuevo) y sin esto la pelota taparía sus paneles. */
+.mkt-page [data-rally] { z-index: 2; }
+
+/* Contador de peloteo (easter egg al golpear la pelota): píldora lima que
+   aparece junto a la pelota; la posiciona el frame loop vía left/top. */
+.mkt-peloteo {
+  position: absolute; left: -200px; top: -200px; z-index: 3;
+  display: inline-flex; padding: 6px 12px; border-radius: 999px;
+  background: var(--acc); color: var(--on-acc);
+  font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap; opacity: 0;
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--acc) 32%, transparent);
+}
 
 /* ── Cold-open del hero (entrada única en carga) + latido "en juego" ── */
 .mkt-anim { animation: mkt-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }

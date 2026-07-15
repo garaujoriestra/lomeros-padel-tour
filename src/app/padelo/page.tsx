@@ -120,8 +120,9 @@ export default function PadeloLanding() {
         </div>
       </section>
 
-      {/* 2 · El giro — antes / después (segunda lectura) */}
-      <section className="mkt-section">
+      {/* 2 · El giro — antes / después (segunda lectura). data-rally: la pelota
+          3D pinea la sección y pelotea entre los dos paneles (ver padel-ball-3d). */}
+      <section className="mkt-section" data-rally>
         <div className="lpt-container">
           <div className="mkt-head">
             <h2 className="display mkt-h2">Tu ranking no debería vivir en un grupo de WhatsApp</h2>
@@ -131,7 +132,7 @@ export default function PadeloLanding() {
             </p>
           </div>
           <div className="mkt-swap">
-            <div className="mkt-panel mkt-before" data-parallax="expand">
+            <div className="mkt-panel mkt-before">
               <p className="mkt-cap">Antes</p>
               <div className="mkt-chat">
                 <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
@@ -140,7 +141,7 @@ export default function PadeloLanding() {
               </div>
             </div>
             <div className="mkt-swap__arrow display" aria-hidden>▶</div>
-            <div className="mkt-panel mkt-panel--after" data-parallax="expand">
+            <div className="mkt-panel mkt-panel--after">
               <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
               <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
                 <div className="mkt-row mkt-row--lead">
