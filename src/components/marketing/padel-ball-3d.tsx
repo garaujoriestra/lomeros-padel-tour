@@ -226,13 +226,16 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
     const ts = Math.max(0.0001, s * fit);
 
     // Amortiguación: sigue al scroll con inercia; el rally pide más nervio.
+    // Durante el saque NO se amortigua: un bote necesita la esquina seca del
+    // impacto y el damp la redondea (la pelota "mushy" en vez de botar).
     const lambda = bus.rally.active ? 12 : 5;
-    if (!init.current) {
+    if (!init.current || !bus.intro.done) {
       g.position.set(tx, ty, 0);
       init.current = true;
+    } else {
+      g.position.x = THREE.MathUtils.damp(g.position.x, tx, lambda, delta);
+      g.position.y = THREE.MathUtils.damp(g.position.y, ty, lambda, delta);
     }
-    g.position.x = THREE.MathUtils.damp(g.position.x, tx, lambda, delta);
-    g.position.y = THREE.MathUtils.damp(g.position.y, ty, lambda, delta);
 
     // Gira a medida que bajas (5 vueltas por página) + deriva viva + golpes.
     spinAccum.current += bus.hit.spin * delta;
@@ -367,20 +370,32 @@ export default function PadelBall3D() {
     if (window.scrollY < window.innerHeight * 0.4) {
       io.y = 1.25;
       io.xOff = -0.155; // cae en el hueco entre el relato y el marcador
+      // Física de bote de verdad (posiciones absolutas en el timeline):
+      // estirón vertical en la caída, aplaste seco EN el contacto, despegue
+      // durante la recuperación y duraciones de bote que escalan con √altura.
       introTl = gsap
         .timeline({ delay: 0.15, onComplete: markIntroDone })
-        .to(io, { y: 0, duration: 0.6, ease: 'power2.in' })
-        .to(io, { squash: 0.66, duration: 0.08, ease: 'power1.out' })
-        .to(io, { squash: 1, duration: 0.12 })
-        .to(io, { y: 0.32, duration: 0.32, ease: 'power2.out' }, '-=0.12')
-        .to(io, { y: 0, duration: 0.28, ease: 'power2.in' })
-        .to(io, { squash: 0.8, duration: 0.07 })
-        .to(io, { squash: 1, duration: 0.1 })
-        .to(io, { y: 0.1, duration: 0.2, ease: 'power2.out' }, '-=0.1')
-        .to(io, { y: 0, duration: 0.18, ease: 'power2.in' })
-        .to(io, { squash: 0.92, duration: 0.06 })
-        .to(io, { squash: 1, duration: 0.3, ease: 'elastic.out(1, 0.5)' })
-        .to(io, { xOff: 0, duration: 0.7, ease: 'power2.inOut' }, '-=0.35');
+        .to(io, { squash: 1.12, duration: 0.3, ease: 'power1.in' }, 0)
+        .to(io, { y: 0, duration: 0.5, ease: 'power2.in' }, 0)
+        // impacto 1
+        .to(io, { squash: 0.6, duration: 0.055, ease: 'power2.out' }, 0.5)
+        .to(io, { squash: 1.06, duration: 0.1, ease: 'power2.in' }, 0.555)
+        .to(io, { y: 0.3, duration: 0.28, ease: 'power2.out' }, 0.56)
+        .to(io, { squash: 1, duration: 0.15 }, 0.66)
+        .to(io, { y: 0, duration: 0.28, ease: 'power2.in' }, 0.84)
+        // impacto 2
+        .to(io, { squash: 0.75, duration: 0.05, ease: 'power2.out' }, 1.12)
+        .to(io, { squash: 1.03, duration: 0.08, ease: 'power2.in' }, 1.17)
+        .to(io, { y: 0.09, duration: 0.15, ease: 'power2.out' }, 1.18)
+        .to(io, { squash: 1, duration: 0.1 }, 1.25)
+        .to(io, { y: 0, duration: 0.15, ease: 'power2.in' }, 1.33)
+        // impacto 3: mínimo, y asentado
+        .to(io, { squash: 0.9, duration: 0.045 }, 1.48)
+        .to(io, { squash: 1, duration: 0.12 }, 1.525)
+        .to(io, { y: 0.025, duration: 0.09, ease: 'power2.out' }, 1.53)
+        .to(io, { y: 0, duration: 0.09, ease: 'power2.in' }, 1.62)
+        // rueda a su sitio tras el marcador
+        .to(io, { xOff: 0, duration: 0.65, ease: 'power2.inOut' }, 1.6);
     } else {
       markIntroDone();
     }
