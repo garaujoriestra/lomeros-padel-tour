@@ -145,10 +145,11 @@ function beatFx(beat: HTMLElement) {
   if (week) fxWave(week);
 }
 
-/** LA PISTA (≥900px + motion): pinea la sección y conmuta los golpes con un
- *  timeline scrubbed; la pelota y la pista de cristal 3D leen su progreso del
- *  bus. El impacto contra el cristal (t = i/beats + 0.08) coincide con la
- *  entrada de cada golpe. */
+/** LA PISTA (con motion, cualquier ancho): pinea la sección y conmuta los
+ *  golpes con un timeline scrubbed; la pelota y la pista de cristal 3D leen
+ *  su progreso del bus. El impacto contra el cristal (t = i/beats + 0.08)
+ *  coincide con la entrada de cada golpe. En móvil el CSS compacta los golpes
+ *  para que quepan en la pantalla anclada. */
 function pistaSetup() {
   const pista = document.querySelector<HTMLElement>('[data-pista]');
   if (!pista) return;
@@ -208,14 +209,6 @@ function pistaSetup() {
     pista.removeAttribute('data-pista-beat');
     LANDING_BUS.pista.active = false;
   };
-}
-
-/** Fallback sin pista (móvil): los golpes son secciones normales y sus
- *  coreografías disparan al entrar en viewport, como el resto. */
-function beatsViaScroll() {
-  for (const beat of gsap.utils.toArray<HTMLElement>('[data-pista] .mkt-beat')) {
-    onceInView(beat, () => beatFx(beat));
-  }
 }
 
 /** Efectos de las secciones de scroll vertical (fuera de La Pista). */
@@ -324,10 +317,9 @@ export function MarketingScrollFx() {
       sectionFx();
     });
 
-    // La Pista solo en escritorio; en móvil (o reduced) los golpes son
-    // secciones apiladas y sus coreografías disparan al entrar en viewport.
-    mm.add('(prefers-reduced-motion: no-preference) and (min-width: 900px)', () => pistaSetup());
-    mm.add('(prefers-reduced-motion: no-preference) and (max-width: 899.98px)', () => beatsViaScroll());
+    // La Pista, en cualquier ancho (con reduced-motion no hay pin y los
+    // golpes quedan como secciones apiladas normales).
+    mm.add('(prefers-reduced-motion: no-preference)', () => pistaSetup());
 
     // Tilt 3D al puntero en las tarjetas clave: solo con puntero fino y hover
     // real (en táctil no existe el gesto) y sin reduced-motion.

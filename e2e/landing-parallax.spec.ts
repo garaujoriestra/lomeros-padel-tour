@@ -137,6 +137,26 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     expect(await beatOpacity(page, 0)).toBeLessThan(0.1);
   });
 
+  test('la pista funciona también en móvil (390×844): pin, golpes que caben y se revelan', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    await expect(page.locator('[data-ball3d]')).toHaveCount(1);
+    await expect(page.locator('.pin-spacer')).toHaveCount(1);
+    await expect(page.locator('[data-pista]')).toHaveClass(/mkt-pista--live/);
+    // Cada golpe cabe en la pantalla anclada (modo compacto móvil).
+    const fits = await page.evaluate(() => {
+      const vh = window.innerHeight;
+      return [...document.querySelectorAll('.mkt-beat')].every((b) => b.scrollHeight <= vh);
+    });
+    expect(fits).toBe(true);
+    // Y los golpes se revelan al avanzar por el pin.
+    const { top, range } = await pistaRange(page);
+    await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * 0.625 });
+    await expect(page.locator('[data-pista]')).toHaveAttribute('data-pista-beat', '2');
+    await expect.poll(() => beatOpacity(page, 2), { timeout: 5_000 }).toBeGreaterThan(0.9);
+  });
+
   test('peloteo: golpear la pelota muestra el contador y encadena toques', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');

@@ -944,6 +944,28 @@
 .mkt-pista--live { height: 100svh; display: grid; align-content: center; overflow: clip; }
 .mkt-pista--live .mkt-beat { grid-area: 1 / 1; padding-block: 0; opacity: 0; }
 
+/* Compacto móvil del modo pineado: cada golpe cabe en la pantalla anclada
+   (se compacta tipografía y relleno SOLO en modo live; apilado no cambia). */
+@media (max-width: 899.98px) {
+  .mkt-pista--live .mkt-h2 { font-size: clamp(22px, 6.6vw, 30px); }
+  .mkt-pista--live .mkt-lead { font-size: 14px; margin-top: 10px; }
+  .mkt-pista--live .mkt-kicker { margin-bottom: 8px; }
+  .mkt-pista--live .mkt-swap { margin-top: 16px; gap: 8px; }
+  .mkt-pista--live .mkt-swap__arrow { display: none; }
+  .mkt-pista--live .mkt-panel { padding: 12px 14px; }
+  .mkt-pista--live .mkt-bubble { font-size: 12px; padding: 6px 10px; }
+  .mkt-pista--live .mkt-cap { margin-bottom: 8px; }
+  .mkt-pista--live .mkt-row { padding: 8px 12px; }
+  .mkt-pista--live .mkt-split { gap: 16px; }
+  .mkt-pista--live .mkt-tile { padding: 10px 12px; gap: 10px; }
+  .mkt-pista--live .mkt-tile__d { font-size: 12px; }
+  .mkt-pista--live .mkt-team { padding: 10px 12px; }
+  .mkt-pista--live .mkt-set { width: 26px; height: 32px; font-size: 16px; }
+  .mkt-pista--live .mkt-week { gap: 4px; }
+  .mkt-pista--live .mkt-cell { height: 14px; }
+  .mkt-pista--live .mkt-weekcap { margin-top: 10px; font-size: 12px; }
+}
+
 /* Contador de peloteo (easter egg al golpear la pelota): píldora lima que
    aparece junto a la pelota; la posiciona el frame loop vía left/top. */
 .mkt-peloteo {

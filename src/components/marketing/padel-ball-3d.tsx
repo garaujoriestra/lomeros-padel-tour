@@ -67,19 +67,25 @@ function samplePath(p: number) {
    scroll-fx mete la tarjeta i justo después (i + 0.1). La pelota queda junto
    al cristal mientras el golpe se lee y despega en FLY_K hacia el otro lado,
    cruzando por encima de la red. */
-const WALL_X = 0.435; // fracción de vw del punto de impacto (centro de la pelota)
-const PARK_X = 0.37; // aparcada tras el rebote, separada del cristal
 const HIT_K = 0.08;
 const FLY_K = 0.72;
 const HIT_Y = -0.19;
 const PARK_Y = -0.16;
 const APEX_Y = 0.1; // fracción de vh del ápice: por encima de la red
 
+/** Geometría horizontal de la pista según el ancho real: en móvil los
+ *  cristales se cierran para que el vidrio siga DENTRO de la pantalla. */
+function courtDims(screenW: number) {
+  return screenW < 900
+    ? { wallX: 0.36, parkX: 0.3 } // fracciones de vw del impacto / aparcamiento
+    : { wallX: 0.435, parkX: 0.37 };
+}
+
 // Golpes pares → cristal DERECHO: así la pelota queda detrás de la maqueta
 // opaca de cada golpe (después-panel, fichas, partido, rejilla), nunca bajo texto.
 const pistaSide = (i: number) => (i % 2 === 0 ? 1 : -1);
 
-function pistaPose(t: number, beats: number) {
+function pistaPose(t: number, beats: number, WALL_X: number, PARK_X: number) {
   const u = THREE.MathUtils.clamp(t * beats, 0, beats - 1e-4);
   const i = Math.floor(u);
   const k = u - i;
@@ -190,7 +196,8 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
     let extraRot = 0;
     const squash = bus.intro.squash * bus.hit.squash;
     if (bus.pista.active) {
-      const pose = pistaPose(bus.pista.t, bus.pista.beats);
+      const { wallX, parkX } = courtDims(size.width);
+      const pose = pistaPose(bus.pista.t, bus.pista.beats, wallX, parkX);
       x = pose.x;
       y = pose.y;
       s = 0.8;
@@ -202,7 +209,7 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
       if (n !== hitCount.current) {
         const idx = Math.max(n, hitCount.current) - 1; // impacto cruzado (en cualquier dirección)
         const side = pistaSide(idx);
-        IMPACTS.push({ x: side * WALL_X * viewport.width, y: HIT_Y * viewport.height, side });
+        IMPACTS.push({ x: side * wallX * viewport.width, y: HIT_Y * viewport.height, side });
         gsap.killTweensOf(WALL_SQ);
         WALL_SQ.v = 0.52;
         gsap.to(WALL_SQ, { v: 1, duration: 0.55, ease: 'elastic.out(1.1, 0.42)' });
@@ -394,10 +401,24 @@ function fadeCourtMats(mats: CourtMats, f: number) {
 
 function Court() {
   const group = useRef<THREE.Group>(null);
-  const { viewport } = useThree();
+  const { viewport, size } = useThree();
   const fade = useRef(0);
   const ringLife = useRef<number[]>(Array.from({ length: RING_N }, () => 0));
   const rings = useRef<(THREE.Mesh | null)[]>([]);
+
+  // Dimensiones desde el viewport (reactivo a resize) — antes del frame loop,
+  // que las captura por cierre.
+  const vw = viewport.width;
+  const vh = viewport.height;
+  const { wallX } = courtDims(size.width);
+  const ballR = 0.8 * THREE.MathUtils.clamp(vw / 8.2, 0.55, 1);
+  const glassX = wallX * vw + ballR + 0.14; // el vidrio, justo por fuera del punto de impacto
+  const floorY = -0.315 * vh;
+  const wallH = 0.62 * vh;
+  const depth = 8.4;
+  const zMid = -1.9;
+  const netH = 0.16 * vh;
+  const postZ = [-5.9, -3.25, -0.6, 2.1];
 
   const floorTex = useMemo(() => makeFloorTexture(), []);
   const netTex = useMemo(() => makeNetTexture(), []);
@@ -448,7 +469,7 @@ function Court() {
       const idx = slot === -1 ? 0 : slot;
       const mesh = rings.current[idx];
       if (mesh) {
-        mesh.position.set(imp.x + imp.side * 0.55, imp.y, 0);
+        mesh.position.set(imp.x + imp.side * (ballR + 0.1), imp.y, 0);
         mesh.rotation.set(0, imp.side > 0 ? -Math.PI / 2 : Math.PI / 2, 0);
         ringLife.current[idx] = 1;
       }
@@ -467,17 +488,6 @@ function Court() {
       (mesh.material as THREE.MeshBasicMaterial).opacity = life * 0.8 * Math.max(f, 0.4);
     });
   });
-
-  // Dimensiones desde el viewport (reactivo a resize).
-  const vw = viewport.width;
-  const vh = viewport.height;
-  const glassX = WALL_X * vw + 0.62; // el vidrio, justo por fuera del punto de impacto
-  const floorY = -0.315 * vh;
-  const wallH = 0.62 * vh;
-  const depth = 8.4;
-  const zMid = -1.9;
-  const netH = 0.16 * vh;
-  const postZ = [-5.9, -3.25, -0.6, 2.1];
 
   return (
     <group ref={group} visible={false}>
