@@ -213,6 +213,12 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
       x = k.x;
       y = k.y;
       s = k.s;
+      // Móvil (una columna): el aparcamiento del hero baja hasta el marcador
+      // para no quedar sobre el párrafo (calibrado a dos columnas en desktop).
+      if (size.width < 900 && bus.progress < 0.05) {
+        x = 0.42;
+        y = -0.28;
+      }
     }
 
     const tx = (x + bus.intro.xOff + bus.hit.x) * viewport.width + state.pointer.x * 0.35;
