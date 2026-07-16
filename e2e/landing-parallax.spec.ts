@@ -125,6 +125,39 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     await expect(chip).toHaveText(/×\s*2/);
   });
 
+  test('efectos por sección: los Elo del hero cuentan y terminan en su valor exacto', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    const elo = page.locator('[data-fx="board-live"] .mkt-elo').first();
+    // El count-up arranca tras el saque: el valor BAJA (arranca en ~88%)…
+    await expect.poll(() => elo.textContent(), { timeout: 8_000 }).not.toBe('1584');
+    // …y termina exactamente en el valor renderizado por el servidor.
+    await expect.poll(() => elo.textContent(), { timeout: 8_000 }).toBe('1584');
+  });
+
+  test('efectos por sección: el contador de La Timba respeta el formato es-ES (1.240)', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    const n = page.locator('[data-fx="countup"]').first();
+    await n.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect.poll(() => n.textContent(), { timeout: 6_000 }).not.toBe('1.240'); // cuenta…
+    await expect.poll(() => n.textContent(), { timeout: 6_000 }).toBe('1.240'); // …y clava el formato
+  });
+
+  test('efectos por sección: nada queda oculto al terminar las coreografías', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/padelo');
+    // sets del partido, celdas de la semana y rail de pasos: visibles tras su entrada
+    for (const sel of ['[data-fx="sets-flip"] .mkt-set', '[data-fx="wave"] .mkt-cell--on', '[data-fx="steps"] .mkt-step__bar']) {
+      await page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      await page.waitForTimeout(1800);
+      await expect
+        .poll(() => page.locator(sel).first().evaluate((el) => getComputedStyle(el).opacity))
+        .toBe('1');
+    }
+    await expect(page.locator('.mkt-step__bar')).toHaveCount(3);
+  });
+
   test('el motion no rompe la landing: CTAs y secciones siguen operativos tras scrollear', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');

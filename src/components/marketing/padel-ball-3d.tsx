@@ -36,17 +36,27 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 /** Recorrido por la página: keyframes en fracciones del viewport (x: -0.5..0.5, y: -0.5..0.5, s: escala).
  *  Regla: la pelota se aparca DETRÁS de la maqueta opaca de cada sección (profundidad)
  *  o recortada contra el borde — nunca parada bajo una columna de texto (contraste).
- *  Los p incluyen el tramo extra de scroll que añade el pin del rally. */
+ *  Cada parada es una MESETA (par de keyframes iguales) centrada en el progreso real
+ *  medido de su sección a 1280×800 (incluye el tramo del pin del rally): la pelota
+ *  está quieta mientras la sección se lee y transita solo entre secciones. */
 const PATH: { p: number; x: number; y: number; s: number }[] = [
   { p: 0.0, x: 0.2, y: -0.04, s: 1.85 }, // hero: grande, asomando tras el marcador
+  { p: 0.05, x: 0.2, y: -0.04, s: 1.85 },
   { p: 0.12, x: -0.26, y: -0.12, s: 1.05 }, // bajando al rally (el rally toma el control)
-  { p: 0.3, x: 0.26, y: -0.16, s: 1.05 }, // salida del rally: donde quedó, en «Después»
-  { p: 0.42, x: -0.3, y: 0.0, s: 1.25 }, // tras las fichas de la capa social
-  { p: 0.55, x: 0.3, y: 0.0, s: 1.25 }, // tras el marcador de partido
-  { p: 0.68, x: -0.29, y: 0.0, s: 1.1 }, // tras la rejilla del planificador
-  { p: 0.79, x: 0.47, y: 0.04, s: 0.85 }, // pasos: recortada al borde derecho
-  { p: 0.89, x: 0.27, y: 0.0, s: 1.15 }, // tras el plan Pase de Temporada
-  { p: 1.0, x: 0.0, y: -0.075, s: 0.72 }, // cierre: posada sobre el oro del podio
+  { p: 0.33, x: 0.26, y: -0.16, s: 1.05 }, // salida del rally: donde quedó, en «Después»
+  { p: 0.36, x: 0.26, y: -0.16, s: 1.05 },
+  { p: 0.43, x: -0.3, y: 0.0, s: 1.25 }, // tras las fichas de la capa social (centro ~0.454)
+  { p: 0.48, x: -0.3, y: 0.0, s: 1.25 },
+  { p: 0.52, x: 0.3, y: 0.0, s: 1.25 }, // tras el marcador de partido (centro ~0.547)
+  { p: 0.57, x: 0.3, y: 0.0, s: 1.25 },
+  { p: 0.605, x: -0.29, y: 0.0, s: 1.1 }, // tras la rejilla del planificador (centro ~0.631)
+  { p: 0.655, x: -0.29, y: 0.0, s: 1.1 },
+  { p: 0.71, x: 0.47, y: 0.04, s: 0.85 }, // pasos: recortada al borde derecho (centro ~0.735)
+  { p: 0.76, x: 0.47, y: 0.04, s: 0.85 },
+  { p: 0.84, x: 0.27, y: 0.0, s: 1.15 }, // tras el plan Pase de Temporada (centro ~0.866)
+  { p: 0.89, x: 0.27, y: 0.0, s: 1.15 },
+  { p: 0.965, x: 0.0, y: -0.075, s: 0.72 }, // cierre: posada sobre el oro del podio
+  { p: 1.0, x: 0.0, y: -0.075, s: 0.72 },
 ];
 
 function smoothstep(t: number) {
@@ -159,6 +169,7 @@ const BUS = {
   intro: { y: 0, xOff: 0, squash: 1, done: false },
   hit: { x: 0, y: 0, spin: 0, squash: 1 },
   screen: { x: -9999, y: -9999, r: 0 },
+  world: { x: 0, y: 0 },
   chipEl: null as HTMLSpanElement | null,
   chipOn: false,
 };
@@ -169,6 +180,7 @@ function resetBus() {
   BUS.intro = { y: 0, xOff: 0, squash: 1, done: false };
   BUS.hit = { x: 0, y: 0, spin: 0, squash: 1 };
   BUS.screen = { x: -9999, y: -9999, r: 0 };
+  BUS.world = { x: 0, y: 0 };
   BUS.chipEl = null;
   BUS.chipOn = false;
 }
@@ -184,6 +196,8 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
   const smoothS = useRef(0);
   const hover = useRef(false);
   const throttle = useRef(0);
+  const rallyIdx = useRef(0);
+  const rallyPanels = useRef<{ before: HTMLElement | null; after: HTMLElement | null } | null>(null);
   const v3 = useMemo(() => new THREE.Vector3(), []);
 
   // El cursor "pointer" sobre la pelota se restaura al desmontar.
@@ -211,6 +225,32 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
       s = 1.0;
       squash *= pose.squash;
       extraRot = -bus.rally.t * Math.PI * 6; // efecto extra durante el peloteo
+
+      // El panel que recibe cada bote encaja el golpe (y el remate enciende
+      // «Después»): la coreografía toca la historia, no solo la pelota.
+      if (!rallyPanels.current) {
+        rallyPanels.current = {
+          before: document.querySelector<HTMLElement>('[data-rally] .mkt-before'),
+          after: document.querySelector<HTMLElement>('[data-rally] .mkt-panel--after'),
+        };
+      }
+      const idx = RALLY_HITS.reduce((n, h) => (bus.rally.t >= h.t ? n + 1 : n), 0);
+      if (idx !== rallyIdx.current) {
+        const hit = RALLY_HITS[Math.max(idx, rallyIdx.current) - 1];
+        const panel = hit && (hit.x < 0 ? rallyPanels.current.before : rallyPanels.current.after);
+        if (panel) {
+          gsap.killTweensOf(panel);
+          gsap.fromTo(panel, { y: 0 }, { y: 7, duration: 0.09, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'y' });
+          if (idx === RALLY_HITS.length && idx > rallyIdx.current) {
+            gsap.fromTo(
+              panel,
+              { boxShadow: '0 0 0 0px color-mix(in oklab, var(--acc) 55%, transparent)' },
+              { boxShadow: '0 0 0 18px color-mix(in oklab, var(--acc) 0%, transparent)', duration: 0.9, ease: 'power2.out', clearProps: 'boxShadow' },
+            );
+          }
+        }
+        rallyIdx.current = idx;
+      }
     } else {
       const k = samplePath(bus.progress);
       x = k.x;
@@ -248,6 +288,9 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
     const sq = THREE.MathUtils.clamp(squash, 0.55, 1.2);
     const wide = smoothS.current / Math.sqrt(sq);
     g.scale.set(wide, smoothS.current * sq, wide);
+
+    bus.world.x = g.position.x;
+    bus.world.y = g.position.y;
 
     // Proyección a pantalla: hit-test del golpe, cursor y chip del peloteo.
     v3.copy(g.position).project(state.camera);
@@ -297,6 +340,68 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
         <tubeGeometry args={[curve, 240, 0.045, 8, true]} />
         <meshStandardMaterial color="#f3f6e4" roughness={0.55} metalness={0} />
       </mesh>
+    </group>
+  );
+}
+
+/** Confeti al aterrizar en el podio: chips 3D en los colores de la pelota que
+ *  estallan desde su posición cuando el scroll llega al final (una vez por
+ *  llegada, con enfriamiento). Celebración = el lenguaje de marca de La Timba. */
+const CONFETTI_COLORS = ['#c8f03c', '#f3f6e4', '#7ea832'];
+const CONFETTI_N = 24;
+
+function Confetti() {
+  const group = useRef<THREE.Group>(null);
+  const parts = useRef<{ vel: THREE.Vector3; rotV: THREE.Vector3; life: number }[]>([]);
+  const prevP = useRef(0);
+  const lastBurst = useRef(-10);
+
+  useFrame((state, delta) => {
+    const g = group.current;
+    if (!g) return;
+    const t = state.clock.elapsedTime;
+
+    if (BUS.progress >= 0.985 && prevP.current < 0.985 && t - lastBurst.current > 3) {
+      lastBurst.current = t;
+      parts.current = g.children.map((m, i) => {
+        const a = (i / g.children.length) * Math.PI * 2;
+        m.position.set(BUS.world.x, BUS.world.y, 0.5);
+        m.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        m.visible = true;
+        return {
+          vel: new THREE.Vector3(Math.sin(a) * (0.8 + Math.random() * 2.2), 2.4 + Math.random() * 3, (Math.random() - 0.5) * 1.6),
+          rotV: new THREE.Vector3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9),
+          life: 1,
+        };
+      });
+    }
+    prevP.current = BUS.progress;
+
+    g.children.forEach((m, i) => {
+      const p = parts.current[i];
+      if (!p || p.life <= 0) {
+        m.visible = false;
+        return;
+      }
+      p.life -= delta / 1.5;
+      p.vel.y -= 7 * delta;
+      m.position.addScaledVector(p.vel, delta);
+      m.rotation.x += p.rotV.x * delta;
+      m.rotation.y += p.rotV.y * delta;
+      m.rotation.z += p.rotV.z * delta;
+      m.scale.setScalar(Math.max(0.0001, p.life) * 0.11);
+      m.visible = p.life > 0;
+    });
+  });
+
+  return (
+    <group ref={group}>
+      {Array.from({ length: CONFETTI_N }, (_, i) => (
+        <mesh key={i} visible={false}>
+          <boxGeometry args={[1, 1, 0.25]} />
+          <meshBasicMaterial color={CONFETTI_COLORS[i % CONFETTI_COLORS.length]} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -478,6 +583,7 @@ export default function PadelBall3D() {
           <directionalLight position={[5, 7, 6]} intensity={1.6} />
           <pointLight position={[-6, 2, -5]} intensity={16} color="#a8db27" />
           <Ball wrap={wrap} />
+          <Confetti />
         </Canvas>
       )}
       <span ref={chip} className="mkt-peloteo num" />

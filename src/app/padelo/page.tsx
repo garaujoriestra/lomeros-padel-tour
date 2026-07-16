@@ -113,7 +113,7 @@ export default function PadeloLanding() {
           </div>
           <div className="mkt-anim" style={{ animationDelay: '0.24s' }}>
             {/* Drift y tilt van en un wrapper propio: mkt-anim ya anima transform en la carga. */}
-            <div data-parallax="drift" data-parallax-speed="-44" data-tilt>
+            <div data-parallax="drift" data-parallax-speed="-44" data-tilt data-fx="board-live">
               <Scoreboard />
             </div>
           </div>
@@ -178,14 +178,14 @@ export default function PadeloLanding() {
               enseñe la app a la siguiente.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-tiles" data-parallax="expand" data-tilt>
+          <div className="mkt-split__visual mkt-tiles" data-parallax="expand" data-tilt data-fx="social">
             <div className="mkt-tile">
               <span className="mkt-ficha" aria-hidden>T</span>
               <div className="mkt-tile__body">
                 <p className="mkt-tile__t">La Timba</p>
                 <p className="mkt-tile__d">Porra entre amigos con fichas de juego, sin dinero real.</p>
               </div>
-              <span className="mkt-tile__n" style={{ color: 'var(--acc)' }}>1.240</span>
+              <span className="mkt-tile__n" style={{ color: 'var(--acc)' }} data-fx="countup">1.240</span>
             </div>
             <div className="mkt-tile">
               <span className="mkt-medal" aria-hidden>🏅</span>
@@ -204,7 +204,7 @@ export default function PadeloLanding() {
                 <p className="mkt-tile__t">Nacho &amp; Bea</p>
                 <p className="mkt-tile__d">Mejor pareja de la temporada.</p>
               </div>
-              <span className="mkt-tile__n">1.602</span>
+              <span className="mkt-tile__n" data-fx="countup">1.602</span>
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function PadeloLanding() {
               avanza como una competición de verdad, no como una lista de partidos.
             </p>
           </div>
-          <div className="mkt-split__visual mkt-match" data-parallax="expand" data-tilt>
+          <div className="mkt-split__visual mkt-match" data-parallax="expand" data-tilt data-fx="sets-flip">
             <div className="mkt-match__head">
               <span>Final · Torneo de primavera</span>
               <span className="num">6-4 · 4-6 · 7-5</span>
@@ -263,6 +263,7 @@ export default function PadeloLanding() {
             <div
               className="mkt-week"
               data-parallax="expand"
+              data-fx="wave"
               role="img"
               aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña."
             >
@@ -299,18 +300,21 @@ export default function PadeloLanding() {
 
       {/* 6 · Cómo funciona — rail numerado */}
       <MarketingSection title="Crea, invita, pícate">
-        <div className="mkt-steps">
+        <div className="mkt-steps" data-fx="steps">
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">01</p>
             <p className="mkt-step__t">Crea tu grupo</p>
             <p className="mkt-step__d">Con tu cuenta de Google, en 30 segundos. Sin tarjeta.</p>
           </div>
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">02</p>
             <p className="mkt-step__t">Invita a tu peña</p>
             <p className="mkt-step__d">Un enlace y cada uno reclama su ficha de jugador.</p>
           </div>
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">03</p>
             <p className="mkt-step__t">Juega y pícate</p>
             <p className="mkt-step__d">Registrad resultados y que empiece la temporada.</p>
@@ -329,7 +333,7 @@ export default function PadeloLanding() {
           </div>
           <div className="mkt-price">
             <div className="mkt-plan" data-parallax="expand">
-              <p className="mkt-plan__price">Gratis</p>
+              <p className="mkt-plan__price" data-fx="stamp">Gratis</p>
               <p className="mkt-plan__unit">para siempre</p>
               <ul className="mkt-list">
                 <li><span className="mkt-check mkt-check--free">✓</span> Ranking Elo 2vs2 e historial</li>
@@ -339,6 +343,7 @@ export default function PadeloLanding() {
               </ul>
             </div>
             <div className="mkt-plan mkt-plan--pass" data-parallax="expand">
+              <span className="mkt-shine" aria-hidden />
               <span className="mkt-official">⭐ Tour Oficial</span>
               <p className="mkt-plan__price" style={{ marginTop: 16 }}>~20&nbsp;€</p>
               <p className="mkt-plan__unit">al año · Pase de Temporada</p>
