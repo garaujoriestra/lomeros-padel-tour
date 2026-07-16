@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { LANDING_BUS } from './landing-bus';
 
 /**
  * Motion de la landing (GSAP + ScrollTrigger), declarado por atributo:
@@ -49,9 +50,177 @@ function onceInView(trigger: Element, fn: () => void, start = 'top 78%') {
   ScrollTrigger.create({ trigger, start, once: true, onEnter: fn });
 }
 
-/** Efectos por sección: cada handler es la coreografía propia de un data-fx. */
+/* ── Coreografías de los golpes de La Pista (también secciones sueltas en
+      móvil/reduced): cada una demuestra el contenido que revela. ── */
+
+/** La capa social: la ficha gira como una moneda, los contadores cuentan y la pareja se junta. */
+function fxSocial(root: HTMLElement) {
+  gsap.from(root.querySelector('.mkt-ficha'), {
+    rotationY: -540,
+    transformPerspective: 600,
+    duration: 1.2,
+    ease: 'power3.out',
+    clearProps: 'transform',
+  });
+  root.querySelectorAll('[data-fx="countup"]').forEach((el, i) => countUp(el, 0.15 + i * 0.1));
+  gsap.from(root.querySelectorAll('.mkt-duo .mkt-ava'), {
+    x: (i) => (i === 0 ? -12 : 12),
+    opacity: 0,
+    duration: 0.5,
+    delay: 0.35,
+    ease: 'power3.out',
+    clearProps: 'all',
+  });
+  gsap.from(root.querySelector('.lpt-badge.win'), {
+    scale: 0.5,
+    opacity: 0,
+    duration: 0.45,
+    delay: 0.55,
+    ease: 'expo.out',
+    clearProps: 'all',
+  });
+}
+
+/** Motor competitivo: los sets voltean uno a uno (flip broadcast, como el
+ *  marcador real de la app) y el delta del ganador remata. */
+function fxSetsFlip(root: HTMLElement) {
+  gsap.from(root.querySelectorAll('.mkt-set'), {
+    rotationX: -85,
+    opacity: 0,
+    transformPerspective: 600,
+    transformOrigin: '50% 100%',
+    duration: 0.5,
+    stagger: 0.12,
+    ease: 'power3.out',
+    clearProps: 'all',
+  });
+  gsap.from(root.querySelectorAll('.mkt-team__meta .mkt-delta'), {
+    scale: 0.55,
+    opacity: 0,
+    duration: 0.4,
+    delay: 0.9,
+    stagger: 0.15,
+    ease: 'expo.out',
+    clearProps: 'all',
+  });
+}
+
+/** Planificador: la semana se llena sola — oleada por columnas y ping sonar
+ *  en el jueves (eco del "en juego" del hero). */
+function fxWave(root: HTMLElement) {
+  root.querySelectorAll('.mkt-daycol').forEach((col, c) => {
+    gsap.from(col.querySelectorAll('.mkt-cell--on'), {
+      opacity: 0,
+      scale: 0.4,
+      duration: 0.35,
+      delay: c * 0.09,
+      stagger: 0.05,
+      ease: 'power3.out',
+      clearProps: 'all',
+    });
+  });
+  const hot = root.querySelector('.mkt-daycol--hot');
+  if (hot) {
+    gsap.fromTo(
+      hot,
+      { boxShadow: '0 0 0 0px color-mix(in oklab, var(--acc) 45%, transparent)' },
+      {
+        boxShadow: '0 0 0 16px color-mix(in oklab, var(--acc) 0%, transparent)',
+        duration: 0.9,
+        delay: 1.0,
+        ease: 'power2.out',
+        clearProps: 'boxShadow',
+      },
+    );
+  }
+}
+
+/** Lanza la coreografía que corresponda al contenido de un golpe. */
+function beatFx(beat: HTMLElement) {
+  const social = beat.querySelector<HTMLElement>('[data-fx="social"]');
+  if (social) fxSocial(social);
+  const match = beat.querySelector<HTMLElement>('[data-fx="sets-flip"]');
+  if (match) fxSetsFlip(match);
+  const week = beat.querySelector<HTMLElement>('[data-fx="wave"]');
+  if (week) fxWave(week);
+}
+
+/** LA PISTA (≥900px + motion): pinea la sección y conmuta los golpes con un
+ *  timeline scrubbed; la pelota y la pista de cristal 3D leen su progreso del
+ *  bus. El impacto contra el cristal (t = i/beats + 0.08) coincide con la
+ *  entrada de cada golpe. */
+function pistaSetup() {
+  const pista = document.querySelector<HTMLElement>('[data-pista]');
+  if (!pista) return;
+  const beats = gsap.utils.toArray<HTMLElement>('.mkt-beat', pista);
+  const B = beats.length;
+  LANDING_BUS.pista.beats = B;
+  pista.classList.add('mkt-pista--live');
+
+  const fired = new Set<number>();
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: pista,
+      start: 'top top',
+      end: `+=${B * 110}%`,
+      pin: true,
+      scrub: 0.4,
+      anticipatePin: 1,
+      onUpdate(self) {
+        LANDING_BUS.pista.t = self.progress;
+        pista.setAttribute('data-pista-beat', String(Math.min(B - 1, Math.floor(self.progress * B))));
+      },
+      onToggle(self) {
+        LANDING_BUS.pista.active = self.isActive;
+      },
+    },
+  });
+  beats.forEach((b, i) => {
+    const side = i % 2 === 0 ? 1 : -1; // la pelota golpea ese lado: la tarjeta entra desde el impacto
+    tl.fromTo(
+      b,
+      { opacity: 0, x: side * 46, scale: 0.97 },
+      {
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out',
+        onStart: () => {
+          if (!fired.has(i)) {
+            fired.add(i);
+            beatFx(beats[i]);
+          }
+        },
+      },
+      i + 0.1,
+    );
+    if (i < B - 1) tl.to(b, { opacity: 0, x: -side * 40, duration: 0.22, ease: 'power2.in' }, i + 0.86);
+  });
+  // relleno hasta B: el último golpe se queda en pantalla el resto del pin
+  tl.to({}, { duration: 0.04 }, B - 0.04);
+
+  // El pin cambia todas las posiciones de la página: recalcular el resto de triggers.
+  ScrollTrigger.refresh();
+
+  return () => {
+    pista.classList.remove('mkt-pista--live');
+    pista.removeAttribute('data-pista-beat');
+    LANDING_BUS.pista.active = false;
+  };
+}
+
+/** Fallback sin pista (móvil): los golpes son secciones normales y sus
+ *  coreografías disparan al entrar en viewport, como el resto. */
+function beatsViaScroll() {
+  for (const beat of gsap.utils.toArray<HTMLElement>('[data-pista] .mkt-beat')) {
+    onceInView(beat, () => beatFx(beat));
+  }
+}
+
+/** Efectos de las secciones de scroll vertical (fuera de La Pista). */
 function sectionFx() {
-  // 1 · Hero: el marcador está VIVO — los Elo cuentan y los ▲/▼ aparecen.
+  // Hero: el marcador está VIVO — los Elo cuentan y los ▲/▼ aparecen.
   const board = document.querySelector<HTMLElement>('[data-fx="board-live"]');
   if (board) {
     // Espera al saque de la pelota si la página se abre desde arriba.
@@ -72,101 +241,6 @@ function sectionFx() {
       },
       'top 96%',
     );
-  }
-
-  // Contadores sueltos (fichas de La Timba, Elo de la mejor pareja).
-  for (const el of gsap.utils.toArray<HTMLElement>('[data-fx="countup"]')) {
-    onceInView(el, () => countUp(el));
-  }
-
-  // 3 · Capa social: la ficha gira como una moneda y la pareja se junta.
-  const social = document.querySelector<HTMLElement>('[data-fx="social"]');
-  if (social) {
-    onceInView(social, () => {
-      gsap.from(social.querySelector('.mkt-ficha'), {
-        rotationY: -540,
-        transformPerspective: 600,
-        duration: 1.2,
-        ease: 'power3.out',
-        clearProps: 'transform',
-      });
-      gsap.from(social.querySelectorAll('.mkt-duo .mkt-ava'), {
-        x: (i) => (i === 0 ? -12 : 12),
-        opacity: 0,
-        duration: 0.5,
-        delay: 0.35,
-        ease: 'power3.out',
-        clearProps: 'all',
-      });
-      gsap.from(social.querySelector('.lpt-badge.win'), {
-        scale: 0.5,
-        opacity: 0,
-        duration: 0.45,
-        delay: 0.55,
-        ease: 'expo.out',
-        clearProps: 'all',
-      });
-    });
-  }
-
-  // 4 · Motor competitivo: los sets voltean uno a uno (flip broadcast, como
-  // el marcador real de la app) y el delta del ganador remata.
-  const match = document.querySelector<HTMLElement>('[data-fx="sets-flip"]');
-  if (match) {
-    onceInView(match, () => {
-      gsap.from(match.querySelectorAll('.mkt-set'), {
-        rotationX: -85,
-        opacity: 0,
-        transformPerspective: 600,
-        transformOrigin: '50% 100%',
-        duration: 0.5,
-        stagger: 0.12,
-        ease: 'power3.out',
-        clearProps: 'all',
-      });
-      gsap.from(match.querySelectorAll('.mkt-team__meta .mkt-delta'), {
-        scale: 0.55,
-        opacity: 0,
-        duration: 0.4,
-        delay: 0.9,
-        stagger: 0.15,
-        ease: 'expo.out',
-        clearProps: 'all',
-      });
-    });
-  }
-
-  // 5 · Planificador: la semana se llena sola — oleada de disponibilidad por
-  // columnas y ping sonar en el jueves (eco del "en juego" del hero).
-  const week = document.querySelector<HTMLElement>('[data-fx="wave"]');
-  if (week) {
-    onceInView(week, () => {
-      week.querySelectorAll('.mkt-daycol').forEach((col, c) => {
-        gsap.from(col.querySelectorAll('.mkt-cell--on'), {
-          opacity: 0,
-          scale: 0.4,
-          duration: 0.35,
-          delay: c * 0.09,
-          stagger: 0.05,
-          ease: 'power3.out',
-          clearProps: 'all',
-        });
-      });
-      const hot = week.querySelector('.mkt-daycol--hot');
-      if (hot) {
-        gsap.fromTo(
-          hot,
-          { boxShadow: '0 0 0 0px color-mix(in oklab, var(--acc) 45%, transparent)' },
-          {
-            boxShadow: '0 0 0 16px color-mix(in oklab, var(--acc) 0%, transparent)',
-            duration: 0.9,
-            delay: 1.0,
-            ease: 'power2.out',
-            clearProps: 'boxShadow',
-          },
-        );
-      }
-    });
   }
 
   // 6 · Cómo funciona: el rail se dibuja y los números 01→02→03 suben en
@@ -249,6 +323,11 @@ export function MarketingScrollFx() {
 
       sectionFx();
     });
+
+    // La Pista solo en escritorio; en móvil (o reduced) los golpes son
+    // secciones apiladas y sus coreografías disparan al entrar en viewport.
+    mm.add('(prefers-reduced-motion: no-preference) and (min-width: 900px)', () => pistaSetup());
+    mm.add('(prefers-reduced-motion: no-preference) and (max-width: 899.98px)', () => beatsViaScroll());
 
     // Tilt 3D al puntero en las tarjetas clave: solo con puntero fino y hover
     // real (en táctil no existe el gesto) y sin reduced-motion.

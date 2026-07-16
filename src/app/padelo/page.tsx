@@ -120,65 +120,68 @@ export default function PadeloLanding() {
         </div>
       </section>
 
-      {/* 2 · El giro — antes / después (segunda lectura). data-rally: la pelota
-          3D pinea la sección y pelotea entre los dos paneles (ver padel-ball-3d). */}
-      <section className="mkt-section" data-rally>
-        <div className="lpt-container">
-          <div className="mkt-head">
-            <h2 className="display mkt-h2">Tu ranking no debería vivir en un grupo de WhatsApp</h2>
-            <p className="mkt-lead">
-              Hoy los resultados se pierden entre mensajes y una nota del móvil. {PLATFORM_NAME} los
-              convierte en un marcador de verdad: quién sube, quién cae, qué racha hay.
-            </p>
-          </div>
-          <div className="mkt-swap">
-            <div className="mkt-panel mkt-before">
-              <p className="mkt-cap">Antes</p>
-              <div className="mkt-chat">
-                <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
-                <span className="mkt-bubble mkt-bubble--me">¿y quién va primero al final?</span>
-                <span className="mkt-bubble">ni idea, estaba en una nota del movil</span>
-              </div>
+      {/* 2 · LA PISTA — scrollytelling de funcionalidades golpe a golpe: la
+          sección se pinea, la pista de cristal 3D aparece (padel-ball-3d) y
+          cada tramo de scroll es un vuelo de la pelota sobre la red hasta el
+          cristal; cada impacto revela un golpe (.mkt-beat). Sin JS o con
+          reduced-motion no hay pin: los golpes son secciones apiladas. */}
+      <section className="mkt-pista" data-pista>
+        <div className="mkt-beat" data-beat="0">
+          <div className="lpt-container">
+            <div className="mkt-head">
+              <h2 className="display mkt-h2">Tu ranking no debería vivir en un grupo de WhatsApp</h2>
+              <p className="mkt-lead">
+                Hoy los resultados se pierden entre mensajes y una nota del móvil. {PLATFORM_NAME} los
+                convierte en un marcador de verdad: quién sube, quién cae, qué racha hay.
+              </p>
             </div>
-            <div className="mkt-swap__arrow display" aria-hidden>▶</div>
-            <div className="mkt-panel mkt-panel--after">
-              <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
-              <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
-                <div className="mkt-row mkt-row--lead">
-                  <span className="mkt-pos">1</span>
-                  <Ava ini="NR" bg="var(--acc)" />
-                  <span className="mkt-name">Nacho R.</span>
-                  <span className="mkt-elo num">1584</span>
-                  <Delta v={18} />
+            <div className="mkt-swap">
+              <div className="mkt-panel mkt-before">
+                <p className="mkt-cap">Antes</p>
+                <div className="mkt-chat">
+                  <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
+                  <span className="mkt-bubble mkt-bubble--me">¿y quién va primero al final?</span>
+                  <span className="mkt-bubble">ni idea, estaba en una nota del movil</span>
                 </div>
-                <div className="mkt-row">
-                  <span className="mkt-pos">2</span>
-                  <Ava ini="BM" bg="var(--win)" />
-                  <span className="mkt-name">Bea M.</span>
-                  <span className="mkt-elo num">1551</span>
-                  <Delta v={7} />
+              </div>
+              <div className="mkt-swap__arrow display" aria-hidden>▶</div>
+              <div className="mkt-panel mkt-panel--after">
+                <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
+                <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
+                  <div className="mkt-row mkt-row--lead">
+                    <span className="mkt-pos">1</span>
+                    <Ava ini="NR" bg="var(--acc)" />
+                    <span className="mkt-name">Nacho R.</span>
+                    <span className="mkt-elo num">1584</span>
+                    <Delta v={18} />
+                  </div>
+                  <div className="mkt-row">
+                    <span className="mkt-pos">2</span>
+                    <Ava ini="BM" bg="var(--win)" />
+                    <span className="mkt-name">Bea M.</span>
+                    <span className="mkt-elo num">1551</span>
+                    <Delta v={7} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* 3 · La capa social (el diferencial) — split + fichas/logros/parejas */}
-      <section className="mkt-section mkt-section--panel">
-        <div className="lpt-container mkt-split mkt-split--rev">
-          <div className="mkt-split__content">
-            <p className="kicker mkt-kicker">
-              <span className="mkt-tick" aria-hidden /> Lo que engancha
-            </p>
-            <h2 className="display mkt-h2">La Timba, logros y rankings de parejas</h2>
-            <p className="mkt-lead">
-              Apuestas internas con <span className="mkt-strong">fichas de juego, nunca dinero real</span>,
-              logros que se desbloquean y rankings de parejas. La capa social que hace que una peña le
-              enseñe la app a la siguiente.
-            </p>
-          </div>
-          <div className="mkt-split__visual mkt-tiles" data-parallax="expand" data-tilt data-fx="social">
+        <div className="mkt-beat" data-beat="1">
+          <div className="lpt-container mkt-split mkt-split--rev">
+            <div className="mkt-split__content">
+              <p className="kicker mkt-kicker">
+                <span className="mkt-tick" aria-hidden /> Lo que engancha
+              </p>
+              <h2 className="display mkt-h2">La Timba, logros y rankings de parejas</h2>
+              <p className="mkt-lead">
+                Apuestas internas con <span className="mkt-strong">fichas de juego, nunca dinero real</span>,
+                logros que se desbloquean y rankings de parejas. La capa social que hace que una peña le
+                enseñe la app a la siguiente.
+              </p>
+            </div>
+            <div className="mkt-split__visual mkt-tiles" data-tilt data-fx="social">
             <div className="mkt-tile">
               <span className="mkt-ficha" aria-hidden>T</span>
               <div className="mkt-tile__body">
@@ -206,21 +209,20 @@ export default function PadeloLanding() {
               </div>
               <span className="mkt-tile__n" data-fx="countup">1.602</span>
             </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* 4 · Motor competitivo — marcador de partido a lo grande */}
-      <section className="mkt-section">
-        <div className="lpt-container mkt-split">
-          <div className="mkt-split__content">
-            <h2 className="display mkt-h2">Cada partido mueve el ranking</h2>
-            <p className="mkt-lead">
-              Elo 2vs2 en cada resultado, historial completo, torneos y pozos. La temporada
-              avanza como una competición de verdad, no como una lista de partidos.
-            </p>
-          </div>
-          <div className="mkt-split__visual mkt-match" data-parallax="expand" data-tilt data-fx="sets-flip">
+        <div className="mkt-beat" data-beat="2">
+          <div className="lpt-container mkt-split">
+            <div className="mkt-split__content">
+              <h2 className="display mkt-h2">Cada partido mueve el ranking</h2>
+              <p className="mkt-lead">
+                Elo 2vs2 en cada resultado, historial completo, torneos y pozos. La temporada
+                avanza como una competición de verdad, no como una lista de partidos.
+              </p>
+            </div>
+            <div className="mkt-split__visual mkt-match" data-tilt data-fx="sets-flip">
             <div className="mkt-match__head">
               <span>Final · Torneo de primavera</span>
               <span className="num">6-4 · 4-6 · 7-5</span>
@@ -252,19 +254,17 @@ export default function PadeloLanding() {
               </div>
             </div>
             <p className="mkt-match__foot">Historial, torneos y pozos: toda la temporada en un sitio.</p>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* 5 · Planificador — rejilla de disponibilidad */}
-      <section className="mkt-section mkt-section--panel">
-        <div className="lpt-container mkt-split">
-          <div className="mkt-split__visual">
-            <div
-              className="mkt-week"
-              data-parallax="expand"
-              data-fx="wave"
-              role="img"
+        <div className="mkt-beat" data-beat="3">
+          <div className="lpt-container mkt-split">
+            <div className="mkt-split__visual">
+              <div
+                className="mkt-week"
+                data-fx="wave"
+                role="img"
               aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña."
             >
               {[
@@ -288,12 +288,13 @@ export default function PadeloLanding() {
               El <span className="mkt-strong" style={{ color: 'var(--acc)' }}>jueves</span> coincidís 6. Menos «¿quién puede?» y más pádel.
             </p>
           </div>
-          <div className="mkt-split__content">
-            <h2 className="display mkt-h2">¿Cuándo puede jugar la peña?</h2>
-            <p className="mkt-lead">
-              Cada jugador marca su disponibilidad semanal y el planificador enseña las coincidencias
-              de un vistazo. La pista se llena sola.
-            </p>
+            <div className="mkt-split__content">
+              <h2 className="display mkt-h2">¿Cuándo puede jugar la peña?</h2>
+              <p className="mkt-lead">
+                Cada jugador marca su disponibilidad semanal y el planificador enseña las coincidencias
+                de un vistazo. La pista se llena sola.
+              </p>
+            </div>
           </div>
         </div>
       </section>

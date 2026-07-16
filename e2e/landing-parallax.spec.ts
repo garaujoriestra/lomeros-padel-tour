@@ -14,18 +14,32 @@ async function scaleOf(page: Page, selector: string): Promise<number | null> {
   });
 }
 
+/** Rango de scroll del pin de La Pista (el pin-spacer mide inicio; el rango es beats × 110vh). */
+async function pistaRange(page: Page) {
+  return page.evaluate(() => {
+    const spacer = document.querySelector('.pin-spacer')!;
+    const r = spacer.getBoundingClientRect();
+    return { top: r.top + window.scrollY, range: window.innerHeight * 4 * 1.1 };
+  });
+}
+
+const beatOpacity = (page: Page, i: number) =>
+  page
+    .locator(`.mkt-beat[data-beat="${i}"]`)
+    .evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+
 test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
   test('un bloque visual lejano arranca encogido y se expande a 1 al llegar con el scroll', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');
 
-    const sel = '.mkt-match[data-parallax="expand"]';
+    const sel = '.mkt-plan[data-parallax="expand"]';
     // ScrollTrigger inicializado: el bloque (aún fuera del viewport) está encogido.
     await expect.poll(() => scaleOf(page, sel)).not.toBeNull();
     expect((await scaleOf(page, sel))!).toBeLessThan(0.95);
 
     // Al centrarlo con el scroll, el scrub lo lleva suavemente a escala 1.
-    await page.locator(sel).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await expect.poll(() => scaleOf(page, sel), { timeout: 5_000 }).toBeGreaterThanOrEqual(0.99);
   });
 
@@ -33,8 +47,10 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    // Con el pin de la pista, el clamp del podio llega a ~0.97 en el fondo
+    // exacto (indistinguible de 1): el listón es que la expansión SE COMPLETA.
     await expect.poll(() => scaleOf(page, '.mkt-podium[data-parallax="expand"]'), { timeout: 5_000 })
-      .toBeGreaterThanOrEqual(0.99);
+      .toBeGreaterThanOrEqual(0.95);
   });
 
   test('el marcador del hero deriva (parallax vertical) al hacer scroll', async ({ page }) => {
@@ -58,12 +74,14 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/padelo');
 
-    const sel = '.mkt-match[data-parallax="expand"]';
-    await page.locator(sel).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    const sel = '.mkt-plan[data-parallax="expand"]';
+    await page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
     // Sin tween: GSAP no toca el elemento (matchMedia) → sin transform inline ni computado.
     await page.waitForTimeout(600);
     expect(await scaleOf(page, sel)).toBeNull();
-    await expect(page.locator(sel)).toBeVisible();
+    await expect(page.locator(sel).first()).toBeVisible();
+    // Y los golpes de La Pista son secciones apiladas normales, todas visibles.
+    await expect(page.locator('[data-pista].mkt-pista--live')).toHaveCount(0);
   });
 
   test('pelota 3D: el wrapper se monta y su progreso avanza con el scroll', async ({ page }) => {
@@ -81,7 +99,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
       .toBeGreaterThan(0.9);
   });
 
-  test('con prefers-reduced-motion la pelota 3D no se monta (ni el pin del rally)', async ({ page }) => {
+  test('con prefers-reduced-motion la pelota 3D no se monta (ni el pin de la pista)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/padelo');
     await page.waitForLoadState('networkidle'); // deja cargar el chunk dinámico
@@ -98,14 +116,25 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
     await expect(ball).toHaveAttribute('data-intro', 'done', { timeout: 10_000 });
   });
 
-  test('rally: la sección Antes/Después queda pineada por ScrollTrigger', async ({ page }) => {
+  test('la pista: la sección se pinea y los golpes se revelan impacto a impacto', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');
-    await expect(page.locator('[data-ball3d]')).toHaveCount(1);
+    await expect(page.locator('[data-ball3d]')).toHaveCount(1); // el pin lo crea scroll-fx; el chunk 3D lee el bus
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
-    // La sección y sus paneles siguen visibles/operativos dentro del pin.
-    await page.locator('[data-rally]').evaluate((el) => el.scrollIntoView());
-    await expect(page.locator('[data-rally] .mkt-panel--after')).toBeVisible();
+    const pista = page.locator('[data-pista]');
+    await expect(pista).toHaveClass(/mkt-pista--live/);
+
+    const { top, range } = await pistaRange(page);
+    // Mitad del golpe 0 (tarjeta ya asentada): visible; la del golpe 2 aún no.
+    await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * 0.125 });
+    await expect(pista).toHaveAttribute('data-pista-beat', '0');
+    await expect.poll(() => beatOpacity(page, 0), { timeout: 5_000 }).toBeGreaterThan(0.9);
+    expect(await beatOpacity(page, 2)).toBeLessThan(0.1);
+    // Avanzando dos impactos: el golpe 2 toma la escena.
+    await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * 0.625 });
+    await expect(pista).toHaveAttribute('data-pista-beat', '2');
+    await expect.poll(() => beatOpacity(page, 2), { timeout: 5_000 }).toBeGreaterThan(0.9);
+    expect(await beatOpacity(page, 0)).toBeLessThan(0.1);
   });
 
   test('peloteo: golpear la pelota muestra el contador y encadena toques', async ({ page }) => {
@@ -138,8 +167,10 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
   test('efectos por sección: el contador de La Timba respeta el formato es-ES (1.240)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');
+    await expect(page.locator('.pin-spacer')).toHaveCount(1);
+    const { top, range } = await pistaRange(page);
+    await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * 0.31 }); // golpe 1: La Timba
     const n = page.locator('[data-fx="countup"]').first();
-    await n.evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await expect.poll(() => n.textContent(), { timeout: 6_000 }).not.toBe('1.240'); // cuenta…
     await expect.poll(() => n.textContent(), { timeout: 6_000 }).toBe('1.240'); // …y clava el formato
   });
@@ -147,14 +178,25 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
   test('efectos por sección: nada queda oculto al terminar las coreografías', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/padelo');
-    // sets del partido, celdas de la semana y rail de pasos: visibles tras su entrada
-    for (const sel of ['[data-fx="sets-flip"] .mkt-set', '[data-fx="wave"] .mkt-cell--on', '[data-fx="steps"] .mkt-step__bar']) {
-      await page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect(page.locator('.pin-spacer')).toHaveCount(1);
+    const { top, range } = await pistaRange(page);
+    // sets del partido (golpe 2) y celdas de la semana (golpe 3): visibles tras su coreografía
+    for (const [f, sel] of [
+      [0.56, '[data-fx="sets-flip"] .mkt-set'],
+      [0.83, '[data-fx="wave"] .mkt-cell--on'],
+    ] as const) {
+      await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * f });
       await page.waitForTimeout(1800);
       await expect
         .poll(() => page.locator(sel).first().evaluate((el) => getComputedStyle(el).opacity))
         .toBe('1');
     }
+    // rail de pasos (sección vertical, fuera de la pista)
+    await page.locator('[data-fx="steps"]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(1600);
+    await expect
+      .poll(() => page.locator('.mkt-step__bar').first().evaluate((el) => getComputedStyle(el).opacity))
+      .toBe('1');
     await expect(page.locator('.mkt-step__bar')).toHaveCount(3);
   });
 

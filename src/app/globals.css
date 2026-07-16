@@ -933,9 +933,16 @@
    nunca tapa texto. La topbar (z:20) queda siempre por encima. */
 .mkt-ball3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .mkt-page .lpt-container { position: relative; z-index: 2; }
-/* La sección del rally necesita su propio z: al pinearla, GSAP le pone un
-   transform (stacking context nuevo) y sin esto la pelota taparía sus paneles. */
-.mkt-page [data-rally] { z-index: 2; }
+/* ── La Pista (scrollytelling golpe a golpe) ──
+   z propio: al pinearla, GSAP le pone un transform (stacking context nuevo)
+   y sin esto la pelota/pista 3D taparía su contenido. */
+.mkt-pista { position: relative; z-index: 2; }
+.mkt-beat { position: relative; padding-block: clamp(58px, 8vw, 112px); }
+/* Modo pineado (lo añade GSAP solo con motion y ≥900px): los golpes se apilan
+   en el viewport y el timeline scrubbed los conmuta; el estado por defecto
+   (sin JS / reduced-motion / móvil) son secciones apiladas normales. */
+.mkt-pista--live { height: 100svh; display: grid; align-content: center; overflow: clip; }
+.mkt-pista--live .mkt-beat { grid-area: 1 / 1; padding-block: 0; opacity: 0; }
 
 /* Contador de peloteo (easter egg al golpear la pelota): píldora lima que
    aparece junto a la pelota; la posiciona el frame loop vía left/top. */

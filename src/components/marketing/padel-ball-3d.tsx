@@ -5,57 +5,42 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { LANDING_BUS as BUS, resetLandingBus } from './landing-bus';
 
 /**
- * Pelota de pádel 3D que recorre la landing girando a medida que se hace
- * scroll (Three.js vía react-three-fiber + ScrollTrigger). El canvas es una
- * capa fija entre el fondo de las secciones y el contenido (`z-index` en
- * globals.css): la pelota pasa POR DETRÁS de las tarjetas —profundidad— y
- * nunca tapa texto.
+ * Pelota de pádel 3D + LA PISTA DE CRISTAL (Three.js vía react-three-fiber).
+ * El canvas es una capa fija entre el fondo de las secciones y el contenido
+ * (`z-index` en globals.css): todo pasa POR DETRÁS de las tarjetas y nunca
+ * tapa texto.
  *
- * Tres momentos con propósito:
+ * Momentos:
  * - **Saque (cold-open)**: al cargar, la pelota cae desde fuera de pantalla,
- *   bota con squash & stretch en el hueco del hero y rueda a su sitio tras
- *   el marcador.
- * - **Rally**: la sección Antes/Después se pinea un tramo de scroll y la
- *   pelota pelotea entre los dos paneles (3 botes) hasta quedarse en
- *   «Después» — el scroll cuenta la historia.
- * - **Peloteo**: la pelota es golpeable (click/tap, hit-test por distancia en
- *   pantalla): impulso, giro y contador de toques encadenados como easter egg.
+ *   bota con física real y rueda a su sitio tras el marcador.
+ * - **La Pista**: mientras la sección [data-pista] está pineada (scroll-fx),
+ *   aparece una pista de pádel — suelo con líneas, cristales con marcos y red
+ *   en medio — y cada tramo de scroll es un vuelo de la pelota sobre la red
+ *   hasta estrellarse contra el cristal: onda expansiva en el vidrio y el
+ *   siguiente golpe (funcionalidad) entra desde el impacto.
+ * - **Peloteo**: la pelota es golpeable (hit-test por distancia en pantalla)
+ *   con contador de toques.
+ * - **Confeti** al aterrizar en el podio del cierre.
  *
- * La pelota es procedural (sin assets): esfera de fieltro lima —el acento de
- * la marca— con ruido de lienzo como bump, y la costura blanca característica
- * construida con la curva paramétrica clásica de la pelota de tenis.
- *
- * Salvaguardas: con prefers-reduced-motion no se monta nada (tampoco el pin
- * del rally); sin WebGL el canvas no se renderiza (la landing 2D queda
- * intacta). El rally solo se activa en ≥760px (en móvil los paneles apilan).
- * `data-progress`/`data-intro`/`data-ball-x/y` en el wrapper para los e2e.
+ * La pelota y la pista son procedurales (sin assets). Con
+ * prefers-reduced-motion no se monta nada; sin WebGL el canvas no se
+ * renderiza. `data-progress`/`data-intro`/`data-ball-x/y` para los e2e.
  */
 
-/** Recorrido por la página: keyframes en fracciones del viewport (x: -0.5..0.5, y: -0.5..0.5, s: escala).
- *  Regla: la pelota se aparca DETRÁS de la maqueta opaca de cada sección (profundidad)
- *  o recortada contra el borde — nunca parada bajo una columna de texto (contraste).
- *  Cada parada es una MESETA (par de keyframes iguales) centrada en el progreso real
- *  medido de su sección a 1280×800 (incluye el tramo del pin del rally): la pelota
- *  está quieta mientras la sección se lee y transita solo entre secciones. */
+/** Recorrido por la página FUERA de la pista: keyframes en fracciones del
+ *  viewport (x: -0.5..0.5, y: -0.5..0.5, s: escala), con MESETAS por sección.
+ *  Durante el pin de la pista manda pistaPose(). */
 const PATH: { p: number; x: number; y: number; s: number }[] = [
   { p: 0.0, x: 0.2, y: -0.04, s: 1.85 }, // hero: grande, asomando tras el marcador
-  { p: 0.05, x: 0.2, y: -0.04, s: 1.85 },
-  { p: 0.12, x: -0.26, y: -0.12, s: 1.05 }, // bajando al rally (el rally toma el control)
-  { p: 0.33, x: 0.26, y: -0.16, s: 1.05 }, // salida del rally: donde quedó, en «Después»
-  { p: 0.36, x: 0.26, y: -0.16, s: 1.05 },
-  { p: 0.43, x: -0.3, y: 0.0, s: 1.25 }, // tras las fichas de la capa social (centro ~0.454)
-  { p: 0.48, x: -0.3, y: 0.0, s: 1.25 },
-  { p: 0.52, x: 0.3, y: 0.0, s: 1.25 }, // tras el marcador de partido (centro ~0.547)
-  { p: 0.57, x: 0.3, y: 0.0, s: 1.25 },
-  { p: 0.605, x: -0.29, y: 0.0, s: 1.1 }, // tras la rejilla del planificador (centro ~0.631)
-  { p: 0.655, x: -0.29, y: 0.0, s: 1.1 },
-  { p: 0.71, x: 0.47, y: 0.04, s: 0.85 }, // pasos: recortada al borde derecho (centro ~0.735)
-  { p: 0.76, x: 0.47, y: 0.04, s: 0.85 },
-  { p: 0.84, x: 0.27, y: 0.0, s: 1.15 }, // tras el plan Pase de Temporada (centro ~0.866)
-  { p: 0.89, x: 0.27, y: 0.0, s: 1.15 },
-  { p: 0.965, x: 0.0, y: -0.075, s: 0.72 }, // cierre: posada sobre el oro del podio
+  { p: 0.045, x: 0.2, y: -0.04, s: 1.85 },
+  { p: 0.765, x: 0.47, y: 0.04, s: 0.85 }, // pasos: recortada al borde derecho (centro ~0.788)
+  { p: 0.81, x: 0.47, y: 0.04, s: 0.85 },
+  { p: 0.87, x: 0.27, y: 0.0, s: 1.15 }, // tras el plan Pase de Temporada (centro ~0.893)
+  { p: 0.915, x: 0.27, y: 0.0, s: 1.15 },
+  { p: 0.985, x: 0.0, y: -0.075, s: 0.72 }, // cierre: posada sobre el oro del podio
   { p: 1.0, x: 0.0, y: -0.075, s: 0.72 },
 ];
 
@@ -77,47 +62,59 @@ function samplePath(p: number) {
   return PATH[PATH.length - 1];
 }
 
-/** Rally Antes/Después: botes de panel a panel mientras la sección está pineada.
- *  `t` es el progreso 0..1 del pin; termina posada en «Después» (derecha). */
-const RALLY_FLOOR = -0.19; // altura (fracción de vh) a la que "botan" sobre los paneles
-const RALLY_HITS = [
-  { t: 0.1, x: -0.26 }, // primer bote: panel «Antes»
-  { t: 0.4, x: 0.26 }, // «Después»
-  { t: 0.7, x: -0.26 }, // «Antes»
-  { t: 0.96, x: 0.26 }, // remate: se queda en «Después»
-];
-// Arcos bajos: los botes van a ras de los paneles (zona de la flecha), sin
-// pararse nunca delante del titular ni del párrafo de la sección.
-const RALLY_ARCS = [0.11, 0.085, 0.065];
+/* ── La Pista: geometría del vuelo ──
+   El impacto contra el cristal del golpe i ocurre en t = (i + HIT_K)/beats;
+   scroll-fx mete la tarjeta i justo después (i + 0.1). La pelota queda junto
+   al cristal mientras el golpe se lee y despega en FLY_K hacia el otro lado,
+   cruzando por encima de la red. */
+const WALL_X = 0.435; // fracción de vw del punto de impacto (centro de la pelota)
+const PARK_X = 0.37; // aparcada tras el rebote, separada del cristal
+const HIT_K = 0.08;
+const FLY_K = 0.72;
+const HIT_Y = -0.19;
+const PARK_Y = -0.16;
+const APEX_Y = 0.1; // fracción de vh del ápice: por encima de la red
 
-function rallyPose(t: number) {
-  const H = RALLY_HITS;
-  let x: number;
-  let y: number;
-  if (t <= H[0].t) {
-    const k = smoothstep(t / H[0].t);
-    x = THREE.MathUtils.lerp(0.05, H[0].x, k);
-    y = RALLY_FLOOR + (1 - k) * 0.2;
-  } else {
-    x = H[H.length - 1].x;
-    y = RALLY_FLOOR;
-    for (let i = 0; i < H.length - 1; i++) {
-      if (t <= H[i + 1].t) {
-        const k = (t - H[i].t) / (H[i + 1].t - H[i].t);
-        x = THREE.MathUtils.lerp(H[i].x, H[i + 1].x, k);
-        y = RALLY_FLOOR + Math.sin(Math.PI * k) * (RALLY_ARCS[i] ?? 0.14);
-        break;
-      }
+// Golpes pares → cristal DERECHO: así la pelota queda detrás de la maqueta
+// opaca de cada golpe (después-panel, fichas, partido, rejilla), nunca bajo texto.
+const pistaSide = (i: number) => (i % 2 === 0 ? 1 : -1);
+
+function pistaPose(t: number, beats: number) {
+  const u = THREE.MathUtils.clamp(t * beats, 0, beats - 1e-4);
+  const i = Math.floor(u);
+  const k = u - i;
+  const flyLen = HIT_K + 1 - FLY_K;
+  if (k < HIT_K) {
+    // Tramo final del vuelo que viene del golpe anterior (o la entrada inicial).
+    if (i === 0) {
+      const w = smoothstep(k / HIT_K);
+      return { x: THREE.MathUtils.lerp(0.12, pistaSide(0) * WALL_X, w), y: THREE.MathUtils.lerp(0.3, HIT_Y, w) };
     }
+    const w = (k + 1 - FLY_K) / flyLen;
+    return {
+      x: THREE.MathUtils.lerp(pistaSide(i - 1) * PARK_X, pistaSide(i) * WALL_X, w),
+      y: THREE.MathUtils.lerp(PARK_Y, HIT_Y, w) + Math.sin(Math.PI * w) * (APEX_Y - PARK_Y),
+    };
   }
-  // Squash al pasar por cada impacto (campana estrecha alrededor del bote).
-  let squash = 1;
-  for (const h of RALLY_HITS) {
-    const d = (t - h.t) / 0.022;
-    squash -= 0.3 * Math.exp(-d * d);
+  if (k < FLY_K || i === beats - 1) {
+    // Aparcada junto al cristal que acaba de golpear, mientras se lee el golpe.
+    return { x: pistaSide(i) * PARK_X, y: PARK_Y };
   }
-  return { x, y, squash: Math.max(0.6, squash) };
+  // Despega hacia el cristal del golpe siguiente.
+  const w = (k - FLY_K) / flyLen;
+  return {
+    x: THREE.MathUtils.lerp(pistaSide(i) * PARK_X, pistaSide(i + 1) * WALL_X, w),
+    y: THREE.MathUtils.lerp(PARK_Y, HIT_Y, w) + Math.sin(Math.PI * w) * (APEX_Y - PARK_Y),
+  };
 }
+
+/** Nº de impactos ya cruzados para un u = t·beats (impactos en i + HIT_K). */
+const hitsPassed = (u: number) => Math.max(0, Math.floor(u - HIT_K) + 1);
+
+/** Cola de impactos contra el cristal (Ball la llena, Court la consume). */
+const IMPACTS: { x: number; y: number; side: number }[] = [];
+/** Aplaste horizontal del impacto contra el cristal (lo anima gsap). */
+const WALL_SQ = { v: 1 };
 
 /** Curva clásica de la costura de la pelota de tenis, proyectada a la esfera de radio R. */
 function seamCurve(R: number) {
@@ -160,31 +157,6 @@ function makeFeltBump() {
   return tex;
 }
 
-/** Canal mutable compartido entre la capa DOM (golpes, rally, intro) y el frame loop.
- *  Singleton de módulo (la landing solo monta una pelota): así ni se mutan props ni
- *  se tocan refs en render. `resetBus()` lo deja limpio en cada montaje. */
-const BUS = {
-  progress: 0,
-  rally: { active: false, t: 0 },
-  intro: { y: 0, xOff: 0, squash: 1, done: false },
-  hit: { x: 0, y: 0, spin: 0, squash: 1 },
-  screen: { x: -9999, y: -9999, r: 0 },
-  world: { x: 0, y: 0 },
-  chipEl: null as HTMLSpanElement | null,
-  chipOn: false,
-};
-
-function resetBus() {
-  BUS.progress = 0;
-  BUS.rally = { active: false, t: 0 };
-  BUS.intro = { y: 0, xOff: 0, squash: 1, done: false };
-  BUS.hit = { x: 0, y: 0, spin: 0, squash: 1 };
-  BUS.screen = { x: -9999, y: -9999, r: 0 };
-  BUS.world = { x: 0, y: 0 };
-  BUS.chipEl = null;
-  BUS.chipOn = false;
-}
-
 function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
   const bus = BUS;
   const group = useRef<THREE.Group>(null);
@@ -196,8 +168,7 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
   const smoothS = useRef(0);
   const hover = useRef(false);
   const throttle = useRef(0);
-  const rallyIdx = useRef(0);
-  const rallyPanels = useRef<{ before: HTMLElement | null; after: HTMLElement | null } | null>(null);
+  const hitCount = useRef(0);
   const v3 = useMemo(() => new THREE.Vector3(), []);
 
   // El cursor "pointer" sobre la pelota se restaura al desmontar.
@@ -217,39 +188,25 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
     let y: number;
     let s: number;
     let extraRot = 0;
-    let squash = bus.intro.squash * bus.hit.squash;
-    if (bus.rally.active) {
-      const pose = rallyPose(bus.rally.t);
+    const squash = bus.intro.squash * bus.hit.squash;
+    if (bus.pista.active) {
+      const pose = pistaPose(bus.pista.t, bus.pista.beats);
       x = pose.x;
       y = pose.y;
-      s = 1.0;
-      squash *= pose.squash;
-      extraRot = -bus.rally.t * Math.PI * 6; // efecto extra durante el peloteo
+      s = 0.8;
+      extraRot = -bus.pista.t * Math.PI * 8; // efecto del peloteo
 
-      // El panel que recibe cada bote encaja el golpe (y el remate enciende
-      // «Después»): la coreografía toca la historia, no solo la pelota.
-      if (!rallyPanels.current) {
-        rallyPanels.current = {
-          before: document.querySelector<HTMLElement>('[data-rally] .mkt-before'),
-          after: document.querySelector<HTMLElement>('[data-rally] .mkt-panel--after'),
-        };
-      }
-      const idx = RALLY_HITS.reduce((n, h) => (bus.rally.t >= h.t ? n + 1 : n), 0);
-      if (idx !== rallyIdx.current) {
-        const hit = RALLY_HITS[Math.max(idx, rallyIdx.current) - 1];
-        const panel = hit && (hit.x < 0 ? rallyPanels.current.before : rallyPanels.current.after);
-        if (panel) {
-          gsap.killTweensOf(panel);
-          gsap.fromTo(panel, { y: 0 }, { y: 7, duration: 0.09, ease: 'power2.out', yoyo: true, repeat: 1, clearProps: 'y' });
-          if (idx === RALLY_HITS.length && idx > rallyIdx.current) {
-            gsap.fromTo(
-              panel,
-              { boxShadow: '0 0 0 0px color-mix(in oklab, var(--acc) 55%, transparent)' },
-              { boxShadow: '0 0 0 18px color-mix(in oklab, var(--acc) 0%, transparent)', duration: 0.9, ease: 'power2.out', clearProps: 'boxShadow' },
-            );
-          }
-        }
-        rallyIdx.current = idx;
+      // Impacto contra el cristal: onda en el vidrio + aplaste horizontal.
+      const u = bus.pista.t * bus.pista.beats;
+      const n = hitsPassed(u);
+      if (n !== hitCount.current) {
+        const idx = Math.max(n, hitCount.current) - 1; // impacto cruzado (en cualquier dirección)
+        const side = pistaSide(idx);
+        IMPACTS.push({ x: side * WALL_X * viewport.width, y: HIT_Y * viewport.height, side });
+        gsap.killTweensOf(WALL_SQ);
+        WALL_SQ.v = 0.52;
+        gsap.to(WALL_SQ, { v: 1, duration: 0.55, ease: 'elastic.out(1.1, 0.42)' });
+        hitCount.current = n;
       }
     } else {
       const k = samplePath(bus.progress);
@@ -265,10 +222,10 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
       (bus.intro.done ? Math.sin(t * 1.1) * 0.07 : 0);
     const ts = Math.max(0.0001, s * fit);
 
-    // Amortiguación: sigue al scroll con inercia; el rally pide más nervio.
+    // Amortiguación: sigue al scroll con inercia; la pista pide más nervio.
     // Durante el saque NO se amortigua: un bote necesita la esquina seca del
     // impacto y el damp la redondea (la pelota "mushy" en vez de botar).
-    const lambda = bus.rally.active ? 12 : 5;
+    const lambda = bus.pista.active ? 12 : 5;
     if (!init.current || !bus.intro.done) {
       g.position.set(tx, ty, 0);
       init.current = true;
@@ -277,17 +234,19 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
       g.position.y = THREE.MathUtils.damp(g.position.y, ty, lambda, delta);
     }
 
-    // Gira a medida que bajas (5 vueltas por página) + deriva viva + golpes.
+    // Gira a medida que bajas + deriva viva + golpes del usuario.
     spinAccum.current += bus.hit.spin * delta;
     g.rotation.z = -bus.progress * Math.PI * 10 + extraRot + spinAccum.current;
     g.rotation.y = t * 0.3 + bus.progress * Math.PI * 2;
     g.rotation.x = Math.sin(t * 0.5) * 0.12;
 
-    // Squash & stretch conservando volumen (achata en Y, ensancha en X/Z).
+    // Squash & stretch conservando volumen: vertical (botes/saque) por `squash`
+    // y horizontal (impacto contra el cristal) por WALL_SQ.
     smoothS.current = THREE.MathUtils.damp(smoothS.current || ts, ts, 5, delta);
     const sq = THREE.MathUtils.clamp(squash, 0.55, 1.2);
+    const wsq = THREE.MathUtils.clamp(WALL_SQ.v, 0.45, 1);
     const wide = smoothS.current / Math.sqrt(sq);
-    g.scale.set(wide, smoothS.current * sq, wide);
+    g.scale.set(wide * wsq, (smoothS.current * sq) / Math.sqrt(wsq), wide);
 
     bus.world.x = g.position.x;
     bus.world.y = g.position.y;
@@ -344,6 +303,229 @@ function Ball({ wrap }: { wrap: React.RefObject<HTMLDivElement | null> }) {
   );
 }
 
+/* ── La pista de cristal ──
+   Suelo con líneas pintadas, cristales laterales y de fondo con marcos y
+   junta de paneles, y la red en medio. Aparece en fundido mientras la sección
+   [data-pista] está pineada y consume la cola de impactos (ondas en el vidrio). */
+
+function makeFloorTexture() {
+  const cnv = document.createElement('canvas');
+  cnv.width = 1024;
+  cnv.height = 512;
+  const ctx = cnv.getContext('2d');
+  if (!ctx) return null;
+  ctx.fillStyle = '#1c484c';
+  ctx.fillRect(0, 0, 1024, 512);
+  ctx.strokeStyle = 'rgba(230, 245, 235, 0.5)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(26, 26, 1024 - 52, 512 - 52);
+  // línea de red (centro) + líneas de saque + línea central de saque
+  ctx.beginPath();
+  ctx.moveTo(512, 26);
+  ctx.lineTo(512, 486);
+  ctx.moveTo(226, 26);
+  ctx.lineTo(226, 486);
+  ctx.moveTo(798, 26);
+  ctx.lineTo(798, 486);
+  ctx.moveTo(226, 256);
+  ctx.lineTo(798, 256);
+  ctx.stroke();
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.colorSpace = THREE.SRGBColorSpace; // sin esto, three lo trata como lineal y aclara el color
+  return tex;
+}
+
+function makeNetTexture() {
+  const cnv = document.createElement('canvas');
+  cnv.width = cnv.height = 128;
+  const ctx = cnv.getContext('2d');
+  if (!ctx) return null;
+  ctx.strokeStyle = 'rgba(215, 232, 222, 0.85)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= 128; i += 10) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, 128);
+    ctx.moveTo(0, i);
+    ctx.lineTo(128, i);
+    ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(9, 1.6);
+  return tex;
+}
+
+function makeGlassTexture() {
+  const cnv = document.createElement('canvas');
+  cnv.width = cnv.height = 256;
+  const ctx = cnv.getContext('2d');
+  if (!ctx) return null;
+  const grad = ctx.createLinearGradient(0, 0, 256, 256);
+  grad.addColorStop(0, 'rgba(255,255,255,0.5)');
+  grad.addColorStop(0.35, 'rgba(255,255,255,0.12)');
+  grad.addColorStop(1, 'rgba(255,255,255,0.03)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(cnv);
+}
+
+const COURT_BASE_OPACITY = { glass: 0.14, frame: 0.95, floor: 0.96, net: 0.6, band: 0.85 };
+const RING_N = 4;
+
+type CourtMats = Record<keyof typeof COURT_BASE_OPACITY, THREE.MeshBasicMaterial> & {
+  ring: THREE.MeshBasicMaterial;
+};
+
+/** Aplica el fundido de la pista a sus materiales (fuera del componente:
+ *  react-hooks/immutability no permite mutar valores de hooks en useFrame). */
+function fadeCourtMats(mats: CourtMats, f: number) {
+  for (const key of Object.keys(COURT_BASE_OPACITY) as (keyof typeof COURT_BASE_OPACITY)[]) {
+    mats[key].opacity = COURT_BASE_OPACITY[key] * f;
+  }
+}
+
+function Court() {
+  const group = useRef<THREE.Group>(null);
+  const { viewport } = useThree();
+  const fade = useRef(0);
+  const ringLife = useRef<number[]>(Array.from({ length: RING_N }, () => 0));
+  const rings = useRef<(THREE.Mesh | null)[]>([]);
+
+  const floorTex = useMemo(() => makeFloorTexture(), []);
+  const netTex = useMemo(() => makeNetTexture(), []);
+  const glassTex = useMemo(() => makeGlassTexture(), []);
+
+  const mats = useMemo(
+    () => ({
+      glass: new THREE.MeshBasicMaterial({
+        map: glassTex ?? undefined,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+      frame: new THREE.MeshBasicMaterial({ color: '#0e2122', transparent: true, opacity: 0 }),
+      floor: new THREE.MeshBasicMaterial({ map: floorTex ?? undefined, transparent: true, opacity: 0 }),
+      net: new THREE.MeshBasicMaterial({
+        map: netTex ?? undefined,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+      band: new THREE.MeshBasicMaterial({ color: '#e8f4ec', transparent: true, opacity: 0 }),
+      ring: new THREE.MeshBasicMaterial({
+        color: '#dcff7a',
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    }),
+    [floorTex, netTex, glassTex],
+  );
+
+  useFrame((_, delta) => {
+    const g = group.current;
+    if (!g) return;
+    fade.current = THREE.MathUtils.damp(fade.current, BUS.pista.active ? 1 : 0, 4, delta);
+    const f = fade.current;
+    g.visible = f > 0.02;
+    fadeCourtMats(mats, f);
+
+    // Ondas de impacto en el cristal.
+    while (IMPACTS.length) {
+      const imp = IMPACTS.shift()!;
+      const slot = ringLife.current.findIndex((l) => l <= 0);
+      const idx = slot === -1 ? 0 : slot;
+      const mesh = rings.current[idx];
+      if (mesh) {
+        mesh.position.set(imp.x + imp.side * 0.55, imp.y, 0);
+        mesh.rotation.set(0, imp.side > 0 ? -Math.PI / 2 : Math.PI / 2, 0);
+        ringLife.current[idx] = 1;
+      }
+    }
+    rings.current.forEach((mesh, i) => {
+      if (!mesh) return;
+      const life = ringLife.current[i];
+      if (life <= 0) {
+        mesh.visible = false;
+        return;
+      }
+      ringLife.current[i] = life - delta / 0.6;
+      const grow = 1 - life;
+      mesh.visible = true;
+      mesh.scale.setScalar(0.7 + grow * 2.6);
+      (mesh.material as THREE.MeshBasicMaterial).opacity = life * 0.8 * Math.max(f, 0.4);
+    });
+  });
+
+  // Dimensiones desde el viewport (reactivo a resize).
+  const vw = viewport.width;
+  const vh = viewport.height;
+  const glassX = WALL_X * vw + 0.62; // el vidrio, justo por fuera del punto de impacto
+  const floorY = -0.315 * vh;
+  const wallH = 0.62 * vh;
+  const depth = 8.4;
+  const zMid = -1.9;
+  const netH = 0.16 * vh;
+  const postZ = [-5.9, -3.25, -0.6, 2.1];
+
+  return (
+    <group ref={group} visible={false}>
+      {/* suelo con líneas */}
+      <mesh position={[0, floorY, zMid]} rotation={[-Math.PI / 2, 0, 0]} material={mats.floor}>
+        <planeGeometry args={[glassX * 2 + 1.4, depth]} />
+      </mesh>
+      {/* cristales laterales con marcos */}
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <mesh position={[side * glassX, floorY + wallH / 2, zMid]} rotation={[0, (side * -Math.PI) / 2, 0]} material={mats.glass}>
+            <planeGeometry args={[depth, wallH]} />
+          </mesh>
+          {postZ.map((z) => (
+            <mesh key={z} position={[side * glassX, floorY + wallH / 2, z]} material={mats.frame}>
+              <boxGeometry args={[0.09, wallH, 0.09]} />
+            </mesh>
+          ))}
+          <mesh position={[side * glassX, floorY + wallH, zMid]} material={mats.frame}>
+            <boxGeometry args={[0.09, 0.09, depth]} />
+          </mesh>
+        </group>
+      ))}
+      {/* cristal del fondo */}
+      <mesh position={[0, floorY + wallH / 2, zMid - depth / 2 - 0.2]} material={mats.glass}>
+        <planeGeometry args={[glassX * 2, wallH]} />
+      </mesh>
+      <mesh position={[0, floorY + wallH, zMid - depth / 2 - 0.2]} material={mats.frame}>
+        <boxGeometry args={[glassX * 2, 0.09, 0.09]} />
+      </mesh>
+      {/* la red, en medio */}
+      <mesh position={[0, floorY + netH / 2, zMid]} rotation={[0, Math.PI / 2, 0]} material={mats.net}>
+        <planeGeometry args={[depth, netH]} />
+      </mesh>
+      <mesh position={[0, floorY + netH, zMid]} material={mats.band}>
+        <boxGeometry args={[0.05, 0.07, depth]} />
+      </mesh>
+      {/* ondas de impacto (pool) */}
+      {Array.from({ length: RING_N }, (_, i) => (
+        <mesh
+          key={i}
+          ref={(m) => {
+            rings.current[i] = m;
+          }}
+          visible={false}
+          material={mats.ring}
+        >
+          <ringGeometry args={[0.42, 0.55, 40]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /** Confeti al aterrizar en el podio: chips 3D en los colores de la pelota que
  *  estallan desde su posición cuando el scroll llega al final (una vez por
  *  llegada, con enfriamiento). Celebración = el lenguaje de marca de La Timba. */
@@ -361,7 +543,7 @@ function Confetti() {
     if (!g) return;
     const t = state.clock.elapsedTime;
 
-    if (BUS.progress >= 0.985 && prevP.current < 0.985 && t - lastBurst.current > 3) {
+    if (BUS.progress >= 0.99 && prevP.current < 0.99 && t - lastBurst.current > 3) {
       lastBurst.current = t;
       parts.current = g.children.map((m, i) => {
         const a = (i / g.children.length) * Math.PI * 2;
@@ -426,12 +608,13 @@ export default function PadelBall3D() {
 
   useEffect(() => {
     if (!enabled) return;
-    resetBus();
+    resetLandingBus();
     const b = BUS;
     b.chipEl = chip.current;
     gsap.registerPlugin(ScrollTrigger);
 
-    // Progreso global de la página (mueve el recorrido y el giro).
+    // Progreso global de la página (mueve el recorrido y el giro). El pin de
+    // la pista lo crea scroll-fx; aquí solo se lee su estado del bus.
     const progressST = ScrollTrigger.create({
       start: 0,
       end: 'max',
@@ -440,29 +623,6 @@ export default function PadelBall3D() {
         wrap.current?.setAttribute('data-progress', self.progress.toFixed(3));
       },
     });
-
-    // Rally: pinea la sección Antes/Después un tramo y pelotea entre paneles.
-    // Solo en ≥760px (en móvil los paneles apilan y no hay "lados").
-    let rallyST: ScrollTrigger | undefined;
-    const rallyEl = document.querySelector<HTMLElement>('[data-rally]');
-    if (rallyEl && window.matchMedia('(min-width: 760px)').matches) {
-      rallyST = ScrollTrigger.create({
-        trigger: rallyEl,
-        start: 'top 10%',
-        end: '+=130%',
-        pin: true,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          b.rally.t = self.progress;
-        },
-        onToggle: (self) => {
-          b.rally.active = self.isActive;
-        },
-      });
-    }
-    // El pin cambia las posiciones de todo lo que hay debajo: recalcular los
-    // triggers ya creados (los expand de scroll-fx se montaron antes que esto).
-    ScrollTrigger.refresh();
 
     // Saque (cold-open): cae desde fuera, bota con squash y rueda a su sitio.
     // Si la página ya está scrolleada (recarga a mitad), no hay saque.
@@ -556,7 +716,7 @@ export default function PadelBall3D() {
       introTl?.kill();
       hideCall?.kill();
       gsap.killTweensOf(b.hit);
-      rallyST?.kill();
+      gsap.killTweensOf(WALL_SQ);
       progressST.kill();
     };
   }, [enabled]);
@@ -582,6 +742,7 @@ export default function PadelBall3D() {
           <ambientLight intensity={0.65} />
           <directionalLight position={[5, 7, 6]} intensity={1.6} />
           <pointLight position={[-6, 2, -5]} intensity={16} color="#a8db27" />
+          <Court />
           <Ball wrap={wrap} />
           <Confetti />
         </Canvas>
