@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PLATFORM_NAME } from '@/lib/groups/constants';
 import { MarketingSection } from '@/components/marketing/marketing-section';
+import { MarketingScrollFx } from '@/components/marketing/scroll-fx';
+import { Ball3DLazy } from '@/components/marketing/ball3d-lazy';
 
 const TITLE = `${PLATFORM_NAME} — la liga de tu peña de pádel`;
 const DESCRIPTION =
@@ -86,6 +88,8 @@ function Scoreboard() {
 export default function PadeloLanding() {
   return (
     <>
+      <MarketingScrollFx />
+      <Ball3DLazy />
       {/* 1 · Hero broadcast — split asimétrico: relato | marcador */}
       <section className="mkt-hero">
         <div className="lpt-container mkt-hero__grid">
@@ -108,76 +112,83 @@ export default function PadeloLanding() {
             </div>
           </div>
           <div className="mkt-anim" style={{ animationDelay: '0.24s' }}>
-            <Scoreboard />
-          </div>
-        </div>
-      </section>
-
-      {/* 2 · El giro — antes / después (segunda lectura) */}
-      <section className="mkt-section">
-        <div className="lpt-container">
-          <div className="mkt-head">
-            <h2 className="display mkt-h2">Tu ranking no debería vivir en un grupo de WhatsApp</h2>
-            <p className="mkt-lead">
-              Hoy los resultados se pierden entre mensajes y una nota del móvil. {PLATFORM_NAME} los
-              convierte en un marcador de verdad: quién sube, quién cae, qué racha hay.
-            </p>
-          </div>
-          <div className="mkt-swap">
-            <div className="mkt-panel mkt-before">
-              <p className="mkt-cap">Antes</p>
-              <div className="mkt-chat">
-                <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
-                <span className="mkt-bubble mkt-bubble--me">¿y quién va primero al final?</span>
-                <span className="mkt-bubble">ni idea, estaba en una nota del movil</span>
-              </div>
-            </div>
-            <div className="mkt-swap__arrow display" aria-hidden>▶</div>
-            <div className="mkt-panel mkt-panel--after">
-              <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
-              <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
-                <div className="mkt-row mkt-row--lead">
-                  <span className="mkt-pos">1</span>
-                  <Ava ini="NR" bg="var(--acc)" />
-                  <span className="mkt-name">Nacho R.</span>
-                  <span className="mkt-elo num">1584</span>
-                  <Delta v={18} />
-                </div>
-                <div className="mkt-row">
-                  <span className="mkt-pos">2</span>
-                  <Ava ini="BM" bg="var(--win)" />
-                  <span className="mkt-name">Bea M.</span>
-                  <span className="mkt-elo num">1551</span>
-                  <Delta v={7} />
-                </div>
-              </div>
+            {/* Drift y tilt van en un wrapper propio: mkt-anim ya anima transform en la carga. */}
+            <div data-parallax="drift" data-parallax-speed="-44" data-tilt data-fx="board-live">
+              <Scoreboard />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3 · La capa social (el diferencial) — split + fichas/logros/parejas */}
-      <section className="mkt-section mkt-section--panel">
-        <div className="lpt-container mkt-split mkt-split--rev">
-          <div className="mkt-split__content">
-            <p className="kicker mkt-kicker">
-              <span className="mkt-tick" aria-hidden /> Lo que engancha
-            </p>
-            <h2 className="display mkt-h2">La Timba, logros y rankings de parejas</h2>
-            <p className="mkt-lead">
-              Apuestas internas con <span className="mkt-strong">fichas de juego, nunca dinero real</span>,
-              logros que se desbloquean y rankings de parejas. La capa social que hace que una peña le
-              enseñe la app a la siguiente.
-            </p>
+      {/* 2 · LA PISTA — scrollytelling de funcionalidades golpe a golpe: la
+          sección se pinea, la pista de cristal 3D aparece (padel-ball-3d) y
+          cada tramo de scroll es un vuelo de la pelota sobre la red hasta el
+          cristal; cada impacto revela un golpe (.mkt-beat). Sin JS o con
+          reduced-motion no hay pin: los golpes son secciones apiladas. */}
+      <section className="mkt-pista" data-pista>
+        <div className="mkt-beat" data-beat="0">
+          <div className="lpt-container">
+            <div className="mkt-head">
+              <h2 className="display mkt-h2">Tu ranking no debería vivir en un grupo de WhatsApp</h2>
+              <p className="mkt-lead">
+                Hoy los resultados se pierden entre mensajes y una nota del móvil. {PLATFORM_NAME} los
+                convierte en un marcador de verdad: quién sube, quién cae, qué racha hay.
+              </p>
+            </div>
+            <div className="mkt-swap">
+              <div className="mkt-panel mkt-before">
+                <p className="mkt-cap">Antes</p>
+                <div className="mkt-chat">
+                  <span className="mkt-bubble">creo q ganamos 6-4 6-3?? 😅</span>
+                  <span className="mkt-bubble mkt-bubble--me">¿y quién va primero al final?</span>
+                  <span className="mkt-bubble">ni idea, estaba en una nota del movil</span>
+                </div>
+              </div>
+              <div className="mkt-swap__arrow display" aria-hidden>▶</div>
+              <div className="mkt-panel mkt-panel--after">
+                <p className="mkt-cap" style={{ color: 'var(--acc)' }}>Después</p>
+                <div className="mkt-board" style={{ boxShadow: 'none', borderRadius: 12 }}>
+                  <div className="mkt-row mkt-row--lead">
+                    <span className="mkt-pos">1</span>
+                    <Ava ini="NR" bg="var(--acc)" />
+                    <span className="mkt-name">Nacho R.</span>
+                    <span className="mkt-elo num">1584</span>
+                    <Delta v={18} />
+                  </div>
+                  <div className="mkt-row">
+                    <span className="mkt-pos">2</span>
+                    <Ava ini="BM" bg="var(--win)" />
+                    <span className="mkt-name">Bea M.</span>
+                    <span className="mkt-elo num">1551</span>
+                    <Delta v={7} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="mkt-split__visual mkt-tiles">
+        </div>
+
+        <div className="mkt-beat" data-beat="1">
+          <div className="lpt-container mkt-split mkt-split--rev">
+            <div className="mkt-split__content">
+              <p className="kicker mkt-kicker">
+                <span className="mkt-tick" aria-hidden /> Lo que engancha
+              </p>
+              <h2 className="display mkt-h2">La Timba, logros y rankings de parejas</h2>
+              <p className="mkt-lead">
+                Apuestas internas con <span className="mkt-strong">fichas de juego, nunca dinero real</span>,
+                logros que se desbloquean y rankings de parejas. La capa social que hace que una peña le
+                enseñe la app a la siguiente.
+              </p>
+            </div>
+            <div className="mkt-split__visual mkt-tiles" data-tilt data-fx="social">
             <div className="mkt-tile">
               <span className="mkt-ficha" aria-hidden>T</span>
               <div className="mkt-tile__body">
                 <p className="mkt-tile__t">La Timba</p>
                 <p className="mkt-tile__d">Porra entre amigos con fichas de juego, sin dinero real.</p>
               </div>
-              <span className="mkt-tile__n" style={{ color: 'var(--acc)' }}>1.240</span>
+              <span className="mkt-tile__n" style={{ color: 'var(--acc)' }} data-fx="countup">1.240</span>
             </div>
             <div className="mkt-tile">
               <span className="mkt-medal" aria-hidden>🏅</span>
@@ -196,23 +207,22 @@ export default function PadeloLanding() {
                 <p className="mkt-tile__t">Nacho &amp; Bea</p>
                 <p className="mkt-tile__d">Mejor pareja de la temporada.</p>
               </div>
-              <span className="mkt-tile__n">1.602</span>
+              <span className="mkt-tile__n" data-fx="countup">1.602</span>
+            </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* 4 · Motor competitivo — marcador de partido a lo grande */}
-      <section className="mkt-section">
-        <div className="lpt-container mkt-split">
-          <div className="mkt-split__content">
-            <h2 className="display mkt-h2">Cada partido mueve el ranking</h2>
-            <p className="mkt-lead">
-              Elo 2vs2 en cada resultado, historial completo, torneos y pozos. La temporada
-              avanza como una competición de verdad, no como una lista de partidos.
-            </p>
-          </div>
-          <div className="mkt-split__visual mkt-match">
+        <div className="mkt-beat" data-beat="2">
+          <div className="lpt-container mkt-split">
+            <div className="mkt-split__content">
+              <h2 className="display mkt-h2">Cada partido mueve el ranking</h2>
+              <p className="mkt-lead">
+                Elo 2vs2 en cada resultado, historial completo, torneos y pozos. La temporada
+                avanza como una competición de verdad, no como una lista de partidos.
+              </p>
+            </div>
+            <div className="mkt-split__visual mkt-match" data-tilt data-fx="sets-flip">
             <div className="mkt-match__head">
               <span>Final · Torneo de primavera</span>
               <span className="num">6-4 · 4-6 · 7-5</span>
@@ -244,15 +254,19 @@ export default function PadeloLanding() {
               </div>
             </div>
             <p className="mkt-match__foot">Historial, torneos y pozos: toda la temporada en un sitio.</p>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* 5 · Planificador — rejilla de disponibilidad */}
-      <section className="mkt-section mkt-section--panel">
-        <div className="lpt-container mkt-split">
-          <div className="mkt-split__visual">
-            <div className="mkt-week" role="img" aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña.">
+        <div className="mkt-beat" data-beat="3">
+          <div className="lpt-container mkt-split">
+            <div className="mkt-split__visual">
+              <div
+                className="mkt-week"
+                data-fx="wave"
+                role="img"
+              aria-label="Rejilla de disponibilidad semanal: el jueves coincide la mayoría de la peña."
+            >
               {[
                 { d: 'L', on: [1, 0, 0, 1, 0, 0] },
                 { d: 'M', on: [0, 1, 0, 0, 1, 0] },
@@ -274,30 +288,34 @@ export default function PadeloLanding() {
               El <span className="mkt-strong" style={{ color: 'var(--acc)' }}>jueves</span> coincidís 6. Menos «¿quién puede?» y más pádel.
             </p>
           </div>
-          <div className="mkt-split__content">
-            <h2 className="display mkt-h2">¿Cuándo puede jugar la peña?</h2>
-            <p className="mkt-lead">
-              Cada jugador marca su disponibilidad semanal y el planificador enseña las coincidencias
-              de un vistazo. La pista se llena sola.
-            </p>
+            <div className="mkt-split__content">
+              <h2 className="display mkt-h2">¿Cuándo puede jugar la peña?</h2>
+              <p className="mkt-lead">
+                Cada jugador marca su disponibilidad semanal y el planificador enseña las coincidencias
+                de un vistazo. La pista se llena sola.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* 6 · Cómo funciona — rail numerado */}
       <MarketingSection title="Crea, invita, pícate">
-        <div className="mkt-steps">
+        <div className="mkt-steps" data-fx="steps">
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">01</p>
             <p className="mkt-step__t">Crea tu grupo</p>
             <p className="mkt-step__d">Con tu cuenta de Google, en 30 segundos. Sin tarjeta.</p>
           </div>
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">02</p>
             <p className="mkt-step__t">Invita a tu peña</p>
             <p className="mkt-step__d">Un enlace y cada uno reclama su ficha de jugador.</p>
           </div>
           <div className="mkt-step">
+            <span className="mkt-step__bar" aria-hidden />
             <p className="mkt-step__n num">03</p>
             <p className="mkt-step__t">Juega y pícate</p>
             <p className="mkt-step__d">Registrad resultados y que empiece la temporada.</p>
@@ -315,8 +333,8 @@ export default function PadeloLanding() {
             </p>
           </div>
           <div className="mkt-price">
-            <div className="mkt-plan">
-              <p className="mkt-plan__price">Gratis</p>
+            <div className="mkt-plan" data-parallax="expand">
+              <p className="mkt-plan__price" data-fx="stamp">Gratis</p>
               <p className="mkt-plan__unit">para siempre</p>
               <ul className="mkt-list">
                 <li><span className="mkt-check mkt-check--free">✓</span> Ranking Elo 2vs2 e historial</li>
@@ -325,7 +343,8 @@ export default function PadeloLanding() {
                 <li><span className="mkt-check mkt-check--free">✓</span> Se instala como app en el móvil</li>
               </ul>
             </div>
-            <div className="mkt-plan mkt-plan--pass">
+            <div className="mkt-plan mkt-plan--pass" data-parallax="expand">
+              <span className="mkt-shine" aria-hidden />
               <span className="mkt-official">⭐ Tour Oficial</span>
               <p className="mkt-plan__price" style={{ marginTop: 16 }}>~20&nbsp;€</p>
               <p className="mkt-plan__unit">al año · Pase de Temporada</p>
@@ -347,7 +366,7 @@ export default function PadeloLanding() {
             <h2 className="display mkt-close__title">Empieza la temporada de tu peña</h2>
             <Cta center />
           </div>
-          <div className="mkt-podium" aria-hidden>
+          <div className="mkt-podium" data-parallax="expand" aria-hidden>
             <span /><span /><span />
           </div>
         </div>
