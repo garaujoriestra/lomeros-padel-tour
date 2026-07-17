@@ -860,8 +860,10 @@
 
 /* ── 6 · Cómo funciona (rail numerado, no cards idénticas) ── */
 .mkt-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 40px); margin-top: clamp(30px, 4vw, 50px); }
-.mkt-step { padding-top: 20px; border-top: 2px solid var(--line); }
-.mkt-step:first-child { border-top-color: var(--acc); }
+/* El filete superior es un elemento propio (no border) para poder "dibujarlo"
+   con scaleX al entrar la sección; estático es visualmente idéntico. */
+.mkt-step__bar { display: block; height: 2px; background: var(--line); margin-bottom: 20px; }
+.mkt-step:first-child .mkt-step__bar { background: var(--acc); }
 .mkt-step__n { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(40px, 5.5vw, 62px); line-height: 0.85; color: color-mix(in oklab, var(--ink) 26%, transparent); font-variant-numeric: tabular-nums; }
 .mkt-step__t { margin-top: 12px; font-weight: 800; font-size: 18px; }
 .mkt-step__d { margin-top: 6px; color: var(--ink-2); font-size: 14.5px; max-width: 34ch; }
@@ -870,7 +872,13 @@
 /* ── 7 · Precio honesto (dos planes, el gratis manda) ── */
 .mkt-price { display: grid; grid-template-columns: 1.12fr 0.88fr; gap: clamp(18px, 2.6vw, 30px); margin-top: clamp(30px, 4vw, 46px); align-items: stretch; }
 .mkt-plan { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--mkt-r); padding: clamp(22px, 3vw, 32px); box-shadow: var(--card-shadow); }
-.mkt-plan--pass { border-color: color-mix(in oklab, var(--acc) 42%, var(--line)); background: linear-gradient(180deg, color-mix(in oklab, var(--acc) 7%, var(--surface)), var(--surface)); }
+.mkt-plan--pass { position: relative; overflow: hidden; border-color: color-mix(in oklab, var(--acc) 42%, var(--line)); background: linear-gradient(180deg, color-mix(in oklab, var(--acc) 7%, var(--surface)), var(--surface)); }
+/* Barrido de brillo único del plan Pase (lo mueve GSAP al entrar). */
+.mkt-shine {
+  position: absolute; top: -30%; bottom: -30%; left: 0; width: 46%;
+  background: linear-gradient(100deg, transparent, oklch(1 0 0 / 0.055), transparent);
+  transform: translateX(-260%) rotate(8deg); pointer-events: none;
+}
 .mkt-plan__price { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(40px, 5.6vw, 62px); line-height: 0.9; }
 .mkt-plan__unit { color: var(--ink-3); font-size: 13px; margin-top: 6px; }
 .mkt-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 11px; }
@@ -918,6 +926,56 @@
 .mkt-legal h1 { font-size: clamp(32px, 6vw, 46px); }
 .mkt-legal h2 { margin-top: 32px; }
 .mkt-legal p { color: var(--ink-2); max-width: 66ch; margin-top: 10px; }
+
+/* ── Pelota de pádel 3D (capa fija entre fondo y contenido) ──
+   Canvas por encima de los fondos de sección (z:1) y contenedores de contenido
+   por encima del canvas (z:2): la pelota pasa por detrás de las tarjetas y
+   nunca tapa texto. La topbar (z:20) queda siempre por encima. */
+.mkt-ball3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.mkt-page .lpt-container { position: relative; z-index: 2; }
+/* ── La Pista (scrollytelling golpe a golpe) ──
+   z propio: al pinearla, GSAP le pone un transform (stacking context nuevo)
+   y sin esto la pelota/pista 3D taparía su contenido. */
+.mkt-pista { position: relative; z-index: 2; }
+.mkt-beat { position: relative; padding-block: clamp(58px, 8vw, 112px); }
+/* Modo pineado (lo añade GSAP solo con motion y ≥900px): los golpes se apilan
+   en el viewport y el timeline scrubbed los conmuta; el estado por defecto
+   (sin JS / reduced-motion / móvil) son secciones apiladas normales. */
+.mkt-pista--live { height: 100svh; display: grid; align-content: center; overflow: clip; }
+.mkt-pista--live .mkt-beat { grid-area: 1 / 1; padding-block: 0; opacity: 0; }
+
+/* Compacto móvil del modo pineado: cada golpe cabe en la pantalla anclada
+   (se compacta tipografía y relleno SOLO en modo live; apilado no cambia). */
+@media (max-width: 899.98px) {
+  .mkt-pista--live .mkt-h2 { font-size: clamp(22px, 6.6vw, 30px); }
+  .mkt-pista--live .mkt-lead { font-size: 14px; margin-top: 10px; }
+  .mkt-pista--live .mkt-kicker { margin-bottom: 8px; }
+  .mkt-pista--live .mkt-swap { margin-top: 16px; gap: 8px; }
+  .mkt-pista--live .mkt-swap__arrow { display: none; }
+  .mkt-pista--live .mkt-panel { padding: 12px 14px; }
+  .mkt-pista--live .mkt-bubble { font-size: 12px; padding: 6px 10px; }
+  .mkt-pista--live .mkt-cap { margin-bottom: 8px; }
+  .mkt-pista--live .mkt-row { padding: 8px 12px; }
+  .mkt-pista--live .mkt-split { gap: 16px; }
+  .mkt-pista--live .mkt-tile { padding: 10px 12px; gap: 10px; }
+  .mkt-pista--live .mkt-tile__d { font-size: 12px; }
+  .mkt-pista--live .mkt-team { padding: 10px 12px; }
+  .mkt-pista--live .mkt-set { width: 26px; height: 32px; font-size: 16px; }
+  .mkt-pista--live .mkt-week { gap: 4px; }
+  .mkt-pista--live .mkt-cell { height: 14px; }
+  .mkt-pista--live .mkt-weekcap { margin-top: 10px; font-size: 12px; }
+}
+
+/* Contador de peloteo (easter egg al golpear la pelota): píldora lima que
+   aparece junto a la pelota; la posiciona el frame loop vía left/top. */
+.mkt-peloteo {
+  position: absolute; left: -200px; top: -200px; z-index: 3;
+  display: inline-flex; padding: 6px 12px; border-radius: 999px;
+  background: var(--acc); color: var(--on-acc);
+  font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap; opacity: 0;
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--acc) 32%, transparent);
+}
 
 /* ── Cold-open del hero (entrada única en carga) + latido "en juego" ── */
 .mkt-anim { animation: mkt-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
