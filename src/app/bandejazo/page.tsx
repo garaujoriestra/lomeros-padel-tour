@@ -346,7 +346,7 @@ export default function BandejazoLanding() {
             <div className="mkt-plan mkt-plan--pass" data-parallax="expand">
               <span className="mkt-shine" aria-hidden />
               <span className="mkt-official">⭐ Tour Oficial</span>
-              <p className="mkt-plan__price" style={{ marginTop: 16 }}>~20&nbsp;€</p>
+              <p className="mkt-plan__price">~20&nbsp;€</p>
               <p className="mkt-plan__unit">al año · Pase de Temporada</p>
               <ul className="mkt-list">
                 <li><span className="mkt-check mkt-check--pass">✓</span> Tu nombre, tu logo y tus colores</li>
