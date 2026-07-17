@@ -12,13 +12,13 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: '/padelo' },
+  alternates: { canonical: '/bandejazo' },
   // La tarjeta social la aporta opengraph-image.tsx (convención de fichero);
   // aquí solo el resto de campos OG/Twitter para WhatsApp/Telegram/X.
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
-    url: '/padelo',
+    url: '/bandejazo',
     siteName: PLATFORM_NAME,
     locale: 'es_ES',
     type: 'website',
@@ -85,7 +85,7 @@ function Scoreboard() {
   );
 }
 
-export default function PadeloLanding() {
+export default function BandejazoLanding() {
   return (
     <>
       <MarketingScrollFx />

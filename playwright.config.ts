@@ -8,9 +8,9 @@ const TEST_ADMIN_EMAIL = 'e2e-admin@test.com';
 const TEST_CRON_SECRET = 'e2e-cron-secret';
 const TEST_SUPER_ADMIN_EMAIL = 'e2e-super@test.com';
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_e2e';
-// Fase 0 captación: host de marketing ficticio para e2e'ar el rewrite '/' → /padelo
+// Fase 0 captación: host de marketing ficticio para e2e'ar el rewrite '/' → /bandejazo
 // (se manda como cabecera Host contra localhost:3100).
-export const TEST_MARKETING_HOST = 'padelo.test';
+export const TEST_MARKETING_HOST = 'bandejazo.test';
 
 export default defineConfig({
   testDir: './e2e',

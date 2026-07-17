@@ -17,7 +17,7 @@ export function isPaidGroup(
   return hasSeasonPass(group, now);
 }
 
-// ¿Muestra el grupo la atribución «hecho con Padelo»? Gobernada por el pase
+// ¿Muestra el grupo la atribución «hecho con Bandejazo»? Gobernada por el pase
 // REAL (como la ⭐, ignora el flag): la atribución es el motor de crecimiento
 // orgánico —cada página de un grupo gratis enlaza a la landing—, así que la beta
 // regala el branding (isPaidGroup) pero no apaga este cartel; solo lo quita

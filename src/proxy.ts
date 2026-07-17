@@ -12,13 +12,13 @@ const DEFAULT_GROUP_SLUG = (process.env.DEFAULT_GROUP_SLUG ?? 'lomeros').trim();
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Dominio de marketing (MARKETING_HOST, p. ej. padelo.app): su raíz sirve la
+  // Dominio de marketing (MARKETING_HOST, p. ej. bandejazo.app): su raíz sirve la
   // landing de plataforma en lugar del tour insignia. Solo se reescribe '/';
   // el resto de rutas (crear-grupo, /g/<slug>, legal…) se comporta igual en
   // cualquier host. Sin la env el bloque es inerte y '/' pasa de largo.
   if (pathname === '/') {
     if (isMarketingHost(request.headers.get('host'))) {
-      return NextResponse.rewrite(new URL('/padelo', request.url));
+      return NextResponse.rewrite(new URL('/bandejazo', request.url));
     }
     return NextResponse.next();
   }

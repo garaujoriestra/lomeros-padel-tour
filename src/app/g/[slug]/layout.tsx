@@ -85,7 +85,7 @@ export default async function GroupLayout({
       {showsAttribution(ctx.group) && (
         <footer className="muted" style={{ textAlign: 'center', fontSize: 12, padding: '12px 0 20px' }}>
           <Link
-            href="/padelo"
+            href="/bandejazo"
             style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
           >
             hecho con {PLATFORM_NAME}

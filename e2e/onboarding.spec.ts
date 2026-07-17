@@ -70,7 +70,7 @@ test.describe('onboarding · crear grupo (API)', () => {
   });
 
   // Fase 4: alta abierta — el token deja de ser obligatorio. El caso "sin token → 200"
-  // vive en landing-padelo.spec; aquí solo la validación de slug/nombre, que no cambia:
+  // vive en landing-bandejazo.spec; aquí solo la validación de slug/nombre, que no cambia:
   // con token válido, un slug reservado/ocupado/inválido o un nombre vacío devuelve 400.
   test('slug reservado → 400; slug ocupado → 400; nombre vacío → 400; slug largo → 400', async ({ request }) => {
     await loginAsFreshUser(request, 'validation');
@@ -95,7 +95,7 @@ test.describe('onboarding · crear grupo sin sesión', () => {
 test.describe('onboarding · página /crear-grupo', () => {
   // Fase 4: alta abierta — el token deja de ser obligatorio. Sin token y sin sesión ya no
   // aparece "necesitas una invitación": se ofrece entrar con Google (la cobertura completa
-  // del alta abierta por UI vive en landing-padelo.spec).
+  // del alta abierta por UI vive en landing-bandejazo.spec).
   test('sin token y sin sesión → botón de Google, sin formulario', async ({ page }) => {
     await page.goto('/crear-grupo');
     await expect(page.getByRole('link', { name: /entrar con google/i })).toBeVisible();

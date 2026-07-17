@@ -18,7 +18,7 @@ test.describe('marca · grupo sin pase (flag e2e ON)', () => {
   test('navbar: nombre del grupo + atribución, sin ⭐ ni acento custom', async ({ page }) => {
     await page.goto('/g/grupo-free');
     await expect(page.locator('.brand-name').first()).toHaveText('Grupo Free');
-    await expect(page.getByText('hecho con Padelo').first()).toBeVisible();
+    await expect(page.getByText('hecho con Bandejazo').first()).toBeVisible();
     await expect(page.getByLabel('Tour Oficial')).toHaveCount(0);
     await expect(page.locator('[data-branding="custom"]')).toHaveCount(0);
   });
@@ -29,7 +29,7 @@ test.describe('marca · grupo con pase (grupo-test)', () => {
     await page.goto('/g/grupo-test');
     await expect(page.locator('.brand-name').first()).toHaveText('Grupo Test');
     await expect(page.getByLabel('Tour Oficial').first()).toBeVisible();
-    await expect(page.getByText('hecho con Padelo')).toHaveCount(0);
+    await expect(page.getByText('hecho con Bandejazo')).toHaveCount(0);
   });
 
   test.describe('como admin del grupo', () => {
@@ -132,7 +132,7 @@ test.describe('marca · webhook del Pase (Stripe)', () => {
 
     await page.goto('/g/grupo-webhook');
     await expect(page.getByLabel('Tour Oficial').first()).toBeVisible();
-    await expect(page.getByText('hecho con Padelo')).toHaveCount(0);
+    await expect(page.getByText('hecho con Bandejazo')).toHaveCount(0);
   });
 
   test('firma inválida → 400', async ({ request }) => {

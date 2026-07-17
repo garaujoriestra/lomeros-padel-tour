@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Parallax de la landing /padelo (GSAP + ScrollTrigger): los bloques visuales
+// Parallax de la landing /bandejazo (GSAP + ScrollTrigger): los bloques visuales
 // (paneles, marcador de partido, rejilla, planes, podio) se expanden suavemente
 // (scale 0.9 → 1) ligados a la posición de scroll, y el marcador del hero deriva
 // a distinta velocidad. Se verifica el motion Y que con prefers-reduced-motion
@@ -28,10 +28,10 @@ const beatOpacity = (page: Page, i: number) =>
     .locator(`.mkt-beat[data-beat="${i}"]`)
     .evaluate((el) => parseFloat(getComputedStyle(el).opacity));
 
-test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
+test.describe('parallax /bandejazo (GSAP ScrollTrigger)', () => {
   test('un bloque visual lejano arranca encogido y se expande a 1 al llegar con el scroll', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
 
     const sel = '.mkt-plan[data-parallax="expand"]';
     // ScrollTrigger inicializado: el bloque (aún fuera del viewport) está encogido.
@@ -45,7 +45,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('los bloques pegados al final de la página (podio) también completan la expansión (clamp)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     // Con el pin de la pista, el clamp del podio llega a ~0.97 en el fondo
     // exacto (indistinguible de 1): el listón es que la expansión SE COMPLETA.
@@ -55,7 +55,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('el marcador del hero deriva (parallax vertical) al hacer scroll', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
 
     const drift = page.locator('[data-parallax="drift"]').first();
     await expect(drift).toBeVisible();
@@ -72,7 +72,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('con prefers-reduced-motion no se aplica ningún transform y el contenido sigue visible', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
 
     const sel = '.mkt-plan[data-parallax="expand"]';
     await page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
@@ -86,7 +86,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('pelota 3D: el wrapper se monta y su progreso avanza con el scroll', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     const ball = page.locator('[data-ball3d]');
     await expect(ball).toHaveCount(1); // espera al dynamic import
     // El runner puede no tener WebGL; el wrapper lo declara y el canvas solo existe si hay contexto.
@@ -101,7 +101,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('con prefers-reduced-motion la pelota 3D no se monta (ni el pin de la pista)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await page.waitForLoadState('networkidle'); // deja cargar el chunk dinámico
     await expect(page.locator('[data-ball3d]')).toHaveCount(0);
     await expect(page.locator('.pin-spacer')).toHaveCount(0);
@@ -109,7 +109,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('cold-open: el saque inicial termina y lo marca (data-intro=done)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     const ball = page.locator('[data-ball3d]');
     await expect(ball).toHaveCount(1);
     await expect(ball).toHaveAttribute('data-intro', 'pending'); // el saque arranca en vuelo
@@ -118,7 +118,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('la pista: la sección se pinea y los golpes se revelan impacto a impacto', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await expect(page.locator('[data-ball3d]')).toHaveCount(1); // el pin lo crea scroll-fx; el chunk 3D lee el bus
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
     const pista = page.locator('[data-pista]');
@@ -140,7 +140,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
   test('la pista funciona también en móvil (390×844): pin, golpes que caben y se revelan', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await expect(page.locator('[data-ball3d]')).toHaveCount(1);
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
     await expect(page.locator('[data-pista]')).toHaveClass(/mkt-pista--live/);
@@ -159,7 +159,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('peloteo: golpear la pelota muestra el contador y encadena toques', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     const ball = page.locator('[data-ball3d]');
     await expect(ball).toHaveCount(1);
     test.skip((await ball.getAttribute('data-webgl')) !== '1', 'el runner no tiene WebGL');
@@ -176,7 +176,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('efectos por sección: los Elo del hero cuentan y terminan en su valor exacto', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     const elo = page.locator('[data-fx="board-live"] .mkt-elo').first();
     // El count-up arranca tras el saque: el valor BAJA (arranca en ~88%)…
     await expect.poll(() => elo.textContent(), { timeout: 8_000 }).not.toBe('1584');
@@ -186,7 +186,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('efectos por sección: el contador de La Timba respeta el formato es-ES (1.240)', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
     const { top, range } = await pistaRange(page);
     await page.evaluate(({ y }) => window.scrollTo(0, y), { y: top + range * 0.31 }); // golpe 1: La Timba
@@ -197,7 +197,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('efectos por sección: nada queda oculto al terminar las coreografías', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
     const { top, range } = await pistaRange(page);
     // sets del partido (golpe 2) y celdas de la semana (golpe 3): visibles tras su coreografía
@@ -222,7 +222,7 @@ test.describe('parallax /padelo (GSAP ScrollTrigger)', () => {
 
   test('el motion no rompe la landing: CTAs y secciones siguen operativos tras scrollear', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/padelo');
+    await page.goto('/bandejazo');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const cta = page.locator('.mkt-close').getByRole('link', { name: /crea tu grupo gratis/i });
     await expect(cta).toBeVisible();

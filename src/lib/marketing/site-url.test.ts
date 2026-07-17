@@ -17,8 +17,8 @@ describe('siteUrl', () => {
   });
 
   it('NEXT_PUBLIC_SITE_URL explícita gana a Vercel (dominio propio)', () => {
-    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://padelo.example');
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://bandejazo.example');
     vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', 'lomeros-padel-tour.vercel.app');
-    expect(siteUrl().toString()).toBe('https://padelo.example/');
+    expect(siteUrl().toString()).toBe('https://bandejazo.example/');
   });
 });

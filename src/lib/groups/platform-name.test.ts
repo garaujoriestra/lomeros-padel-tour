@@ -11,7 +11,7 @@ const repoFile = (rel: string) =>
 // (mayúscula). La raíz insignia — src/app/(public)/** y constants.ts — queda fuera:
 // ahí «Lomeros» es correcto.
 // NOTA: src/app/manifest.ts NO está aquí a propósito — desde Fase 4 · Pieza 2 el
-// manifest es la identidad del grupo (raíz = Lomeros insignia), no «Padelo».
+// manifest es la identidad del grupo (raíz = Lomeros insignia), no «Bandejazo».
 const PLATFORM_FILES = [
   'src/app/login/page.tsx',
   'src/app/layout.tsx',
@@ -21,18 +21,19 @@ const PLATFORM_FILES = [
 ];
 
 describe('marca de plataforma neutralizada', () => {
-  it('PLATFORM_NAME es «Padelo»', () => {
-    expect(PLATFORM_NAME).toBe('Padelo');
+  it('PLATFORM_NAME es «Bandejazo»', () => {
+    expect(PLATFORM_NAME).toBe('Bandejazo');
   });
 
-  it.each(PLATFORM_FILES)('%s no contiene el literal «Lomeros»', (file) => {
+  it.each(PLATFORM_FILES)('%s no contiene literales «Lomeros» ni «Padelo»', (file) => {
     // Case-sensitive: los comentarios con «/g/lomeros» (minúscula) son legítimos.
-    expect(repoFile(file)).not.toMatch(/Lomeros/);
+    // «Padelo» (marca de trabajo previa, renombrada a Bandejazo) tampoco debe volver.
+    expect(repoFile(file)).not.toMatch(/Lomeros|Padelo/);
   });
 });
 
 // Directorios de PLATAFORMA creados en la landing: NINGÚN .tsx debe mencionar «Lomeros».
-const PLATFORM_DIRS = ['src/app/padelo', 'src/app/legal', 'src/components/marketing'];
+const PLATFORM_DIRS = ['src/app/bandejazo', 'src/app/legal', 'src/components/marketing'];
 
 function walkTsx(relDir: string): string[] {
   const abs = fileURLToPath(new URL(`../../../${relDir}`, import.meta.url));
@@ -46,10 +47,10 @@ function walkTsx(relDir: string): string[] {
   return out;
 }
 
-describe('superficies de la landing sin literal «Lomeros»', () => {
+describe('superficies de la landing sin literales «Lomeros» ni «Padelo»', () => {
   const files = PLATFORM_DIRS.flatMap(walkTsx);
   it('hay ficheros que comprobar', () => expect(files.length).toBeGreaterThan(0));
-  it.each(files)('%s no contiene el literal «Lomeros»', (file) => {
-    expect(repoFile(file)).not.toMatch(/Lomeros/);
+  it.each(files)('%s no contiene literales «Lomeros» ni «Padelo»', (file) => {
+    expect(repoFile(file)).not.toMatch(/Lomeros|Padelo/);
   });
 });

@@ -21,7 +21,7 @@ describe('hasSeasonPass (⭐: pase REAL, ignora el flag)', () => {
   });
 });
 
-describe('showsAttribution («hecho con Padelo»: pase real, ignora el flag)', () => {
+describe('showsAttribution («hecho con Bandejazo»: pase real, ignora el flag)', () => {
   it('sin pase o caducado → atribución visible', () => {
     expect(showsAttribution(never, NOW)).toBe(true);
     expect(showsAttribution(expired, NOW)).toBe(true);

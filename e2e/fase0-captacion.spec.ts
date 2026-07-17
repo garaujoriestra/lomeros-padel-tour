@@ -40,13 +40,13 @@ test.describe('captación · SEO técnico', () => {
     const res = await request.get('/sitemap.xml');
     expect(res.status()).toBe(200);
     const body = await res.text();
-    expect(body).toContain(`${BASE_URL}/padelo`);
+    expect(body).toContain(`${BASE_URL}/bandejazo`);
     expect(body).toContain(`${BASE_URL}/legal/privacidad`);
     expect(body).toContain(`${BASE_URL}/legal/terminos`);
   });
 
-  test('/padelo lleva tarjeta OG: og:image absoluta que sirve un png', async ({ page, request }) => {
-    await page.goto('/padelo');
+  test('/bandejazo lleva tarjeta OG: og:image absoluta que sirve un png', async ({ page, request }) => {
+    await page.goto('/bandejazo');
     const content = await page
       .locator('meta[property="og:image"]')
       .first()
@@ -60,19 +60,26 @@ test.describe('captación · SEO técnico', () => {
     expect(img.status()).toBe(200);
     expect(img.headers()['content-type']).toContain('image/png');
   });
+
+  test('la URL antigua /padelo redirige 308 a /bandejazo (renombrado de marca)', async ({ request }) => {
+    const res = await request.get('/padelo', { maxRedirects: 0 });
+    expect(res.status()).toBe(308);
+    // Location puede venir relativa o absoluta según despliegue; basta el path.
+    expect(res.headers()['location']).toContain('/bandejazo');
+  });
 });
 
 test.describe('captación · atribución enlazada', () => {
-  test('en un grupo sin pase «hecho con Padelo» es un enlace a la landing', async ({ page }) => {
+  test('en un grupo sin pase «hecho con Bandejazo» es un enlace a la landing', async ({ page }) => {
     await page.goto('/g/grupo-free');
-    const link = page.getByRole('link', { name: 'hecho con Padelo' });
+    const link = page.getByRole('link', { name: 'hecho con Bandejazo' });
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/padelo');
+    await expect(link).toHaveAttribute('href', '/bandejazo');
   });
 
   test('en un grupo con pase no hay atribución', async ({ page }) => {
     await page.goto('/g/grupo-test');
-    await expect(page.getByText('hecho con Padelo')).toHaveCount(0);
+    await expect(page.getByText('hecho con Bandejazo')).toHaveCount(0);
   });
 });
 
