@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Crest from '@/components/shared/crest';
-import { PLATFORM_NAME } from '@/lib/groups/constants';
+import { defaultGroupSlug, PLATFORM_NAME } from '@/lib/groups/constants';
 
 export function SiteFooter() {
   return (
@@ -16,7 +16,7 @@ export function SiteFooter() {
         <nav className="mkt-footer__nav" aria-label="Enlaces legales">
           <Link href="/legal/privacidad">Privacidad</Link>
           <Link href="/legal/terminos">Términos</Link>
-          <Link href="/">Ver un tour en marcha</Link>
+          <Link href={`/g/${defaultGroupSlug()}`}>Ver un tour en marcha</Link>
         </nav>
       </div>
     </footer>

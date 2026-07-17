@@ -3,11 +3,8 @@ import type { NextRequest } from 'next/server';
 import { verifySession } from '@/lib/auth/jwt';
 import { decideAccess } from '@/lib/auth/authorize';
 import { getGroupBySlug } from '@/lib/groups/resolve-slug';
+import { defaultGroupSlug } from '@/lib/groups/constants';
 import { isMarketingHost } from '@/lib/marketing/host';
-
-// Slug del grupo canónico en la raíz (env configurable, por defecto 'lomeros').
-// /g/<defaultSlug> → 308 a '/' para que la raíz sea el único canónico.
-const DEFAULT_GROUP_SLUG = (process.env.DEFAULT_GROUP_SLUG ?? 'lomeros').trim();
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,7 +30,14 @@ export async function proxy(request: NextRequest) {
       return new Response(null, { status: 404 });
     }
     // TODO(Paso C): unificar con getDefaultGroupId() cuando el proxy tenga contexto de grupo (hoy compara por slug de env; la página compara por id de DB).
-    if (group.slug === DEFAULT_GROUP_SLUG) {
+    if (group.slug === defaultGroupSlug()) {
+      // En el host de marketing la raíz es la landing, así que el tour insignia
+      // no puede canonicalizar a '/': se sirve aquí mismo (rewrite al contenido
+      // de la raíz, la URL se queda en /g/<slug>). Es el destino del CTA
+      // «Ver un tour en marcha». En el resto de hosts, canónico único en '/'.
+      if (isMarketingHost(request.headers.get('host'))) {
+        return NextResponse.rewrite(new URL('/', request.url));
+      }
       return NextResponse.redirect(new URL('/', request.url), 308);
     }
     return NextResponse.next();
