@@ -96,7 +96,9 @@ test.describe('landing /bandejazo', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const crear = page.getByRole('link', { name: /crea tu grupo/i }).first();
     await expect(crear).toHaveAttribute('href', '/crear-grupo');
-    await expect(page.getByRole('link', { name: /ver un tour en marcha/i }).first()).toHaveAttribute('href', '/');
+    // A /g/lomeros y no a '/': en el host de marketing la raíz es la propia
+    // landing (el proxy sirve allí el insignia y aquí canonicaliza a '/').
+    await expect(page.getByRole('link', { name: /ver un tour en marcha/i }).first()).toHaveAttribute('href', '/g/lomeros');
   });
 
   test('la landing de plataforma NO contiene el literal «Lomeros»', async ({ page }) => {

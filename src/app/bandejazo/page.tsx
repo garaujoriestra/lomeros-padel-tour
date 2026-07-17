@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PLATFORM_NAME } from '@/lib/groups/constants';
+import { defaultGroupSlug, PLATFORM_NAME } from '@/lib/groups/constants';
 import { MarketingSection } from '@/components/marketing/marketing-section';
 import { MarketingScrollFx } from '@/components/marketing/scroll-fx';
 import { Ball3DLazy } from '@/components/marketing/ball3d-lazy';
@@ -52,7 +52,9 @@ function Cta({ center = false }: { center?: boolean }) {
   return (
     <div className={`mkt-cta${center ? ' mkt-cta--center' : ''}`}>
       <Link className="lpt-btn primary" href="/crear-grupo">Crea tu grupo gratis</Link>
-      <Link className="lpt-btn" href="/">Ver un tour en marcha</Link>
+      {/* Prueba social: el tour insignia. A '/g/<slug>' y no a '/' porque en el
+          host de marketing la raíz es esta misma landing (el proxy resuelve). */}
+      <Link className="lpt-btn" href={`/g/${defaultGroupSlug()}`}>Ver un tour en marcha</Link>
     </div>
   );
 }

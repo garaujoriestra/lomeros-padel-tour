@@ -93,4 +93,13 @@ test.describe('captación · dominio de marketing (MARKETING_HOST)', () => {
     expect(normal.status).toBe(200);
     expect(normal.body).not.toContain('Tu peña merece una liga');
   });
+
+  test('en el host de marketing /g/lomeros SIRVE el tour insignia (destino del CTA «Ver un tour en marcha»)', async () => {
+    // En el host normal /g/lomeros canonicaliza con 308 a '/' (slug-routing.spec);
+    // en el de marketing la raíz es la landing, así que aquí se sirve el tour.
+    const res = await getWithHost('/g/lomeros', TEST_MARKETING_HOST);
+    expect(res.status).toBe(200);
+    expect(res.body).toContain('Lomeros Padel Tour');
+    expect(res.body).not.toContain('Tu peña merece una liga');
+  });
 });
