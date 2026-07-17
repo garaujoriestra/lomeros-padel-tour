@@ -19,7 +19,9 @@ async function pistaRange(page: Page) {
   return page.evaluate(() => {
     const spacer = document.querySelector('.pin-spacer')!;
     const r = spacer.getBoundingClientRect();
-    return { top: r.top + window.scrollY, range: window.innerHeight * 4 * 1.1 };
+    // Distancia real de scroll del pin = alto del spacer − alto de la sección
+    // pineada (100svh). Derivarlo de la geometría evita hardcodear el `end`.
+    return { top: r.top + window.scrollY, range: r.height - window.innerHeight };
   });
 }
 
@@ -123,6 +125,9 @@ test.describe('parallax /bandejazo (GSAP ScrollTrigger)', () => {
     await expect(page.locator('.pin-spacer')).toHaveCount(1);
     const pista = page.locator('[data-pista]');
     await expect(pista).toHaveClass(/mkt-pista--live/);
+    // Indicador tipo slides: 4 puntos, visibles solo en el modo pineado.
+    await expect(pista.locator('.mkt-pista__dots span')).toHaveCount(4);
+    await expect(pista.locator('.mkt-pista__dots')).toBeVisible();
 
     const { top, range } = await pistaRange(page);
     // Mitad del golpe 0 (tarjeta ya asentada): visible; la del golpe 2 aún no.

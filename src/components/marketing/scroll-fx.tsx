@@ -150,6 +150,18 @@ function beatFx(beat: HTMLElement) {
  *  su progreso del bus. El impacto contra el cristal (t = i/beats + 0.08)
  *  coincide con la entrada de cada golpe. En móvil el CSS compacta los golpes
  *  para que quepan en la pantalla anclada. */
+/* Ventanas de cada golpe dentro de su tramo del pin (unidad = 1 golpe).
+   La tarjeta entra CON el impacto (HIT_K de la pelota = 0.08) y no se va hasta
+   el 0.94: meseta legible del 68% del tramo. La saliente y la entrante se
+   cruzan en fundido — nunca hay pantalla sin texto (antes había ~0.5 de tramo
+   en blanco entre golpe y golpe, la queja real de scroll «vacío»). */
+const BEAT_IN_AT = 0.08;
+const BEAT_IN_DUR = 0.18;
+const BEAT_OUT_AT = 0.94;
+const BEAT_OUT_DUR = 0.18;
+// Centro de la meseta: el punto de reposo del snap tipo «slide».
+const BEAT_REST = 0.6;
+
 function pistaSetup() {
   const pista = document.querySelector<HTMLElement>('[data-pista]');
   if (!pista) return;
@@ -157,16 +169,31 @@ function pistaSetup() {
   const B = beats.length;
   LANDING_BUS.pista.beats = B;
   pista.classList.add('mkt-pista--live');
+  pista.setAttribute('data-pista-beat', '0');
 
   const fired = new Set<number>();
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: pista,
       start: 'top top',
-      end: `+=${B * 110}%`,
+      end: `+=${B * 88}%`,
       pin: true,
       scrub: 0.4,
       anticipatePin: 1,
+      // «Slides»: al dejar de scrollear, el pin se asienta en el golpe completo
+      // más cercano (como pasar diapositivas). 0 y 1 son puntos de reposo para
+      // entrar y salir del pin sin tirones hacia atrás.
+      snap: {
+        snapTo: [0, ...beats.map((_, i) => (i + BEAT_REST) / B), 1],
+        // Al golpe más CERCANO, sin proyectar la velocidad (inertia) ni forzar
+        // la dirección: es el asentamiento de un pase de diapositivas, no un
+        // lanzamiento — y con scrolls programáticos (tests) no se pasa de largo.
+        duration: { min: 0.2, max: 0.5 },
+        delay: 0.06,
+        ease: 'power1.inOut',
+        inertia: false,
+        directional: false,
+      },
       onUpdate(self) {
         LANDING_BUS.pista.t = self.progress;
         pista.setAttribute('data-pista-beat', String(Math.min(B - 1, Math.floor(self.progress * B))));
@@ -185,7 +212,7 @@ function pistaSetup() {
         opacity: 1,
         x: 0,
         scale: 1,
-        duration: 0.3,
+        duration: BEAT_IN_DUR,
         ease: 'power2.out',
         onStart: () => {
           if (!fired.has(i)) {
@@ -194,9 +221,11 @@ function pistaSetup() {
           }
         },
       },
-      i + 0.1,
+      i + BEAT_IN_AT,
     );
-    if (i < B - 1) tl.to(b, { opacity: 0, x: -side * 40, duration: 0.22, ease: 'power2.in' }, i + 0.86);
+    // La salida invade el tramo siguiente (i+0.94 → i+1.12) y se cruza con la
+    // entrada del golpe i+1 (i+1.08): fundido cruzado, sin hueco en blanco.
+    if (i < B - 1) tl.to(b, { opacity: 0, x: -side * 40, duration: BEAT_OUT_DUR, ease: 'power2.in' }, i + BEAT_OUT_AT);
   });
   // relleno hasta B: el último golpe se queda en pantalla el resto del pin
   tl.to({}, { duration: 0.04 }, B - 0.04);

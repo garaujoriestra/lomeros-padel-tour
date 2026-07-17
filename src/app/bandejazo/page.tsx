@@ -128,6 +128,12 @@ export default function BandejazoLanding() {
           cristal; cada impacto revela un golpe (.mkt-beat). Sin JS o con
           reduced-motion no hay pin: los golpes son secciones apiladas. */}
       <section className="mkt-pista" data-pista>
+        {/* Indicador de golpe (solo en el modo pineado, vía CSS): sitúa al
+            usuario — «vas por la 2 de 4» — para que el pin nunca parezca
+            una página en blanco sin final. */}
+        <div className="mkt-pista__dots" aria-hidden>
+          <span /><span /><span /><span />
+        </div>
         <div className="mkt-beat" data-beat="0">
           <div className="lpt-container">
             <div className="mkt-head">
