@@ -946,8 +946,28 @@
 /* Modo pineado (lo añade GSAP solo con motion y ≥900px): los golpes se apilan
    en el viewport y el timeline scrubbed los conmuta; el estado por defecto
    (sin JS / reduced-motion / móvil) son secciones apiladas normales. */
-.mkt-pista--live { height: 100svh; display: grid; align-content: center; overflow: clip; }
+.mkt-pista--live { position: relative; height: 100svh; display: grid; align-content: center; overflow: clip; }
 .mkt-pista--live .mkt-beat { grid-area: 1 / 1; padding-block: 0; opacity: 0; }
+
+/* Indicador de golpe del pin (solo modo live): puntos tipo pase de slides.
+   El activo lo marca data-pista-beat, que ya mantiene scroll-fx. */
+.mkt-pista__dots { display: none; }
+.mkt-pista--live .mkt-pista__dots {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  display: flex; gap: 8px; z-index: 2;
+}
+.mkt-pista__dots span {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: var(--ink-3); opacity: 0.4;
+  transition: opacity 0.25s ease-out, background-color 0.25s ease-out, transform 0.25s ease-out;
+}
+.mkt-pista--live[data-pista-beat="0"] .mkt-pista__dots span:nth-child(1),
+.mkt-pista--live[data-pista-beat="1"] .mkt-pista__dots span:nth-child(2),
+.mkt-pista--live[data-pista-beat="2"] .mkt-pista__dots span:nth-child(3),
+.mkt-pista--live[data-pista-beat="3"] .mkt-pista__dots span:nth-child(4) {
+  background: var(--acc); opacity: 1; transform: scale(1.3);
+}
 
 /* Compacto móvil del modo pineado: cada golpe cabe en la pantalla anclada
    (se compacta tipografía y relleno SOLO en modo live; apilado no cambia). */
