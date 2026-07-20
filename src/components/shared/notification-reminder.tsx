@@ -99,7 +99,7 @@ export function NotificationReminder() {
         background: 'color-mix(in oklab, var(--bg) 55%, transparent)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
-        animation: 'fadeIn 0.18s ease',
+        animation: 'fadeIn var(--dur-2) var(--ease-out)',
       }}
     >
       <div
@@ -110,7 +110,7 @@ export function NotificationReminder() {
           maxWidth: 380,
           textAlign: 'center',
           // El panel entra con scale+fade (no solo el backdrop): nada aparece de golpe.
-          animation: 'popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+          animation: 'popIn var(--dur-3) var(--ease-out)',
         }}
       >
         <div style={{ fontSize: 40, lineHeight: 1 }} aria-hidden="true">

@@ -367,12 +367,12 @@ export function AvailabilityGrid({
             padding: 20,
             background: 'color-mix(in oklab, var(--bg) 55%, transparent)',
             backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
-            animation: 'fadeIn 0.18s ease',
+            animation: 'fadeIn var(--dur-2) var(--ease-out)',
           }}
         >
           <div
             className="lpt-card card-pad"
-            style={{ width: '100%', maxWidth: 340, animation: 'popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1)' }}
+            style={{ width: '100%', maxWidth: 340, animation: 'popIn var(--dur-3) var(--ease-out)' }}
           >
             <p style={{ margin: 0, fontWeight: 800 }}>Tienes disponibilidad sin guardar</p>
             <p className="small muted" style={{ margin: '6px 0 14px' }}>

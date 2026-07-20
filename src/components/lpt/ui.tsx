@@ -130,7 +130,7 @@ export function FormDots({ form, size = 26 }: { form: ('W' | 'L')[]; size?: numb
         <div
           key={i}
           className={`form-dot ${r === 'W' ? 'w' : 'l'}`}
-          style={{ width: size, height: size, animation: `fadeUp 0.4s ${i * 0.05}s both` }}
+          style={{ width: size, height: size, animation: `fadeUp var(--dur-4) var(--ease-out) ${i * 0.05}s both` }}
         >
           {r === 'W' ? 'V' : 'D'}
         </div>
