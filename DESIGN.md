@@ -57,6 +57,18 @@ spacing:
   md: "14px"
   lg: "20px"
   section: "34px"
+motion:
+  duration:
+    dur-1: "100ms"
+    dur-2: "150ms"
+    dur-3: "260ms"
+    dur-4: "420ms"
+    dur-5: "700ms"
+  easing:
+    ease-out: "cubic-bezier(0.22, 1, 0.36, 1)"
+    ease-in-out: "cubic-bezier(0.65, 0, 0.35, 1)"
+    ease-in: "cubic-bezier(0.4, 0, 1, 1)"
+    ease-linear: "linear"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
@@ -150,7 +162,37 @@ Híbrido suave: bordes de 1px (`--line`) definen las superficies; la sombra es a
 ### Named Rules
 **The Borde-Primero Rule.** La profundidad la da el borde de 1px; la sombra acompaña. Nunca sombra dura sin borde.
 
-## 5. Components
+## 5. Motion
+
+Escala **corta y cerrada**: toda duración y toda curva salen de estos tokens (`globals.css :root`). Un literal suelto en una `transition` o una `animation` es deuda, no una decisión.
+
+**Character:** el motion de LPT *aterriza*, no rebota. Todo entra rápido y se posa (`--ease-out`); nada hace overshoot salvo la ficha de La Timba y la celebración del acierto, que son los dos momentos con licencia teatral.
+
+### Duration Scale
+- **`--dur-1` (100ms)** — feedback inmediato: `:active`, `.press`, el hundido táctil.
+- **`--dur-2` (150ms)** — estado de UI: color, fondo, borde, sombra; el deslizante del `Seg`. **El paso más usado de la app**; anclado en los 150ms que ya dominaban, para que tokenizar no cambiara la sensación de nada.
+- **`--dur-3` (260ms)** — entrada de elemento: popovers, chips, celdas, entrada de pantalla.
+- **`--dur-4` (420ms)** — movimiento de layout y cambio de página (view transitions, tema claro/oscuro).
+- **`--dur-5` (700ms)** — momento con relato: podio, celebración de La Timba, flip de sets.
+
+### Easing Scale
+- **`--ease-out`** `cubic-bezier(0.22, 1, 0.36, 1)` — entra y se posa. La curva por defecto: si dudas, esta.
+- **`--ease-in-out`** `cubic-bezier(0.65, 0, 0.35, 1)` — movimiento de A a B y bucles ambientales.
+- **`--ease-in`** `cubic-bezier(0.4, 0, 1, 1)` — salidas (algo que se va de pantalla).
+- **`--ease-linear`** `linear` — barridos y todo lo ligado a scroll (`scrub`).
+
+### GSAP pairing (landing)
+La landing empareja **por nombre**, no por réplica exacta del cubic-bezier (`src/components/marketing/motion.ts`): `--ease-out`↔`expo.out`, `--ease-in-out`↔`power2.inOut`, `--ease-in`↔`power2.in`, `--ease-linear`↔`none`. Los defaults de GSAP se fijan en `--ease-out` + `--dur-4`. Clavar las curvas exigiría `CustomEase` (~3 KB gzip) para una diferencia imperceptible.
+
+### Fuera de escala (a propósito)
+Los **ritmos ambientales** no son respuesta de UI y por eso no se tokenizan sus duraciones — solo sus curvas: `deltaPulse` 2.4s, `mkt-ping` 2.1s, splash 1.6s, `barGrow` 0.9s, trazo del chart 1.1s. Meterlos en la escala la alargaría sin ganar coherencia. Las **escaleras de delay** (stagger 0.02→0.37s, `pop-in`, podio) tampoco: son cadencia, no duración.
+
+### Named Rules
+**The Aterriza Rule.** Todo entra con `--ease-out` y se posa. El overshoot se reserva a los dos momentos teatrales (ficha de La Timba, acierto de La Timba); en cualquier otro sitio es ruido.
+**The Token-o-Nada Rule.** Ninguna `transition` ni `animation` lleva un número o una curva a pelo. Si un valor nuevo no cabe en la escala, se discute la escala — no se cuela el literal.
+**The Reduced-Motion Rule.** El kill global (`@media (prefers-reduced-motion: reduce)`) es la red, no la solución: lo que tenga coreografía propia (la landing, el splash, el podio) la apaga explícitamente.
+
+## 6. Components
 
 ### Buttons
 - **Shape:** píldora (`--r-pill: 999px`), min-height 44px.
@@ -180,7 +222,7 @@ Híbrido suave: bordes de 1px (`--line`) definen las superficies; la sombra es a
 ### La Timba chip (signature)
 La pestaña central del bottom nav es una **ficha de casino elevada**: círculo lima de 46px que sobresale de la barra, borde del color de la barra, sombra lima; al pulsarla escala a 0.92 y activa gana un anillo lima. Es el único elemento con licencia para ser teatral en el chrome.
 
-## 6. Do's and Don'ts
+## 7. Do's and Don'ts
 
 ### Do:
 - **Do** usar `--on-acc` sobre lima y `--acc-text` como texto acento (The Tinta-sobre-Lima Rule).

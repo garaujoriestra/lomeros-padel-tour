@@ -6,6 +6,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { LANDING_BUS as BUS, resetLandingBus } from './landing-bus';
+import { applyMotionDefaults } from './motion';
 
 /**
  * Pelota de pádel 3D + LA PISTA DE CRISTAL (Three.js vía react-three-fiber).
@@ -628,6 +629,7 @@ export default function PadelBall3D() {
     const b = BUS;
     b.chipEl = chip.current;
     gsap.registerPlugin(ScrollTrigger);
+    applyMotionDefaults();
 
     // Progreso global de la página (mueve el recorrido y el giro). El pin de
     // la pista lo crea scroll-fx; aquí solo se lee su estado del bus.

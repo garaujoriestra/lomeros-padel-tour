@@ -99,7 +99,7 @@ export function EloChart({
           strokeLinejoin="round"
           strokeDasharray={pathLen}
           strokeDashoffset={pathLen}
-          style={{ animation: 'chartDraw 1.1s cubic-bezier(0.4,0,0.2,1) forwards' }}
+          style={{ animation: 'chartDraw 1.1s var(--ease-out) forwards' }}
         />
         {milestones.map(
           (m, k) =>

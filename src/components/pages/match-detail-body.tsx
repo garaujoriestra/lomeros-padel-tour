@@ -264,7 +264,7 @@ export async function MatchDetailBody({ ctx, matchId: id }: { ctx: PageContext; 
               <span className="num">{100 - prediction}%</span>
             </div>
             <div style={{ display: 'flex', height: 8, borderRadius: 99, overflow: 'hidden', gap: 2 }}>
-              <div style={{ width: `${prediction}%`, background: 'var(--acc)', borderRadius: '99px 0 0 99px', animation: 'barGrow 0.9s both' }} />
+              <div style={{ width: `${prediction}%`, background: 'var(--acc)', borderRadius: '99px 0 0 99px', animation: 'barGrow 0.9s var(--ease-out) both' }} />
               <div style={{ flex: 1, background: 'color-mix(in oklab, currentcolor 25%, transparent)', borderRadius: '0 99px 99px 0' }} />
             </div>
           </div>

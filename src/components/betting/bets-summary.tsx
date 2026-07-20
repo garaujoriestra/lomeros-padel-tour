@@ -47,7 +47,7 @@ export async function BetsSummary({ matchId, myPlayerId }: { matchId: string; my
           <div
             data-testid="timba-celebration"
             className="lpt-card card-pad podium-gold"
-            style={{ textAlign: 'center', animation: 'celebrateIn 0.6s cubic-bezier(0.22, 1, 0.36, 1)' }}
+            style={{ textAlign: 'center', animation: 'celebrateIn var(--dur-5) var(--ease-out)' }}
           >
             <p style={{ fontSize: 30, lineHeight: 1, margin: 0 }}>🎉</p>
             <p className="display" style={{ fontSize: 26, margin: '6px 0 0' }}>¡Acertaste!</p>

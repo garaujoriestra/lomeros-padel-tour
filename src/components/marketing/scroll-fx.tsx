@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { LANDING_BUS } from './landing-bus';
+import { applyMotionDefaults } from './motion';
 
 /**
  * Motion de la landing (GSAP + ScrollTrigger), declarado por atributo:
@@ -327,6 +328,7 @@ export function MarketingScrollFx() {
     if (!root) return;
 
     gsap.registerPlugin(ScrollTrigger);
+    applyMotionDefaults();
     const mm = gsap.matchMedia();
 
     // Los ScrollTrigger se crean EN ORDEN DE PÁGINA (hero → pista → resto): es

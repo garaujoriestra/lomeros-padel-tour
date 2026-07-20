@@ -82,6 +82,23 @@
   --r-card: 14px;
   --r-pill: 999px;
 
+  /* ── Motion ── escala corta y cerrada: toda duración y toda curva de la app
+     salen de aquí (ver DESIGN.md §5). Los literales sueltos son deuda.
+     `--dur-2` está anclado en los 150ms que ya dominaban la app: el paso más
+     usado no cambia de sensación al tokenizarse. */
+  --dur-1: 100ms;  /* feedback inmediato: :active, press */
+  --dur-2: 150ms;  /* estado de UI: color, fondo, sombra, el deslizante del Seg */
+  --dur-3: 260ms;  /* entrada de elemento: popovers, chips, celdas */
+  --dur-4: 420ms;  /* movimiento de layout y cambios de página */
+  --dur-5: 700ms;  /* momento con relato: podio, celebración */
+
+  /* Emparejadas con GSAP por NOMBRE (sin CustomEase): la landing usa la curva
+     nombrada equivalente, no una réplica exacta del cubic-bezier. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* ≈ expo.out — entra y se posa */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* ≈ power2.inOut — de A a B */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);           /* ≈ power2.in — sale */
+  --ease-linear: linear;                            /* ≈ none — barridos y scrub */
+
   /* tema claro */
   --bg: oklch(0.962 0.008 160);
   --surface: oklch(0.99 0.004 140);
@@ -162,7 +179,7 @@
     font-size: 15.5px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    transition: background 0.35s ease, color 0.35s ease;
+    transition: background var(--dur-4) var(--ease-out), color var(--dur-4) var(--ease-out);
   }
   input,
   select,
@@ -177,7 +194,7 @@
 
 /* ════════════════ LAYOUT ════════════════ */
 .lpt-container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 calc(20px * var(--sp)); }
-.screen { flex: 1; padding: calc(22px * var(--sp)) 0 calc(110px * var(--sp)); animation: screenIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+.screen { flex: 1; padding: calc(22px * var(--sp)) 0 calc(110px * var(--sp)); animation: screenIn var(--dur-3) var(--ease-out); }
 @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @media (min-width: 760px) { .screen { padding-bottom: calc(48px * var(--sp)); } }
 
@@ -212,7 +229,7 @@
 @media (min-width: 760px) { .nav-tabs { display: flex; } }
 .nav-tab {
   display: flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: var(--r-pill);
-  font-size: 13.5px; font-weight: 600; color: var(--ink-3); transition: color 0.15s, background 0.15s;
+  font-size: 13.5px; font-weight: 600; color: var(--ink-3); transition: color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out);
 }
 .nav-tab:hover { color: var(--ink); }
 .nav-tab.active { color: var(--acc-text); background: color-mix(in oklab, var(--acc) 13%, transparent); }
@@ -220,7 +237,7 @@
 .icon-btn {
   width: 36px; height: 36px; border-radius: var(--r-pill); display: grid; place-items: center;
   color: var(--ink-3); border: 1px solid var(--line); background: var(--surface);
-  transition: color 0.15s, border-color 0.15s, transform 0.15s;
+  transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
   cursor: pointer;
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--line-strong); transform: translateY(-1px); }
@@ -239,7 +256,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 6px 2px; border-radius: 10px; color: var(--ink-3);
   font-size: 10px; font-weight: 700; letter-spacing: 0.04em; min-height: 48px;
-  transition: color 0.15s, transform 0.18s; position: relative;
+  transition: color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); position: relative;
 }
 .bn-item.active { color: var(--acc-text); }
 .bn-item.active::before {
@@ -256,7 +273,7 @@
   background: var(--acc); color: var(--on-acc);
   border: 3px solid color-mix(in oklab, var(--surface) 92%, transparent);
   box-shadow: 0 5px 16px color-mix(in oklab, var(--acc) 42%, transparent);
-  transition: transform 0.18s, box-shadow 0.18s;
+  transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 .bn-timba:active .bn-chip { transform: translateX(-50%) scale(0.92); }
 .bn-timba.active .bn-chip {
@@ -271,7 +288,7 @@
   border: var(--card-border);
   border-radius: var(--r-card);
   box-shadow: var(--card-shadow);
-  transition: background 0.35s ease, border-color 0.35s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  transition: background var(--dur-4) var(--ease-out), border-color var(--dur-4) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 .lpt-card.clickable { cursor: pointer; }
 .lpt-card.clickable:hover { transform: translateY(-2px); }
@@ -292,7 +309,7 @@
 .delta { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; }
 .delta.up { color: var(--win); }
 .delta.down { color: var(--loss-text); }
-.delta.pulse { animation: deltaPulse 2.4s ease-in-out infinite; }
+.delta.pulse { animation: deltaPulse 2.4s var(--ease-in-out) infinite; }
 @keyframes deltaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
 .lpt-avatar {
@@ -318,7 +335,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 13.5px; font-weight: 700; letter-spacing: 0.02em;
   padding: 10px 18px; border-radius: var(--r-pill); min-height: 44px;
-  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   border: 1px solid var(--line);
   background: var(--surface); color: var(--ink); cursor: pointer;
 }
@@ -327,7 +344,7 @@
 .dark .lpt-btn.primary:hover { box-shadow: var(--glow) color-mix(in oklab, var(--acc) 40%, transparent); }
 
 /* ── Feedback de pulsación reutilizable (botones ad-hoc fuera de .lpt-btn) ── */
-.press { transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease, filter 0.15s ease; }
+.press { transition: transform var(--dur-1) var(--ease-out), background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out), filter var(--dur-2) var(--ease-out); }
 .press:active:not(:disabled) { transform: scale(0.97); }
 
 /* ── Focus visible coherente en los componentes propios ── */
@@ -339,7 +356,7 @@
 
 /* ── Barras de stats ── */
 .stat-bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; position: relative; }
-.bar-fill { height: 100%; border-radius: inherit; background: var(--acc); transform-origin: left; animation: barGrow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.bar-fill { height: 100%; border-radius: inherit; background: var(--acc); transform-origin: left; animation: barGrow 0.9s var(--ease-out) both; }
 .bar-fill.win { background: var(--win); }
 .bar-fill.loss { background: var(--loss); }
 @keyframes barGrow { from { transform: scaleX(0); } }
@@ -387,7 +404,7 @@
   display: flex; align-items: center; gap: 13px;
   padding: calc(12px * var(--sp)) calc(16px * var(--sp));
   border-bottom: 1px solid var(--line); cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--dur-2) var(--ease-out);
   color: inherit;
 }
 .rank-row:last-child { border-bottom: none; }
@@ -427,7 +444,7 @@
    y el oro aterriza el ÚLTIMO — el líder es el dato protagonista del home.
    En oscuro, su glow lima "respira" UNA vez al posarse (momento, no loop). */
 @keyframes podiumIn { from { opacity: 0; transform: translateY(16px) scale(0.96); } }
-.podium-step { animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.podium-step { animation: podiumIn var(--dur-5) var(--ease-out) both; }
 .podium-step.p-silver { animation-delay: 0.04s; }
 .podium-step.p-bronze { animation-delay: 0.1s; }
 .podium-step.p-gold { animation-delay: 0.18s; }
@@ -437,8 +454,8 @@
   100% { box-shadow: var(--card-shadow), 0 0 38px color-mix(in oklab, var(--acc) 15%, transparent); }
 }
 .dark .podium-step.p-gold {
-  animation: podiumIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.18s both,
-             podiumGlow 1.4s ease-out 0.65s 1 both;
+  animation: podiumIn var(--dur-5) var(--ease-out) 0.18s both,
+             podiumGlow 1.4s var(--ease-out) 0.65s 1 both;
 }
 
 /* ── Feed ── */
@@ -451,7 +468,7 @@
 
 /* ── Segmented (filtros) ── */
 .seg { display: inline-flex; gap: 3px; background: var(--surface-2); border-radius: var(--r-pill); padding: 3px; border: 1px solid var(--line); }
-.seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: color 0.15s, background 0.15s, box-shadow 0.15s; cursor: pointer; }
+.seg button { padding: 7px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; color: var(--ink-3); min-height: 38px; transition: color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); cursor: pointer; }
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px oklch(0 0 0 / 0.12); }
 
 /* Variante con indicador deslizante (componente <Seg>): la píldora activa se
@@ -467,7 +484,7 @@
   /* width en la transición a propósito: las pestañas tienen anchos distintos y
      scaleX deformaría el radio de la píldora; al ser absolute, el layout que
      recalcula es solo el suyo (sin thrash de hermanos). */
-  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), width 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform var(--dur-2) var(--ease-out), width var(--dur-2) var(--ease-out);
   pointer-events: none;
 }
 
@@ -481,7 +498,7 @@
 .grid-main { display: grid; gap: calc(28px * var(--sp)); }
 @media (min-width: 980px) { .grid-main { grid-template-columns: 1.6fr 1fr; align-items: start; } }
 
-.stagger > * { animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger > * { animation: fadeUp var(--dur-4) var(--ease-out) both; }
 .stagger > *:nth-child(1) { animation-delay: 0.02s; }
 .stagger > *:nth-child(2) { animation-delay: 0.07s; }
 .stagger > *:nth-child(3) { animation-delay: 0.12s; }
@@ -502,14 +519,14 @@
 @keyframes setFlip { from { opacity: 0; transform: rotateX(-80deg); } }
 .sets-flip .score-row { perspective: 500px; }
 .sets-flip .set-cell {
-  animation: setFlip 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: setFlip var(--dur-5) var(--ease-out) both;
   animation-delay: calc(0.15s + var(--set-i, 0) * 0.11s);
   transform-origin: center bottom;
 }
 
 /* Lectura de jornada (▲/▼): los chips de movimiento de Elo entran con un pop
    sutil escalonado — que se note que acaba de pasar algo. */
-.pop-in > * { animation: popIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.pop-in > * { animation: popIn var(--dur-4) var(--ease-out) both; }
 .pop-in > *:nth-child(1) { animation-delay: 0.05s; }
 .pop-in > *:nth-child(2) { animation-delay: 0.09s; }
 .pop-in > *:nth-child(3) { animation-delay: 0.13s; }
@@ -535,10 +552,10 @@
   background: linear-gradient(160deg, #1d2f2c 0%, #0c1715 60%);
   opacity: 0;
   pointer-events: none;
-  animation: screenLoaderReveal 0.25s ease 0.1s forwards;
+  animation: screenLoaderReveal var(--dur-3) var(--ease-out) 0.1s forwards;
 }
 .screen-loader__crest {
-  animation: lpt-splash-pulse 1.6s ease-in-out infinite;
+  animation: lpt-splash-pulse 1.6s var(--ease-in-out) infinite;
 }
 @keyframes screenLoaderReveal { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lpt-splash-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
@@ -584,7 +601,7 @@
 /* Estados táctiles (sin hover en pantallas táctiles) */
 @media (hover: none) {
   .lpt-card.clickable:hover { transform: none; }
-  .lpt-card.clickable:active { transform: scale(0.98); transition-duration: 0.08s; }
+  .lpt-card.clickable:active { transform: scale(0.98); transition-duration: var(--dur-1); }
   .rank-row:hover, .feed-row:hover { background: transparent; }
   .rank-row:active, .feed-row:active { background: var(--surface-2); }
   .bn-item:active { transform: scale(0.9); }
@@ -612,9 +629,9 @@
    motion-blur del morph, el timing escalonado y el reduced-motion correctos.
    ═══════════════════════════════════════════════════════════════════════ */
 :root {
-  --duration-exit: 150ms;
-  --duration-enter: 210ms;
-  --duration-move: 400ms;
+  --duration-exit: var(--dur-2);   /* 150ms — igual que antes */
+  --duration-enter: var(--dur-3);  /* 260ms (antes 210ms) */
+  --duration-move: var(--dur-4);   /* 420ms (antes 400ms) */
 }
 
 @keyframes vt-fade {
@@ -630,26 +647,26 @@
 ::view-transition-old(.nav-forward) {
   --slide-offset: -60px;
   animation:
-    var(--duration-exit) ease-in both vt-fade reverse,
-    var(--duration-move) ease-in-out both vt-slide reverse;
+    var(--duration-exit) var(--ease-in) both vt-fade reverse,
+    var(--duration-move) var(--ease-in-out) both vt-slide reverse;
 }
 ::view-transition-new(.nav-forward) {
   --slide-offset: 60px;
   animation:
-    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
-    var(--duration-move) ease-in-out both vt-slide;
+    var(--duration-enter) var(--ease-out) var(--duration-exit) both vt-fade,
+    var(--duration-move) var(--ease-in-out) both vt-slide;
 }
 ::view-transition-old(.nav-back) {
   --slide-offset: 60px;
   animation:
-    var(--duration-exit) ease-in both vt-fade reverse,
-    var(--duration-move) ease-in-out both vt-slide reverse;
+    var(--duration-exit) var(--ease-in) both vt-fade reverse,
+    var(--duration-move) var(--ease-in-out) both vt-slide reverse;
 }
 ::view-transition-new(.nav-back) {
   --slide-offset: -60px;
   animation:
-    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
-    var(--duration-move) ease-in-out both vt-slide;
+    var(--duration-enter) var(--ease-out) var(--duration-exit) both vt-fade,
+    var(--duration-move) var(--ease-in-out) both vt-slide;
 }
 
 /* Morph de elemento compartido (avatar de la lista → ficha del jugador) */
@@ -766,7 +783,7 @@
 }
 .mkt-board__label { display: flex; align-items: center; gap: 9px; }
 .mkt-live { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
-.mkt-live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: mkt-ping 2.1s ease-out infinite; }
+.mkt-live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: mkt-ping 2.1s var(--ease-out) infinite; }
 .mkt-tag {
   font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px;
@@ -918,7 +935,7 @@
 .mkt-footer__brand { display: flex; align-items: center; gap: 12px; }
 .mkt-footer__nav { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-block: -10px; }
 /* Target táctil ≥44px sin inflar el layout (padding + margen negativo compensado). */
-.mkt-footer__nav a { display: inline-flex; align-items: center; min-height: 44px; padding-block: 10px; color: var(--ink-2); font-size: 13.5px; transition: color 0.15s ease; }
+.mkt-footer__nav a { display: inline-flex; align-items: center; min-height: 44px; padding-block: 10px; color: var(--ink-2); font-size: 13.5px; transition: color var(--dur-2) var(--ease-out); }
 .mkt-footer__nav a:hover { color: var(--ink); }
 .mkt-footer__nav a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
 
@@ -960,7 +977,7 @@
 .mkt-pista__dots span {
   width: 6px; height: 6px; border-radius: 999px;
   background: var(--ink-3); opacity: 0.4;
-  transition: opacity 0.25s ease-out, background-color 0.25s ease-out, transform 0.25s ease-out;
+  transition: opacity var(--dur-3) var(--ease-out), background-color var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
 }
 .mkt-pista--live[data-pista-beat="0"] .mkt-pista__dots span:nth-child(1),
 .mkt-pista--live[data-pista-beat="1"] .mkt-pista__dots span:nth-child(2),
@@ -1003,7 +1020,7 @@
 }
 
 /* ── Cold-open del hero (entrada única en carga) + latido "en juego" ── */
-.mkt-anim { animation: mkt-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.mkt-anim { animation: mkt-rise var(--dur-5) var(--ease-out) both; }
 @keyframes mkt-rise { from { opacity: 0; transform: translateY(16px); } }
 @keyframes mkt-ping { 0% { transform: scale(1); opacity: 0.55; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
