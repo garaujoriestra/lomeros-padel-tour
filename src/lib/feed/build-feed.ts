@@ -55,6 +55,13 @@ export type FeedEvent =
       match: MatchLike;
     }
   | {
+      type: 'match_draw';
+      matchId: string;
+      timestamp: string;
+      match: MatchLike;
+      sets: MatchSetLike[];
+    }
+  | {
       type: 'rank_change';
       timestamp: string;
       event: RankChangeEvent;
@@ -130,6 +137,16 @@ export function buildFeed(input: BuildFeedInput): FeedEvent[] {
         matchId: m.id,
         timestamp: m.createdAt,
         match: m,
+      });
+    } else if (m.status === 'draw') {
+      // Un empate no escribe en rating_history, así que no hay instante de
+      // cierre del que tirar: se ancla en createdAt, igual que la lesión.
+      events.push({
+        type: 'match_draw',
+        matchId: m.id,
+        timestamp: m.createdAt,
+        match: m,
+        sets: setsByMatch.get(m.id) ?? [],
       });
     }
   }

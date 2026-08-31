@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
-    if (match.status === 'completed') {
+    if (match.status === 'completed' || match.status === 'draw') {
       return NextResponse.json({ error: 'El partido ya está completado' }, { status: 400 });
     }
 

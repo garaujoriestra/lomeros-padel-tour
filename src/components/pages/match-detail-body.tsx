@@ -7,7 +7,7 @@ import { getBetsWithBettorForMatch } from '@/lib/betting/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Calendar, MapPin, Users, Bandage } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Bandage, Equal } from 'lucide-react';
 import { expectedScore, projectDoublesElo, type EloProjection } from '@/lib/rating/elo';
 import { ShareMatchButton } from '@/components/shared/share-match-button';
 import { DirectionalTransition } from '@/components/shared/view-transitions';
@@ -134,6 +134,7 @@ export async function MatchDetailBody({ ctx, matchId: id }: { ctx: PageContext; 
 
   const isUp = match.status === 'scheduled';
   const isInjury = match.status === 'injury_aborted';
+  const isDraw = match.status === 'draw';
   const prediction = isUp && fourPlayers.length === 4
     ? Math.round(expectedScore((t1p1!.eloRating + t1p2!.eloRating) / 2, (t2p1!.eloRating + t2p2!.eloRating) / 2) * 100)
     : null;
@@ -275,6 +276,15 @@ export async function MatchDetailBody({ ctx, matchId: id }: { ctx: PageContext; 
             <Bandage size={16} style={{ color: 'var(--loss)', flexShrink: 0 }} />
             <span className="small" style={{ fontWeight: 600 }}>
               {injured ? <>Lesión de <b>{displayName(injured)}</b> — el partido no cuenta para el ranking.</> : 'No terminado por lesión — el partido no cuenta para el ranking.'}
+            </span>
+          </div>
+        )}
+
+        {isDraw && (
+          <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 10, opacity: 0.85 }}>
+            <Equal size={16} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
+            <span className="small" style={{ fontWeight: 600 }}>
+              <b>Empate a un set</b> — no dio tiempo al tercero, así que el partido no mueve el Elo de nadie.
             </span>
           </div>
         )}

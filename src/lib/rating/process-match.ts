@@ -184,6 +184,86 @@ export async function processMatchRatings(match: MatchInput): Promise<MatchRatin
   };
 }
 
+type DrawMatchInput = {
+  id: string;
+  groupId: string;
+  date: string;
+  team1Player1Id: string;
+  team1Player2Id: string;
+  team2Player1Id: string;
+  team2Player2Id: string;
+};
+
+/**
+ * Procesa un partido que acabó 1-1 a sets (no dio tiempo al tercero).
+ *
+ * Un empate cuenta como partido jugado pero no mueve el ranking: los cuatro
+ * suman `matchesPlayed` y ahí acaba la cosa. En concreto,
+ *
+ * - el Elo individual y el de pareja quedan intactos, igual que `wins`/`losses`;
+ * - no se escribe fila en `rating_history`: no hay delta que guardar, y como las
+ *   rachas y los logros se calculan sobre esa tabla, el empate ni corta ni
+ *   alarga una racha — simplemente no existe para el detector;
+ * - por lo mismo no se detectan logros.
+ *
+ * Los empates de un jugador son derivables sin columna nueva:
+ * `matchesPlayed − wins − losses` (el otro estado sin ganador, la lesión,
+ * tampoco incrementa `matchesPlayed`).
+ */
+export async function processDrawMatch(match: DrawMatchInput): Promise<void> {
+  const playerIds = [
+    match.team1Player1Id,
+    match.team1Player2Id,
+    match.team2Player1Id,
+    match.team2Player2Id,
+  ];
+
+  const playersData = await Promise.all(
+    playerIds.map((id) =>
+      db
+        .select()
+        .from(players)
+        .where(and(eq(players.id, id), eq(players.groupId, match.groupId)))
+        .limit(1)
+        .then((r) => r[0])
+    )
+  );
+
+  if (playersData.some((p) => !p)) throw new Error('Jugador no encontrado');
+
+  for (const player of playersData as NonNullable<typeof playersData[0]>[]) {
+    await db
+      .update(players)
+      .set({ matchesPlayed: player.matchesPlayed + 1 })
+      .where(eq(players.id, player.id));
+  }
+
+  // Las parejas también suman partido jugado (sin victoria ni derrota). La
+  // sinergia se recalcula con el nuevo denominador, igual que se diluye el
+  // win-rate del jugador.
+  const pairs: [string, string][] = [
+    [match.team1Player1Id, match.team1Player2Id],
+    [match.team2Player1Id, match.team2Player2Id],
+  ];
+
+  for (const pair of pairs) {
+    const pairRow = await getOrCreatePairStats(pair[0], pair[1]);
+    const newMatches = pairRow.matchesPlayed + 1;
+
+    const [p1id, p2id] = [pair[0], pair[1]].sort();
+    const p1data = playersData.find((p) => p?.id === p1id)!;
+    const p2data = playersData.find((p) => p?.id === p2id)!;
+    const p1WinRate = p1data.matchesPlayed > 0 ? p1data.wins / p1data.matchesPlayed : 0.5;
+    const p2WinRate = p2data.matchesPlayed > 0 ? p2data.wins / p2data.matchesPlayed : 0.5;
+    const synergy = calculateSynergy(pairRow.wins, newMatches, p1WinRate, p2WinRate);
+
+    await db
+      .update(pairStats)
+      .set({ matchesPlayed: newMatches, synergyScore: synergy, lastPlayed: match.date })
+      .where(and(eq(pairStats.player1Id, p1id), eq(pairStats.player2Id, p2id)));
+  }
+}
+
 // Recalcula los logros ligados a un partido tras corregir sus juegos: borra los
 // otorgados con trigger en este partido y re-detecta. Los logros de rosco (6-0)
 // dependen de los juegos; el ganador no cambia en una corrección, así que las

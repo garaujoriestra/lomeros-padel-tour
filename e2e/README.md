@@ -1,6 +1,6 @@
 # Tests e2e (Playwright)
 
-Suite de navegador que cubre los flujos reales de LPT de punta a punta (~36 specs).
+Suite de navegador que cubre los flujos reales de LPT de punta a punta (~48 specs).
 Usa una DB SQLite de fichero aislada (`e2e/test.db`, se borra en cada arranque) y
 cookies de sesión forjadas — no toca producción ni necesita Google OAuth.
 
@@ -42,7 +42,9 @@ terminada sin su e2e). Agrupada por área:
 - **Pozos**: `pozo-americano`, `pozo-fixed-pairs`, `pozo-public`.
 - **Torneos**: `torneo-single-elim`, `torneo-groups-elim`, `torneo-public`.
 - **Partidos / ranking**: `event-create`, `event-delete`, `eventos`, `edit-result`,
-  `rankings-you`, `elo-proyeccion` (Elo proyectado en partidos programados).
+  `rankings-you`, `elo-proyeccion` (Elo proyectado en partidos programados),
+  `empate` (1-1 a sets: se registra como empate, no mueve el Elo y devuelve las
+  apuestas; incluye la regresión de que un 1-1 no se cuele como victoria).
 - **Planificador**: `planner` — disponibilidad semanal pintable (tap = una celda,
   arrastre con umbral), mapa de calor y resumen «quién puede», validación de bloques
   (≥1,5h), authz de API entre grupos, paridad `/g/[slug]/planificador`.

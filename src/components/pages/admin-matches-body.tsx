@@ -30,7 +30,9 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
   }
 
   const scheduled = allMatches.filter((m) => m.status === 'scheduled');
-  const completed = allMatches.filter((m) => m.status === 'completed' || m.status === 'injury_aborted');
+  const completed = allMatches.filter(
+    (m) => m.status === 'completed' || m.status === 'draw' || m.status === 'injury_aborted',
+  );
 
   const meta = (match: (typeof allMatches)[number]) => (
     <div className="flex items-center gap-3 flex-wrap small muted" style={{ fontWeight: 600 }}>
@@ -105,12 +107,14 @@ export async function AdminMatchesBody({ ctx }: { ctx: PageContext }) {
                 const t1 = [playerMap[match.team1Player1Id], playerMap[match.team1Player2Id]];
                 const t2 = [playerMap[match.team2Player1Id], playerMap[match.team2Player2Id]];
                 const isInjury = match.status === 'injury_aborted';
+                const isDraw = match.status === 'draw';
                 return (
                   <div key={match.id} className="lpt-card card-pad" style={isInjury ? { borderColor: 'color-mix(in oklab, var(--loss) 35%, var(--line))' } : undefined}>
                     <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
                       {meta(match)}
                       <div className="flex items-center gap-2">
                         {isInjury && <StatusPill status="injury_aborted" />}
+                        {isDraw && <StatusPill status="draw" />}
                         {!isInjury && (
                           <Link href={`${basePath}/admin/matches/${match.id}/edit`} className="lpt-btn" style={smallBtn}>
                             <Pencil size={14} /> Editar

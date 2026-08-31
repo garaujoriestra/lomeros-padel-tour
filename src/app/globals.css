@@ -351,6 +351,8 @@
 }
 .form-dot.w { background: var(--win); }
 .form-dot.l { background: var(--loss); opacity: 0.85; }
+/* Empate 1-1: ni verde ni rojo. Neutro, con el mismo peso visual que la derrota. */
+.form-dot.e { background: var(--ink-3); opacity: 0.85; }
 
 /* ── Status pills ── */
 .status-pill {
@@ -361,6 +363,8 @@
 .status-pill.scheduled { background: color-mix(in oklab, var(--acc) 16%, transparent); color: var(--acc-text); }
 .status-pill.completed { background: var(--surface-2); color: var(--ink-3); }
 .status-pill.injury { background: color-mix(in oklab, var(--loss) 14%, transparent); color: var(--loss-text); }
+/* Empate: neutro y sin alarma — un 1-1 es un resultado, no una incidencia. */
+.status-pill.draw { background: color-mix(in oklab, var(--ink-3) 16%, transparent); color: var(--ink-2); }
 
 /* ── Scoreboard ── */
 .score-grid { display: grid; gap: 3px 0; }

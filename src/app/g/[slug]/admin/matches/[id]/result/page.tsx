@@ -12,7 +12,7 @@ export default async function GroupAddResultPage({ params }: { params: Promise<{
   const groupId = ctx.groupId;
   const match = await getMatchInGroup(groupId, id);
   if (!match) notFound();
-  if (match.status === 'completed') {
+  if (match.status === 'completed' || match.status === 'draw') {
     return (
       <div className="max-w-2xl space-y-4">
         <h1 className="sec-title">Resultado ya registrado</h1>

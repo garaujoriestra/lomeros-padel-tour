@@ -7,6 +7,7 @@ import { computeSideStats } from '@/lib/rating/side-stats';
 import { computeAllRivalries } from '@/lib/rating/head-to-head';
 import { detectRankChanges } from '@/lib/feed/rank-changes';
 import { findUnplayedPartners } from '@/lib/players/unplayed-partners';
+import { isPlayed, type FormResult } from '@/lib/matches/outcome';
 
 export async function loadPlayerProfile(groupId: string, id: string) {
   const player = await getPlayerInGroup(groupId, id);
@@ -48,12 +49,14 @@ export async function loadPlayerProfile(groupId: string, id: string) {
         .orderBy(desc(playerAchievements.earnedAt)),
     ]);
 
-  const completedMatches = playerMatches.filter((m) => m.status === 'completed');
+  // Los empates son partidos jugados: entran en el historial y en la racha.
+  const completedMatches = playerMatches.filter(isPlayed);
   const playerMap = Object.fromEntries(allPlayers.map((p) => [p.id, p]));
   const allRankEvents = detectRankChanges(globalHistory, allPlayers);
   const playerRankEvents = allRankEvents.filter((e) => e.playerId === id);
 
-  const recentForm = completedMatches.slice(0, 8).map((m) => {
+  const recentForm: FormResult[] = completedMatches.slice(0, 8).map((m) => {
+    if (m.status === 'draw') return 'D';
     const isTeam1 = m.team1Player1Id === id || m.team1Player2Id === id;
     return (isTeam1 && m.winnerTeam === 1) || (!isTeam1 && m.winnerTeam === 2) ? 'W' : 'L';
   });

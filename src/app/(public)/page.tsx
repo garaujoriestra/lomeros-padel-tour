@@ -98,7 +98,9 @@ export default async function HomePage() {
 
   // Cold-open de retransmisión: el hero abre con lo último que ha pasado en la
   // liga (el resultado más reciente), no solo con el ident de la temporada.
-  const lastCompleted = recentMatchesAll.find((m) => m.status === 'completed' && m.winnerTeam != null) ?? null;
+  const lastCompleted = recentMatchesAll.find(
+    (m) => (m.status === 'completed' && m.winnerTeam != null) || m.status === 'draw',
+  ) ?? null;
   let coldOpen: { text: string; href: string } | null = null;
   if (lastCompleted) {
     const short = (id: string | null) => (id && playerMap[id] ? (playerMap[id].nickname || playerMap[id].name.split(' ')[0]) : '?');
@@ -109,8 +111,14 @@ export default async function HomePage() {
       .join(' ');
     const t1 = `${short(lastCompleted.team1Player1Id)} y ${short(lastCompleted.team1Player2Id)}`;
     const t2 = `${short(lastCompleted.team2Player1Id)} y ${short(lastCompleted.team2Player2Id)}`;
-    const [winners, losers] = lastCompleted.winnerTeam === 2 ? [t2, t1] : [t1, t2];
-    coldOpen = { text: `${winners} ${score} a ${losers}`, href: `/matches/${lastCompleted.id}` };
+    // Sin ganador que anteponer, el empate se lee en el orden del partido.
+    const text = lastCompleted.status === 'draw'
+      ? `${t1} empatan ${score} con ${t2}`
+      : (() => {
+          const [winners, losers] = lastCompleted.winnerTeam === 2 ? [t2, t1] : [t1, t2];
+          return `${winners} ${score} a ${losers}`;
+        })();
+    coldOpen = { text, href: `/matches/${lastCompleted.id}` };
   }
 
   return (

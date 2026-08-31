@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildFeed } from './build-feed';
 
 describe('buildFeed', () => {
-  function match(id: string, status: 'scheduled' | 'completed', date: string, t1p1 = 'a', t1p2 = 'b', t2p1 = 'c', t2p2 = 'd') {
+  function match(id: string, status: 'scheduled' | 'completed' | 'draw', date: string, t1p1 = 'a', t1p2 = 'b', t2p1 = 'c', t2p2 = 'd') {
     return {
       id, status, date,
       team1Player1Id: t1p1, team1Player2Id: t1p2,
@@ -40,6 +40,27 @@ describe('buildFeed', () => {
     if (events[0].type === 'match_completed') {
       expect(events[0].matchId).toBe('m1');
       expect(events[0].timestamp).toBe('2026-04-01T11:00:00Z');
+    }
+  });
+
+  // Un empate no escribe en rating_history (no hay delta de Elo), así que su
+  // evento no puede depender de esa tabla: se ancla en createdAt, como la lesión.
+  it('emits a match_draw event con sus sets, sin rating_history', () => {
+    const events = buildFeed({
+      matches: [match('m-draw', 'draw', '2026-04-05T10:00:00Z')],
+      matchSets: [set('m-draw', 1, 6, 4), set('m-draw', 2, 3, 6)],
+      ratingHistory: [],
+      players: [],
+      rankEvents: [],
+      achievements: [],
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('match_draw');
+    if (events[0].type === 'match_draw') {
+      expect(events[0].matchId).toBe('m-draw');
+      expect(events[0].timestamp).toBe('2026-04-05T10:00:00Z');
+      expect(events[0].sets).toHaveLength(2);
+      expect(events[0].match.winnerTeam).toBeNull();
     }
   });
 

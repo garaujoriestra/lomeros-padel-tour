@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Swords, Bandage, Calendar, TrendingUp, TrendingDown, UserPlus, Award, type LucideIcon } from 'lucide-react';
+import { Swords, Bandage, Calendar, Equal, TrendingUp, TrendingDown, UserPlus, Award, type LucideIcon } from 'lucide-react';
 import type { FeedEvent } from '@/lib/feed/build-feed';
 import { relativeTime } from '@/lib/format/relative-time';
 
@@ -66,6 +66,19 @@ export function ActivityFeedItem({ event, playerMap }: { event: FeedEvent; playe
     return (
       <Row icon={Swords} href={`/matches/${m.id}`} time={time}>
         <b>{winnerNames}</b> ganan a {loserNames}{' '}
+        {setsStr && <span className="num" style={{ fontWeight: 700 }}>({setsStr})</span>}
+      </Row>
+    );
+  }
+
+  if (event.type === 'match_draw') {
+    const m = event.match;
+    const t1 = teamNames(playerMap[m.team1Player1Id], playerMap[m.team1Player2Id]);
+    const t2 = teamNames(playerMap[m.team2Player1Id], playerMap[m.team2Player2Id]);
+    const setsStr = event.sets.map((s) => `${s.team1Games}–${s.team2Games}`).join(' · ');
+    return (
+      <Row icon={Equal} href={`/matches/${m.id}`} time={time}>
+        <b>{t1}</b> empatan con <b>{t2}</b>{' '}
         {setsStr && <span className="num" style={{ fontWeight: 700 }}>({setsStr})</span>}
       </Row>
     );
