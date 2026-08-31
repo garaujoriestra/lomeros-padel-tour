@@ -56,7 +56,8 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
     setSets(updated);
   }
 
-  function validateSets() {
+  // `winner: null` = empate 1-1: dos sets, uno cada equipo, sin tiempo al tercero.
+  function validateSets(): { team1SetsWon: number; team2SetsWon: number; winner: 1 | 2 | null } | null {
     let team1SetsWon = 0;
     let team2SetsWon = 0;
     for (const set of sets) {
@@ -67,6 +68,9 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
     }
     if (team1SetsWon === 2 || team2SetsWon === 2) {
       return { team1SetsWon, team2SetsWon, winner: team1SetsWon === 2 ? 1 : 2 };
+    }
+    if (sets.length === 2 && team1SetsWon === 1 && team2SetsWon === 1) {
+      return { team1SetsWon, team2SetsWon, winner: null };
     }
     return null;
   }
@@ -98,7 +102,7 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
       return;
     }
     if (mode === 'completed' && !matchResult) {
-      toast.error('El resultado no es válido (alguien debe ganar 2 sets)');
+      toast.error('El resultado no es válido (alguien debe ganar 2 sets, o quedar 1-1)');
       return;
     }
 
@@ -141,9 +145,11 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
 
     if (res.ok) {
       toast.success(
-        mode === 'completed'
-          ? 'Partido registrado y ratings actualizados ✓'
-          : 'Partido programado correctamente 📅'
+        mode === 'scheduled'
+          ? 'Partido programado correctamente 📅'
+          : matchResult?.winner === null
+          ? 'Empate registrado ✓ (no mueve el ranking)'
+          : 'Partido registrado y ratings actualizados ✓'
       );
       router.push(`${basePath}/admin/matches`);
       router.refresh();
@@ -319,7 +325,19 @@ export function MatchForm({ players, groupSlug }: MatchFormProps) {
             </div>
           ))}
 
-          {matchResult && (
+          {matchResult && matchResult.winner === null && (
+            <div className="mt-2 p-3 rounded-xl bg-surface-2 border border-line text-sm text-center">
+              <p className="font-bold text-ink-2">
+                🤝 Empate{' '}
+                <Badge variant="outline" className="ml-1">
+                  {matchResult.team1SetsWon} — {matchResult.team2SetsWon}
+                </Badge>
+              </p>
+              <p className="text-xs text-ink-3 mt-1">Cuenta como partido jugado, pero no mueve el Elo</p>
+            </div>
+          )}
+
+          {matchResult && matchResult.winner !== null && (
             <div className="mt-2 p-3 rounded-xl bg-win/10 border border-win/30 text-sm text-center">
               <p className="font-bold text-win">
                 🏆 Gana {matchResult.winner === 1 ? '🔵 Equipo 1' : '🔴 Equipo 2'}{' '}

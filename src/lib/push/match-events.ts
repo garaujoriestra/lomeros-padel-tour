@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendToUsers, userIdsForPlayers } from './send';
-import { buildResultNotification, buildAchievementNotification } from './notifications';
+import { buildResultNotification, buildDrawNotification, buildAchievementNotification } from './notifications';
 import { computeResultPositions } from '@/lib/rankings/match-positions';
 import type { MatchRatingResult } from '@/lib/rating/process-match';
 
@@ -14,6 +14,32 @@ interface MatchTeams {
   team1Player2Id: string;
   team2Player1Id: string;
   team2Player2Id: string;
+}
+
+// Empate 1-1: aviso a los cuatro. No hay cambios de ELO ni de posición que
+// contar, así que no hace falta el cálculo de ranking. Best-effort, como el de
+// resultado: nunca lanza.
+export async function notifyMatchDraw(match: {
+  id: string;
+  groupId: string;
+  team1Player1Id: string;
+  team1Player2Id: string;
+  team2Player1Id: string;
+  team2Player2Id: string;
+}): Promise<void> {
+  try {
+    const playerIds = [
+      match.team1Player1Id,
+      match.team1Player2Id,
+      match.team2Player1Id,
+      match.team2Player2Id,
+    ];
+    const userIds = await userIdsForPlayers(match.groupId, playerIds);
+    if (userIds.length === 0) return;
+    await sendToUsers(userIds, buildDrawNotification(match.id));
+  } catch (error) {
+    console.error('notifyMatchDraw error', error);
+  }
 }
 
 // Envía push de resultado a los 4 jugadores y de logro a quien corresponda.

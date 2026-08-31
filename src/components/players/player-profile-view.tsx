@@ -66,6 +66,9 @@ export function PlayerProfileView({
     })
     .filter((m): m is EloMilestone => m !== null);
 
+  // Los empates no tienen columna propia: son los partidos jugados que no
+  // fueron ni victoria ni derrota (las lesiones no suman partido jugado).
+  const draws = Math.max(0, player.matchesPlayed - player.wins - player.losses);
   const driveW = Math.round(sideStats.drive.winRate * 100);
   const revesW = Math.round(sideStats.reves.winRate * 100);
 
@@ -197,7 +200,7 @@ export function PlayerProfileView({
               {recentForm.length > 0 && (
                 <div className="lpt-card card-pad">
                   <div className="kicker" style={{ marginBottom: 12 }}>Forma reciente</div>
-                  <FormDots form={recentForm as ('W' | 'L')[]} />
+                  <FormDots form={recentForm} />
                 </div>
               )}
               <div className="lpt-card card-pad">
@@ -210,6 +213,7 @@ export function PlayerProfileView({
                 </div>
                 <div className="small muted" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                   <span>{player.wins} victoria{player.wins !== 1 ? 's' : ''}</span>
+                  {draws > 0 && <span>{draws} empate{draws !== 1 ? 's' : ''}</span>}
                   <span>{player.losses} derrota{player.losses !== 1 ? 's' : ''}</span>
                 </div>
               </div>
@@ -296,7 +300,8 @@ export function PlayerProfileView({
               <div className="lpt-card" style={{ overflow: 'hidden' }}>
                 {completedMatches.slice(0, 10).map((match) => {
                   const isTeam1 = match.team1Player1Id === id || match.team1Player2Id === id;
-                  const won = (isTeam1 && match.winnerTeam === 1) || (!isTeam1 && match.winnerTeam === 2);
+                  const drew = match.status === 'draw';
+                  const won = !drew && ((isTeam1 && match.winnerTeam === 1) || (!isTeam1 && match.winnerTeam === 2));
                   const partnerId = isTeam1
                     ? (match.team1Player1Id === id ? match.team1Player2Id : match.team1Player1Id)
                     : (match.team2Player1Id === id ? match.team2Player2Id : match.team2Player1Id);
@@ -307,7 +312,7 @@ export function PlayerProfileView({
                   const delta = eloChangeByMatch[match.id];
                   return (
                     <Link key={match.id} href={`${basePath}/matches/${match.id}`} className="rank-row" style={{ display: 'flex', gap: 10 }}>
-                      <span className={`form-dot ${won ? 'w' : 'l'}`}>{won ? 'V' : 'D'}</span>
+                      <span className={`form-dot ${drew ? 'e' : won ? 'w' : 'l'}`}>{drew ? 'E' : won ? 'V' : 'D'}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           <span className="muted">con</span> {displayName(partner)}{' '}

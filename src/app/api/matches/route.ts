@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { after } from 'next/server';
 import { trackFunnel } from '@/lib/analytics/events';
-import { processMatchRatings } from '@/lib/rating/process-match';
+import { processMatchRatings, processDrawMatch } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
+import { resolveSetsOutcome, type SetInput } from '@/lib/matches/outcome';
 import { requireGroupAdmin } from '@/lib/auth/guard';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
 import { listMatchesByDate, createMatchInGroup, insertMatchSets } from '@/lib/matches/queries';
 import { getPlayersInGroup } from '@/lib/players/queries';
-import { notifyMatchResult } from '@/lib/push/match-events';
+import { notifyMatchResult, notifyMatchDraw } from '@/lib/push/match-events';
 import { notifyBettingOpen } from '@/lib/push/bet-events';
 
 // GET /api/matches?g=<slug> (público; grupo por defecto = Lomeros)
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/matches (admin DEL GRUPO objetivo; grupo en body.g)
 //   - With sets  → status='completed', calculates winner, triggers Elo
+//                  (o status='draw' si quedó 1-1: cuenta partido, no mueve Elo)
 //   - Without sets → status='scheduled', winnerTeam=null, no Elo yet
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -63,19 +65,18 @@ export async function POST(request: NextRequest) {
 
     const isScheduled = !sets || sets.length === 0;
 
-    if (!isScheduled && (sets.length < 2 || sets.length > 3)) {
-      return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
-    }
-
     let winnerTeam: 1 | 2 | null = null;
+    let status: 'scheduled' | 'completed' | 'draw' = 'scheduled';
+    let resolvedSets: SetInput[] = [];
+
     if (!isScheduled) {
-      let team1SetsWon = 0;
-      let team2SetsWon = 0;
-      for (const set of sets) {
-        if (set.team1Games > set.team2Games) team1SetsWon++;
-        else team2SetsWon++;
-      }
-      winnerTeam = team1SetsWon > team2SetsWon ? 1 : 2;
+      // Un 1-1 a sets (no dio tiempo al tercero) es un empate, no una victoria
+      // del equipo 2 como salía del conteo antiguo.
+      const outcome = resolveSetsOutcome(sets);
+      if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: 400 });
+      winnerTeam = outcome.winnerTeam;
+      status = outcome.status;
+      resolvedSets = outcome.sets;
     }
 
     const match = await createMatchInGroup(groupId, {
@@ -91,22 +92,28 @@ export async function POST(request: NextRequest) {
       team2Player1Side: coerceSide(team2Player1Side),
       team2Player2Side: coerceSide(team2Player2Side),
       winnerTeam,
-      status: isScheduled ? 'scheduled' : 'completed',
+      status,
     });
 
     if (isScheduled) {
       // Apuestas abiertas: avisa a todos los suscritos de La Timba. Best-effort.
       await notifyBettingOpen(match);
     } else {
-      await insertMatchSets(match.id, sets);
+      await insertMatchSets(match.id, resolvedSets);
 
-      const ratingResult = await processMatchRatings({
-        ...match,
-        winnerTeam: winnerTeam as 1 | 2,
-        sets,
-      });
+      if (status === 'draw') {
+        // El empate suma partido jugado pero no mueve el ranking.
+        await processDrawMatch(match);
+        await notifyMatchDraw(match);
+      } else {
+        const ratingResult = await processMatchRatings({
+          ...match,
+          winnerTeam: winnerTeam as 1 | 2,
+          sets: resolvedSets,
+        });
 
-      await notifyMatchResult({ ...match, winnerTeam: winnerTeam as 1 | 2 }, ratingResult);
+        await notifyMatchResult({ ...match, winnerTeam: winnerTeam as 1 | 2 }, ratingResult);
+      }
     }
 
     // Funnel de captación: partidos registrados = grupo ACTIVADO (métrica norte).

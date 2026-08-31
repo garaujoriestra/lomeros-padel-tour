@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { NewMatch } from '@/lib/db/schema';
-import { processMatchRatings } from '@/lib/rating/process-match';
+import { processMatchRatings, processDrawMatch } from '@/lib/rating/process-match';
 import { coerceSide } from '@/lib/rating/side-stats';
+import { resolveSetsOutcome } from '@/lib/matches/outcome';
 import { requireGroupAdmin } from '@/lib/auth/guard';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { groupIdFromQuery, groupIdFromValue } from '@/lib/groups/request-group';
@@ -12,7 +13,7 @@ import {
   deleteMatchInGroup,
   insertMatchSets,
 } from '@/lib/matches/queries';
-import { notifyMatchResult } from '@/lib/push/match-events';
+import { notifyMatchResult, notifyMatchDraw } from '@/lib/push/match-events';
 import { settleMatchBets, refundOpenBets, reverseSettlement } from '@/lib/betting/settle';
 import { notifyBetSettlements } from '@/lib/push/bet-events';
 
@@ -77,13 +78,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       photoUrl,
     } = body;
 
-    if (!sets || sets.length < 2 || sets.length > 3) {
-      return NextResponse.json({ error: 'El partido necesita 2 o 3 sets' }, { status: 400 });
-    }
+    // Un 1-1 a sets (no dio tiempo al tercero) se resuelve como empate.
+    const outcome = resolveSetsOutcome(sets);
+    if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: 400 });
 
     const match = await getMatchInGroup(groupId, id);
     if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
-    if (match.status === 'completed') {
+    if (match.status === 'completed' || match.status === 'draw') {
       return NextResponse.json({ error: 'Este partido ya tiene resultado' }, { status: 400 });
     }
 
@@ -115,17 +116,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       sameTeam([match.team2Player1Id, match.team2Player2Id], [team2Player1Id, team2Player2Id])
     );
 
-    let team1SetsWon = 0;
-    let team2SetsWon = 0;
-    for (const set of sets) {
-      if (set.team1Games > set.team2Games) team1SetsWon++;
-      else team2SetsWon++;
-    }
-    const winnerTeam: 1 | 2 = team1SetsWon > team2SetsWon ? 1 : 2;
+    const resolvedSets = outcome.sets;
 
-    await insertMatchSets(id, sets);
+    await insertMatchSets(id, resolvedSets);
 
-    const updateFields: Partial<NewMatch> = { winnerTeam, status: 'completed' };
+    const updateFields: Partial<NewMatch> = {
+      winnerTeam: outcome.winnerTeam,
+      status: outcome.status,
+    };
     if (pairingProvided) {
       updateFields.team1Player1Id = team1Player1Id;
       updateFields.team1Player2Id = team1Player2Id;
@@ -141,13 +139,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updated = await updateMatchInGroup(groupId, id, updateFields);
     if (!updated) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 });
 
-    const ratingResult = await processMatchRatings({ ...updated, winnerTeam, sets });
+    let betOutcomes;
+    if (outcome.status === 'draw') {
+      // Empate: cuenta como partido jugado pero no mueve el ranking, y en La
+      // Timba nadie acertó ni «gana el equipo X» ni «2-0 / 2-1» → se devuelve
+      // todo, igual que en una lesión o un cambio de cartel.
+      await processDrawMatch(updated);
+      await notifyMatchDraw(updated);
+      betOutcomes = await refundOpenBets(id);
+    } else {
+      const winnerTeam = outcome.winnerTeam;
+      const ratingResult = await processMatchRatings({ ...updated, winnerTeam, sets: resolvedSets });
 
-    await notifyMatchResult({ ...updated, winnerTeam }, ratingResult);
+      await notifyMatchResult({ ...updated, winnerTeam }, ratingResult);
 
-    const betOutcomes = pairingChanged
-      ? await refundOpenBets(id)
-      : await settleMatchBets(id, winnerTeam, sets);
+      betOutcomes = pairingChanged
+        ? await refundOpenBets(id)
+        : await settleMatchBets(id, winnerTeam, resolvedSets);
+    }
     await notifyBetSettlements(id, betOutcomes);
 
     return NextResponse.json(updated);

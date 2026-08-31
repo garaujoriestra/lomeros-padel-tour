@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { ViewTransition } from 'react';
 import { PlayerAvatar } from '@/components/shared/player-avatar';
-import { Calendar, Check, Bandage, Trophy, ChevronRight, type LucideIcon } from 'lucide-react';
+import type { FormResult } from '@/lib/matches/outcome';
+import { Calendar, Check, Bandage, Equal, Trophy, ChevronRight, type LucideIcon } from 'lucide-react';
 
 /* ── Tipos compartidos ── */
 export interface LptPlayer {
@@ -122,19 +123,28 @@ export function StatBar({ pct, tone = 'accent', height }: { pct: number; tone?: 
   );
 }
 
-/* ── Forma reciente W/L ── */
-export function FormDots({ form, size = 26 }: { form: ('W' | 'L')[]; size?: number }) {
+/* ── Forma reciente V/E/D ── */
+const FORM_DOT: Record<FormResult, { cls: string; letter: string }> = {
+  W: { cls: 'w', letter: 'V' },
+  L: { cls: 'l', letter: 'D' },
+  D: { cls: 'e', letter: 'E' }, // empate 1-1
+};
+
+export function FormDots({ form, size = 26 }: { form: FormResult[]; size?: number }) {
   return (
     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-      {form.map((r, i) => (
-        <div
-          key={i}
-          className={`form-dot ${r === 'W' ? 'w' : 'l'}`}
-          style={{ width: size, height: size, animation: `fadeUp 0.4s ${i * 0.05}s both` }}
-        >
-          {r === 'W' ? 'V' : 'D'}
-        </div>
-      ))}
+      {form.map((r, i) => {
+        const dot = FORM_DOT[r];
+        return (
+          <div
+            key={i}
+            className={`form-dot ${dot.cls}`}
+            style={{ width: size, height: size, animation: `fadeUp 0.4s ${i * 0.05}s both` }}
+          >
+            {dot.letter}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -144,6 +154,7 @@ export function StatusPill({ status }: { status: string }) {
   const map: Record<string, { cls: string; Icon: LucideIcon; label: string }> = {
     scheduled: { cls: 'scheduled', Icon: Calendar, label: 'Programado' },
     completed: { cls: 'completed', Icon: Check, label: 'Completado' },
+    draw: { cls: 'draw', Icon: Equal, label: 'Empate' },
     injury_aborted: { cls: 'injury', Icon: Bandage, label: 'No terminado' },
   };
   const m = map[status] ?? map.completed;

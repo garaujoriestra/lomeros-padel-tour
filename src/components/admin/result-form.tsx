@@ -86,7 +86,9 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
     setSets(updated);
   }
 
-  function validateSets() {
+  // `winner: null` = empate 1-1: se jugaron 2 sets, uno cada equipo, y no dio
+  // tiempo al tercero.
+  function validateSets(): { t1: number; t2: number; winner: 1 | 2 | null } | null {
     let t1 = 0, t2 = 0;
     for (const set of sets) {
       if (set.team1Games === '' || set.team2Games === '') return null;
@@ -95,6 +97,7 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
       else t2++;
     }
     if (t1 === 2 || t2 === 2) return { t1, t2, winner: t1 === 2 ? 1 : 2 };
+    if (sets.length === 2 && t1 === 1 && t2 === 1) return { t1, t2, winner: null };
     return null;
   }
 
@@ -154,7 +157,11 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
     });
 
     if (res.ok) {
-      toast.success('Resultado guardado y ratings actualizados ✓');
+      toast.success(
+        matchResult.winner === null
+          ? 'Empate guardado ✓ (no mueve el ranking)'
+          : 'Resultado guardado y ratings actualizados ✓',
+      );
       router.push(`${basePath}/admin/matches`);
       router.refresh();
     } else {
@@ -397,7 +404,19 @@ export function ResultForm({ matchId, date, location, matchPlayers, initialSides
           </div>
         ))}
 
-        {matchResult && (
+        {matchResult && matchResult.winner === null && (
+          <div className="mt-2 p-3 rounded-xl bg-surface-2 border border-line text-sm text-center">
+            <p className="font-bold text-ink-2">
+              🤝 Empate{' '}
+              <Badge variant="outline" className="ml-1">
+                {matchResult.t1} — {matchResult.t2}
+              </Badge>
+            </p>
+            <p className="text-xs text-ink-3 mt-1">Cuenta como partido jugado, pero no mueve el Elo</p>
+          </div>
+        )}
+
+        {matchResult && matchResult.winner !== null && (
           <div className="mt-2 p-3 rounded-xl bg-win/10 border border-win/30 text-sm text-center">
             <p className="font-bold text-win">
               🏆 Gana {matchResult.winner === 1 ? `🔵 ${team1Name}` : `🔴 ${team2Name}`}{' '}

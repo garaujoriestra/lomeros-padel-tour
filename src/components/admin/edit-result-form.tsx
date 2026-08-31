@@ -19,7 +19,8 @@ interface EditResultFormProps {
   location?: string | null;
   team1Name: string;
   team2Name: string;
-  winnerTeam: 1 | 2;
+  /** `null` = el partido acabó en empate 1-1. */
+  winnerTeam: 1 | 2 | null;
   initialSets: { team1Games: number; team2Games: number }[];
   initialPhotoUrl: string | null;
   groupSlug?: string;
@@ -48,7 +49,8 @@ export function EditResultForm({
     setSets(updated);
   }
 
-  function validateSets() {
+  // `winner: null` = empate 1-1 (dos sets, uno cada equipo).
+  function validateSets(): { t1: number; t2: number; winner: 1 | 2 | null } | null {
     let t1 = 0, t2 = 0;
     for (const set of sets) {
       if (set.team1Games === '' || set.team2Games === '') return null;
@@ -57,11 +59,15 @@ export function EditResultForm({
       else t2++;
     }
     if (t1 === 2 || t2 === 2) return { t1, t2, winner: t1 === 2 ? 1 : 2 };
+    if (sets.length === 2 && t1 === 1 && t2 === 1) return { t1, t2, winner: null };
     return null;
   }
 
   const matchResult = validateSets();
-  const winnerChanged = matchResult !== null && matchResult.winner !== winnerTeam;
+  // El desenlace no puede cambiar al corregir juegos: ni el ganador de equipo,
+  // ni un empate convertirse en victoria (o al revés).
+  const outcomeChanged = matchResult !== null && matchResult.winner !== winnerTeam;
+  const wasDraw = winnerTeam === null;
   const setsDirty =
     sets.length !== initialSets.length ||
     sets.some((s, i) => s.team1Games !== initialSets[i]?.team1Games || s.team2Games !== initialSets[i]?.team2Games);
@@ -102,7 +108,7 @@ export function EditResultForm({
       toast.error('El resultado no es válido');
       return;
     }
-    if (winnerChanged) return;
+    if (outcomeChanged) return;
     if (!setsDirty && photoUrl === undefined) {
       toast.info('No hay cambios que guardar');
       return;
@@ -191,7 +197,18 @@ export function EditResultForm({
           </div>
         ))}
 
-        {matchResult && !winnerChanged && (
+        {matchResult && !outcomeChanged && matchResult.winner === null && (
+          <div className="mt-2 p-3 rounded-xl bg-surface-2 border border-line text-sm text-center">
+            <p className="font-bold text-ink-2">
+              🤝 Empate{' '}
+              <Badge variant="outline" className="ml-1">
+                {matchResult.t1} — {matchResult.t2}
+              </Badge>
+            </p>
+          </div>
+        )}
+
+        {matchResult && !outcomeChanged && matchResult.winner !== null && (
           <div className="mt-2 p-3 rounded-xl bg-win/10 border border-win/30 text-sm text-center">
             <p className="font-bold text-win">
               🏆 Gana {matchResult.winner === 1 ? `🔵 ${team1Name}` : `🔴 ${team2Name}`}{' '}
@@ -202,12 +219,28 @@ export function EditResultForm({
           </div>
         )}
 
-        {winnerChanged && (
+        {outcomeChanged && (
           <div className="mt-2 p-3 rounded-xl bg-loss/10 border border-loss/30 text-sm text-center">
             <p className="font-bold text-loss">
-              ⚠️ Esta corrección cambiaría el equipo ganador. El ELO y las apuestas ya se
-              liquidaron con el ganador original: para cambiarlo, borra el partido y
-              regístralo de nuevo.
+              {wasDraw ? (
+                <>
+                  ⚠️ Esta corrección convertiría el empate en una victoria. El partido se
+                  registró sin ganador y las apuestas se devolvieron: para cambiarlo, bórralo
+                  y regístralo de nuevo.
+                </>
+              ) : matchResult?.winner === null ? (
+                <>
+                  ⚠️ Esta corrección convertiría la victoria en un empate. El ELO y las apuestas
+                  ya se liquidaron con el ganador original: para cambiarlo, borra el partido y
+                  regístralo de nuevo.
+                </>
+              ) : (
+                <>
+                  ⚠️ Esta corrección cambiaría el equipo ganador. El ELO y las apuestas ya se
+                  liquidaron con el ganador original: para cambiarlo, borra el partido y
+                  regístralo de nuevo.
+                </>
+              )}
             </p>
           </div>
         )}
@@ -266,7 +299,7 @@ export function EditResultForm({
       <div className="flex gap-3">
         <Button
           type="submit"
-          disabled={loading || uploading || winnerChanged || (setsDirty && !matchResult)}
+          disabled={loading || uploading || outcomeChanged || (setsDirty && !matchResult)}
           className="flex-1 min-h-11 px-4 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
         >
           {loading ? 'Guardando...' : '✓ Guardar corrección'}

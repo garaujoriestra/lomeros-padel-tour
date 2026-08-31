@@ -19,7 +19,7 @@ export default async function GroupEditMatchResultPage({
   const ctx = await resolvePageContext(slug);
   const groupId = ctx.groupId;
   const match = await getMatchInGroup(groupId, id);
-  if (!match || match.status !== 'completed' || (match.winnerTeam !== 1 && match.winnerTeam !== 2)) notFound();
+  if (!match || (match.status !== 'completed' && match.status !== 'draw')) notFound();
 
   const sets = await getMatchSetsForMatch(id);
   const allPlayers = await listAllPlayersInGroup(groupId);
@@ -41,7 +41,7 @@ export default async function GroupEditMatchResultPage({
         location={match.location}
         team1Name={team1Name}
         team2Name={team2Name}
-        winnerTeam={match.winnerTeam}
+        winnerTeam={match.winnerTeam === 1 || match.winnerTeam === 2 ? match.winnerTeam : null}
         initialSets={sets.map((s) => ({ team1Games: s.team1Games, team2Games: s.team2Games }))}
         initialPhotoUrl={match.photoUrl}
         groupSlug={slug}

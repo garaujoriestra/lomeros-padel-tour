@@ -29,6 +29,17 @@ export function buildResultNotification(
   };
 }
 
+// Empate 1-1: no hay ELO ni posición que enseñar, así que el aviso solo cuenta
+// lo que pasó.
+export function buildDrawNotification(matchId: string): PushPayload {
+  return {
+    title: '🤝 Empate registrado',
+    body: 'El partido acabó 1-1 · no mueve el ranking',
+    url: `/matches/${matchId}`,
+    tag: `result-${matchId}`,
+  };
+}
+
 export function buildAchievementNotification(achievementId: string): PushPayload | null {
   const a = ACHIEVEMENT_BY_ID[achievementId];
   if (!a) return null;

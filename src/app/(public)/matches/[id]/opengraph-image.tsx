@@ -4,6 +4,7 @@ import { matchSets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getDefaultGroupId } from '@/lib/auth/group-context';
 import { getMatchInGroup } from '@/lib/matches/queries';
+import { isPlayed } from '@/lib/matches/outcome';
 import { listAllPlayersInGroup } from '@/lib/players/queries';
 import { resolveCourtPositions, type PositionedPlayer } from '@/lib/og/court-positions';
 import { getGroupById } from '@/lib/groups/queries';
@@ -167,7 +168,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   const sets =
-    match.status === 'completed'
+    isPlayed(match)
       ? await db
           .select()
           .from(matchSets)
@@ -176,7 +177,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
       : [];
 
   const scoreText =
-    match.status === 'completed' && sets.length > 0
+    isPlayed(match) && sets.length > 0
       ? sets.map((s) => `${s.team1Games}-${s.team2Games}`).join(' · ')
       : null;
   const winnerNames =
@@ -185,7 +186,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
       : match.status === 'completed' && match.winnerTeam === 2
         ? `${pMap[match.team2Player1Id]?.name ?? '?'} & ${pMap[match.team2Player2Id]?.name ?? '?'}`
         : null;
-  const showVs = match.status !== 'completed';
+  const isDrawMatch = match.status === 'draw';
+  const showVs = !isPlayed(match);
 
   const isInjury = match.status === 'injury_aborted';
   const injuredPlayer = isInjury && match.injuredPlayerId ? pMap[match.injuredPlayerId] : null;
@@ -389,7 +391,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
               </span>
             )}
           </div>
-        ) : match.status === 'completed' ? (
+        ) : isPlayed(match) ? (
             <div
               style={{
                 flex: 1,
@@ -617,7 +619,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: winnerNames ? '#22c55e' : 'transparent',
+            background: winnerNames ? '#22c55e' : isDrawMatch ? '#64748b' : 'transparent',
           }}
         >
           {winnerNames ? (
@@ -634,6 +636,21 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             >
               <span style={{ fontSize: 36 }}>🏆</span>
               <span>{winnerNames} ganan</span>
+            </span>
+          ) : isDrawMatch ? (
+            <span
+              style={{
+                color: '#f8fafc',
+                fontSize: 32,
+                fontWeight: 900,
+                letterSpacing: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <span style={{ fontSize: 36 }}>🤝</span>
+              <span>Empate a un set</span>
             </span>
           ) : null}
         </div>

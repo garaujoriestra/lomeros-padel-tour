@@ -7,7 +7,7 @@ export interface MatchCardData {
   id: string;
   date: string;
   location?: string | null;
-  status: string; // 'scheduled' | 'completed' | 'injury_aborted'
+  status: string; // 'scheduled' | 'completed' | 'draw' | 'injury_aborted'
   winnerTeam?: number | null;
   photoUrl?: string | null;
   injuredPlayerId?: string | null;

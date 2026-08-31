@@ -74,9 +74,10 @@ export const matches = sqliteTable('matches', {
   // Team 2
   team2Player1Id: text('team2_player1_id').notNull().references(() => players.id),
   team2Player2Id: text('team2_player2_id').notNull().references(() => players.id),
-  // Result: 1 = team1 wins, 2 = team2 wins, null = pending or aborted
+  // Result: 1 = team1 wins, 2 = team2 wins, null = pending, aborted or draw
   winnerTeam: integer('winner_team'), // 1 | 2 | null
-  // Status: 'scheduled' | 'completed' | 'injury_aborted'
+  // Status: 'scheduled' | 'completed' | 'draw' | 'injury_aborted'
+  // 'draw' = acabó 1-1 a sets (sin tiempo para el tercero): winnerTeam queda null.
   status: text('status').notNull().default('completed'),
   team1Player1Side: text('team1_player1_side'),  // 'drive' | 'reves' | null
   team1Player2Side: text('team1_player2_side'),
