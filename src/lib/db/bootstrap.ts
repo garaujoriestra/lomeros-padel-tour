@@ -104,6 +104,12 @@ export async function ensureAuxTables(client: Client): Promise<void> {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
+  // Antispam de avisos no ligados a un partido (hoy: el del planificador).
+  await client.execute(`CREATE TABLE IF NOT EXISTS notification_throttle (
+    key TEXT PRIMARY KEY,
+    sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   // Planificador semanal: disponibilidad por slots de 30 min (courts es legado inerte de v1).
   await client.execute(`CREATE TABLE IF NOT EXISTS courts (
     id TEXT PRIMARY KEY,

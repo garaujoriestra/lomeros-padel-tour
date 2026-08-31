@@ -153,6 +153,14 @@ export const notificationLog = sqliteTable('notification_log', {
   unique().on(t.matchId, t.kind),
 ]));
 
+// Antispam de avisos no ligados a un partido. Una fila por «cosa que no debe
+// repetirse muy seguido»; la clave la compone quien la usa (p. ej. el aviso del
+// planificador: 'planner:<groupId>:<weekStart>:<playerId>').
+export const notificationThrottle = sqliteTable('notification_throttle', {
+  key: text('key').primaryKey(),
+  sentAt: text('sent_at').notNull().default(sql`(datetime('now'))`),
+});
+
 // ─── BETS (apuestas «La Timba») ──────────────────────────────────────────────
 export const bets = sqliteTable('bets', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -343,6 +351,7 @@ export type NewUser = typeof users.$inferInsert;
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type NotificationLogRow = typeof notificationLog.$inferSelect;
+export type NotificationThrottleRow = typeof notificationThrottle.$inferSelect;
 export type Bet = typeof bets.$inferSelect;
 export type NewBet = typeof bets.$inferInsert;
 export type TokenLedgerRow = typeof tokenLedger.$inferSelect;

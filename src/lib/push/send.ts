@@ -81,11 +81,22 @@ export async function sendToUsers(userIds: string[], payload: PushPayload): Prom
 // Envía a TODOS los miembros del grupo (vía sus suscripciones). Reemplaza a sendToAll,
 // que enviaba sin scoping. Los miembros = users con membership en el grupo.
 export async function sendToGroup(groupId: string, payload: PushPayload): Promise<number> {
+  return sendToGroupExceptUsers(groupId, [], payload);
+}
+
+// Como sendToGroup pero saltándose a algunos usuarios: para avisos provocados
+// por una persona, que no debe recibir la notificación de su propia acción.
+export async function sendToGroupExceptUsers(
+  groupId: string,
+  excludeUserIds: string[],
+  payload: PushPayload,
+): Promise<number> {
   const memberRows = await db
     .select({ userId: memberships.userId })
     .from(memberships)
     .where(eq(memberships.groupId, groupId));
-  const userIds = memberRows.map((r) => r.userId);
+  const excluded = new Set(excludeUserIds);
+  const userIds = memberRows.map((r) => r.userId).filter((id) => !excluded.has(id));
   if (userIds.length === 0) return 0;
   const subs = await db
     .select()

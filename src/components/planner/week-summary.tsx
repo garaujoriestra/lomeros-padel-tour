@@ -1,8 +1,7 @@
+import { DAY_NAMES } from '@/lib/planner/day-names';
 import { formatMin } from '@/lib/planner/slots';
 import type { DaySegment } from '@/lib/planner/summary';
 import { EmptyState } from '@/components/shared/empty-state';
-
-const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 // «Quién puede esta semana»: por día, tramos con la gente disponible en cada uno.
 // Sin umbrales: esto enseña dónde hay interés y el partido se cuadra por fuera.
