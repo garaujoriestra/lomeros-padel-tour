@@ -29,6 +29,13 @@ export async function POST() {
       )
     `);
 
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS notification_throttle (
+        key TEXT PRIMARY KEY,
+        sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

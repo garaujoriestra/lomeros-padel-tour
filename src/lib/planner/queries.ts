@@ -9,6 +9,30 @@ export async function getWeekSlots(groupId: string, weekStart: string): Promise<
     .where(and(eq(plannerSlots.groupId, groupId), eq(plannerSlots.weekStart, weekStart)));
 }
 
+// Slots que un jugador tiene pintados en un día concreto. Se lee ANTES de
+// escribir para saber si la escritura añade disponibilidad (y entonces avisar al
+// grupo) o solo la recorta. Sin fila → día vacío.
+export async function getPlayerDaySlots(
+  groupId: string,
+  weekStart: string,
+  day: number,
+  playerId: string,
+): Promise<number[]> {
+  const rows = await db.select({ slots: plannerSlots.slots }).from(plannerSlots).where(and(
+    eq(plannerSlots.groupId, groupId),
+    eq(plannerSlots.weekStart, weekStart),
+    eq(plannerSlots.day, day),
+    eq(plannerSlots.subjectType, 'player'),
+    eq(plannerSlots.subjectId, playerId),
+  ));
+  if (rows.length === 0) return [];
+  try {
+    const val = JSON.parse(rows[0].slots);
+    if (Array.isArray(val) && val.every((n) => Number.isInteger(n))) return val;
+  } catch { /* JSON inválido: se trata como día vacío, igual que en week-data */ }
+  return [];
+}
+
 // Upsert de los slots de UN día para un sujeto (subjectType 'court' es legado
 // inerte; solo se escribe 'player'). slots=[] borra la fila.
 export async function upsertDaySlots(

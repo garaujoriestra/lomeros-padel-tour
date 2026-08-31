@@ -41,3 +41,10 @@ export function slotsToRanges(slots: number[]): { startMin: number; endMin: numb
   }
   return out;
 }
+
+// ¿La nueva lista ofrece alguna hora que la anterior no tenía? Es la condición
+// para avisar al grupo: pintar más disponibilidad es noticia, borrarla no.
+export function hasNewSlots(previous: number[], next: number[]): boolean {
+  const before = new Set(previous);
+  return next.some((s) => !before.has(s));
+}
