@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Proyecto Remotion autocontenido (vídeos de marketing): tiene su propio
+    // package.json/tsconfig y no forma parte de la app Next.
+    "promo/**",
   ]),
 ]);
 
