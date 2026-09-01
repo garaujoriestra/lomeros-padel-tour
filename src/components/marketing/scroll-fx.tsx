@@ -162,8 +162,8 @@ const BEAT_OUT_DUR = 0.18;
 // Centro de la meseta: el punto de reposo del snap tipo «slide».
 const BEAT_REST = 0.6;
 
-function pistaSetup() {
-  const pista = document.querySelector<HTMLElement>('[data-pista]');
+function pistaSetup(root: HTMLElement) {
+  const pista = root.querySelector<HTMLElement>('[data-pista]');
   if (!pista) return;
   const beats = gsap.utils.toArray<HTMLElement>('.mkt-beat', pista);
   const B = beats.length;
@@ -180,6 +180,15 @@ function pistaSetup() {
       pin: true,
       scrub: 0.4,
       anticipatePin: 1,
+      // El pin alarga la página ~B×88vh, así que TODO lo que va debajo (planes,
+      // podio) depende de su pin-spacing para medir su posición. ScrollTrigger
+      // refresca en orden de creación salvo que alguien declare refreshPriority;
+      // en cuanto uno lo hace, ordena TODOS los triggers por posición de página
+      // (`_sortY`) y el prioritario primero. Con esto el pin aplica su spacer
+      // antes de que nadie mida, en el arranque y en cada refresh (resize,
+      // fuentes). Sin esto los bloques de abajo completaban su expansión ~2300px
+      // antes de asomar: el efecto no se veía nunca.
+      refreshPriority: 1,
       // «Slides»: al dejar de scrollear, el pin se asienta en el golpe completo
       // más cercano (como pasar diapositivas). 0 y 1 son puntos de reposo para
       // entrar y salir del pin sin tirones hacia atrás.
@@ -230,9 +239,6 @@ function pistaSetup() {
   // relleno hasta B: el último golpe se queda en pantalla el resto del pin
   tl.to({}, { duration: 0.04 }, B - 0.04);
 
-  // El pin cambia todas las posiciones de la página: recalcular el resto de triggers.
-  ScrollTrigger.refresh();
-
   return () => {
     pista.classList.remove('mkt-pista--live');
     pista.removeAttribute('data-pista-beat');
@@ -241,9 +247,9 @@ function pistaSetup() {
 }
 
 /** Efectos de las secciones de scroll vertical (fuera de La Pista). */
-function sectionFx() {
+function sectionFx(root: HTMLElement) {
   // Hero: el marcador está VIVO — los Elo cuentan y los ▲/▼ aparecen.
-  const board = document.querySelector<HTMLElement>('[data-fx="board-live"]');
+  const board = root.querySelector<HTMLElement>('[data-fx="board-live"]');
   if (board) {
     // Espera al saque de la pelota si la página se abre desde arriba.
     const delay = window.scrollY < window.innerHeight * 0.4 ? 2.4 : 0.4;
@@ -267,7 +273,7 @@ function sectionFx() {
 
   // 6 · Cómo funciona: el rail se dibuja y los números 01→02→03 suben en
   // secuencia (es una secuencia real: el orden ES la información).
-  const steps = document.querySelector<HTMLElement>('[data-fx="steps"]');
+  const steps = root.querySelector<HTMLElement>('[data-fx="steps"]');
   if (steps) {
     onceInView(steps, () => {
       gsap.from(steps.querySelectorAll('.mkt-step__bar'), {
@@ -291,7 +297,7 @@ function sectionFx() {
 
   // 7 · Precio: «Gratis» se estampa con autoridad; el plan Pase recibe un
   // único barrido de brillo (es la línea premium).
-  const stamp = document.querySelector<HTMLElement>('[data-fx="stamp"]');
+  const stamp = root.querySelector<HTMLElement>('[data-fx="stamp"]');
   if (stamp) {
     onceInView(stamp, () =>
       gsap.from(stamp, {
@@ -304,7 +310,7 @@ function sectionFx() {
       }),
     );
   }
-  const shine = document.querySelector<HTMLElement>('.mkt-shine');
+  const shine = root.querySelector<HTMLElement>('.mkt-shine');
   if (shine) {
     onceInView(shine.parentElement ?? shine, () =>
       gsap.fromTo(shine, { xPercent: -260 }, { xPercent: 260, duration: 1.1, delay: 0.5, ease: 'power2.inOut' }),
@@ -314,11 +320,36 @@ function sectionFx() {
 
 export function MarketingScrollFx() {
   useEffect(() => {
+    // Todo el motion se acota a la raíz de la landing: este componente no pinta
+    // nada (devuelve null), así que sin acotar sus selectores barrerían el
+    // documento entero desde cualquier sitio donde se montara.
+    const root = document.querySelector<HTMLElement>('.mkt-page');
+    if (!root) return;
+
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
 
+    // Los ScrollTrigger se crean EN ORDEN DE PÁGINA (hero → pista → resto): es
+    // lo que recomienda GSAP, porque el refresco sigue el orden de creación y el
+    // pin de La Pista cambia la posición de todo lo que va debajo. El
+    // `refreshPriority` del pin lo garantiza también en refrescos posteriores.
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      for (const el of gsap.utils.toArray<HTMLElement>('[data-parallax="expand"]')) {
+      // 1 · Hero (arriba del todo): el marcador deriva a otra velocidad.
+      for (const el of gsap.utils.toArray<HTMLElement>('[data-parallax="drift"]', root)) {
+        const hero = el.closest<HTMLElement>('.mkt-hero');
+        gsap.to(el, {
+          y: Number(el.dataset.parallaxSpeed ?? -40),
+          ease: 'none',
+          scrollTrigger: { trigger: hero ?? el, start: 'top top', end: 'bottom top', scrub: true },
+        });
+      }
+
+      // 2 · La Pista: el PIN. Se crea antes que nada de lo que vive debajo para
+      // que su pin-spacing ya esté aplicado cuando los demás midan.
+      const cleanupPista = pistaSetup(root);
+
+      // 3 · Bloques de más abajo (planes, podio) y efectos por sección.
+      for (const el of gsap.utils.toArray<HTMLElement>('[data-parallax="expand"]', root)) {
         gsap.fromTo(
           el,
           { scale: 0.9, y: 30, opacity: 0.55 },
@@ -334,27 +365,16 @@ export function MarketingScrollFx() {
         );
       }
 
-      for (const el of gsap.utils.toArray<HTMLElement>('[data-parallax="drift"]')) {
-        const hero = el.closest<HTMLElement>('.mkt-hero');
-        gsap.to(el, {
-          y: Number(el.dataset.parallaxSpeed ?? -40),
-          ease: 'none',
-          scrollTrigger: { trigger: hero ?? el, start: 'top top', end: 'bottom top', scrub: true },
-        });
-      }
+      sectionFx(root);
 
-      sectionFx();
+      return () => cleanupPista?.();
     });
-
-    // La Pista, en cualquier ancho (con reduced-motion no hay pin y los
-    // golpes quedan como secciones apiladas normales).
-    mm.add('(prefers-reduced-motion: no-preference)', () => pistaSetup());
 
     // Tilt 3D al puntero en las tarjetas clave: solo con puntero fino y hover
     // real (en táctil no existe el gesto) y sin reduced-motion.
     mm.add('(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)', () => {
       const cleanups: (() => void)[] = [];
-      for (const el of gsap.utils.toArray<HTMLElement>('[data-tilt]')) {
+      for (const el of gsap.utils.toArray<HTMLElement>('[data-tilt]', root)) {
         gsap.set(el, { transformPerspective: 900 });
         const rotX = gsap.quickTo(el, 'rotationX', { duration: 0.4, ease: 'power2.out' });
         const rotY = gsap.quickTo(el, 'rotationY', { duration: 0.4, ease: 'power2.out' });
